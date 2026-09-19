@@ -12,8 +12,9 @@ import { toReviewedIntake, useIntakeDraft } from "@/components/student/use-intak
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { intakeResponseSchema, type IntakeResponse } from "@/lib/api-contracts";
+import { encounterDetailResponseSchema, intakeResponseSchema, type IntakeResponse } from "@/lib/api-contracts";
 import { apiFetch, sessionIdFromToken, useSessionToken } from "@/lib/client/session-store";
+import { usePolling } from "@/lib/client/use-polling";
 
 type Step = "describe" | "followups" | "review";
 
@@ -47,6 +48,26 @@ function readSubmitted(sessionId: string | null): IntakeResponse | null {
 export function StudentFlow({ profile }: { profile: StudentProfileSummary }) {
   const sessionId = sessionIdFromToken(useSessionToken() ?? null);
   return <SessionIntake key={sessionId ?? "unpaired"} sessionId={sessionId} profile={profile} />;
+}
+
+/** Polls the shared encounter so the returned packet appears here without a refresh (§3 Scene 3). */
+function SubmittedStatus({ submitted, profile }: { submitted: IntakeResponse; profile: StudentProfileSummary }) {
+  const { data: encounter, error } = usePolling(`/api/encounters/${submitted.encounterId}`, encounterDetailResponseSchema);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <StatusView
+        status={encounter?.status ?? submitted.status}
+        packetId={encounter?.packetId}
+        profile={profile}
+      />
+      {error === "unavailable" && (
+        <p role="status" className="text-xs text-muted-foreground">
+          Reconnecting… showing the last update.
+        </p>
+      )}
+    </div>
+  );
 }
 
 function SessionIntake({ sessionId, profile }: { sessionId: string | null; profile: StudentProfileSummary }) {
@@ -106,7 +127,7 @@ function SessionIntake({ sessionId, profile }: { sessionId: string | null; profi
       <CardContent className="flex flex-col gap-6">
         <ProfileSummary profile={profile} />
 
-        {submitted && <StatusView status={submitted.status} profile={profile} />}
+        {submitted && <SubmittedStatus submitted={submitted} profile={profile} />}
 
         {!submitted && step === "describe" && (
           <DescribeStep

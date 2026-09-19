@@ -13,7 +13,7 @@ pnpm install
 pnpm dev
 ```
 
-Open [localhost:3000](http://localhost:3000). The home page starts or resumes a demo session; `/join` pairs a second device; `/s` is the student intake; `/hcp` is the clinician queue and brief; `/packet/<id>` is still a stub. Every page uses the shared layout and persistent synthetic-data banner. The stubs run without credentials; intake, API routes, database access, and AI calls come in later issues.
+Open [localhost:3000](http://localhost:3000). The home page starts or resumes a demo session; `/join` pairs a second device; `/s` is the student intake and returned-packet status; `/hcp` is the clinician workspace; `/packet/<id>` shows a returned packet inside its own session. Every page uses the shared layout and persistent synthetic-data banner. The stubs run without credentials; intake, API routes, database access, and AI calls come in later issues.
 
 ## Server configuration
 
@@ -72,6 +72,7 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/components/synthetic-banner.tsx`: the non-dismissible synthetic-data notice.
 - `src/components/session/`: session start, join, and the `SessionGate` wrapper for paired screens.
 - `src/components/hcp/`: the `/hcp` queue, SBAR brief with its source badge and audio, options table with inline mock labels, locked manufacturer drawer, and the source-values panel.
+- `src/components/packet/`: the `/packet/<id>` view.
 - `src/components/student/`: the `/s` intake flow; the draft lives in `use-intake-draft.ts` and stays in browser memory.
 - `src/lib/voice.ts`: brief audio rules — when the prepared recording may play, and the labelled fallbacks.
 - `src/lib/format.ts`: browser-safe display helpers (fixture wall-clock times, “not reported”, mock dollars).
@@ -86,7 +87,8 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/lib/intake.ts`: candidate-field extraction from the student's text and the onset suggestion.
 - `src/lib/encounters.ts`: server-side routing, field sources, brief, and persistence for a consented intake.
 - `src/lib/options.ts`: deterministic join of the fixture catalogs into labelled mock option rows.
-- `src/lib/packet.ts`: selection validation and idempotent packet persistence.
+- `src/lib/packet.ts`: selection validation, idempotent packet persistence, and the packet read model.
+- `src/lib/packet-view.ts`: browser-safe shape of `GET /api/packet/:id` (stored packet plus display text).
 - `src/lib/resources.ts`: the manufacturer resource gate decision, atomic unlock, and audit events.
 - `src/lib/sbar.ts`: clinician brief generation with a deterministic fallback and the prepared fixture.
 
@@ -130,6 +132,8 @@ node -e 'process.stdout.write(require("./data/demo-brief.json").sbar.spokenScrip
 say -v Samantha -r 175 -f /tmp/brief.txt -o /tmp/brief.aiff
 ffmpeg -y -i /tmp/brief.aiff -codec:a libmp3lame -b:a 96k -ac 1 public/demo-brief.mp3
 ```
+
+`GET /api/packet/:id` (session-guarded, `no-store`) returns the stored packet in the §9 contract shape plus a `display` object resolved on the server from the fixtures: names, mock labels, the prewritten instruction copy for the selected languages only, and only the resources attached to that packet. The price is the one stored at attach time. A packet from another session, or an unknown ID, is a 404. `/packet/<id>` renders it with a synthetic or mock label beside every value and the status “Available in demo”; the student screen polls its shared encounter and shows an “Open demo packet” link once the status is `packet_available`.
 
 ## Demo sessions and pairing
 
