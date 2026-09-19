@@ -13,7 +13,7 @@ pnpm install
 pnpm dev
 ```
 
-Open [localhost:3000](http://localhost:3000). The home page starts or resumes a demo session; `/join` pairs a second device; `/s` is the student intake; `/hcp` (clinician) and `/packet/<id>` are still stubs. Every page uses the shared layout and persistent synthetic-data banner. The stubs run without credentials; intake, API routes, database access, and AI calls come in later issues.
+Open [localhost:3000](http://localhost:3000). The home page starts or resumes a demo session; `/join` pairs a second device; `/s` is the student intake; `/hcp` is the clinician queue and brief; `/packet/<id>` is still a stub. Every page uses the shared layout and persistent synthetic-data banner. The stubs run without credentials; intake, API routes, database access, and AI calls come in later issues.
 
 ## Server configuration
 
@@ -71,11 +71,13 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/components/ui/`: shadcn/ui components for Tailwind v4, configured in `components.json`.
 - `src/components/synthetic-banner.tsx`: the non-dismissible synthetic-data notice.
 - `src/components/session/`: session start, join, and the `SessionGate` wrapper for paired screens.
+- `src/components/hcp/`: the `/hcp` queue, SBAR brief with its source badge, and the source-values panel.
 - `src/components/student/`: the `/s` intake flow; the draft lives in `use-intake-draft.ts` and stays in browser memory.
 - `src/lib/format.ts`: browser-safe display helpers (fixture wall-clock times, “not reported”, mock dollars).
 - `src/lib/env.ts`: validated server configuration.
 - `src/lib/db.ts`: session-scoped DynamoDB helpers for the single demo table.
 - `src/lib/session.ts`: demo session tokens, session creation, and the `requireSession` route guard.
+- `src/lib/client/use-polling.ts`: two-second polling that pauses while the tab is hidden and keeps the last good data on errors.
 - `src/lib/client/session-store.ts`: browser token store and `apiFetch`, which attaches the token to API calls.
 - `src/lib/http.ts`: `json` / `errorJson` responses with `Cache-Control: no-store`.
 - `src/lib/ai.ts`: server-only Gemini structured generation with schema validation, bounded retries, and session-scoped caching.
