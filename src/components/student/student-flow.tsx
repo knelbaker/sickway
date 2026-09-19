@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { BriefSourceBadge } from "@/components/brief-source-badge";
+import { OutcomeChip } from "@/components/outcome-chip";
 import { PollStatus } from "@/components/poll-status";
 import { CandidateSummary } from "@/components/student/candidate-summary";
 import { ConsentControl } from "@/components/student/consent-control";
 import { DescribeStep } from "@/components/student/describe-step";
+import { SimulateFollowUp } from "@/components/student/follow-up";
 import { ListQuestion, RedFlagChecklist } from "@/components/student/follow-ups";
 import { PreparedDemoSummary } from "@/components/student/prepared-demo";
 import { ProfileSummary, type StudentProfileSummary } from "@/components/student/profile-summary";
@@ -68,6 +70,8 @@ function SubmittedStatus({ submitted, profile }: { submitted: IntakeResponse; pr
         packetId={encounter?.packetId}
         profile={profile}
       />
+      {encounter?.followUp && <OutcomeChip followUp={encounter.followUp} />}
+      {encounter?.status === "packet_available" && <SimulateFollowUp encounterId={encounter.id} />}
       {encounter?.sbar && (
         <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           Clinic brief: <BriefSourceBadge source={encounter.sbar.source} />

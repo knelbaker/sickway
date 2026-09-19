@@ -4,6 +4,7 @@ import { BriefAudio } from "@/components/hcp/brief-audio";
 import { BriefView } from "@/components/hcp/brief-view";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/components/hcp/labels";
 import { SourcePanel } from "@/components/hcp/source-panel";
+import { OutcomeChip } from "@/components/outcome-chip";
 import { PollStatus } from "@/components/poll-status";
 import { VisitPanel } from "@/components/hcp/visit-panel";
 import type { StudentProfileSummary } from "@/components/student/profile-summary";
@@ -50,6 +51,8 @@ export function EncounterView({
           </Badge>
         </div>
       </div>
+
+      {encounter.followUp && <OutcomeChip followUp={encounter.followUp} />}
 
       {encounter.status === "emergency" && (
         <Alert variant="destructive">
