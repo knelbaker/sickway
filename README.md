@@ -13,7 +13,7 @@ pnpm install
 pnpm dev
 ```
 
-Open [localhost:3000](http://localhost:3000). The foundation includes four stub pages: `/`, `/s` (student), `/hcp` (clinician), and `/packet/test` (an example packet reference). Every page uses the shared layout and persistent synthetic-data banner. The stubs run without credentials; intake, API routes, database access, and AI calls come in later issues.
+Open [localhost:3000](http://localhost:3000). The home page starts or resumes a demo session; `/join` pairs a second device; `/s` (student), `/hcp` (clinician), and `/packet/<id>` are still stubs. Every page uses the shared layout and persistent synthetic-data banner. The stubs run without credentials; intake, API routes, database access, and AI calls come in later issues.
 
 ## Server configuration
 
@@ -28,6 +28,23 @@ Required settings:
 - `DDB_TABLE` and `DEMO_SESSION_SECRET`
 
 `VOICE_MODE` accepts `baseline` or `live` and defaults to `baseline` when absent or blank. `ELEVENLABS_API_KEY`, `NEXT_PUBLIC_DOORWAY_AGENT_ID`, and `NEXT_PUBLIC_INTAKE_AGENT_ID` are optional and may be blank. Voice integrations are not implemented yet. Only the agent IDs have public names; never put secrets in `NEXT_PUBLIC_` variables.
+
+## Deployment and health check
+
+`main` deploys automatically to Vercel at <https://vthacks-14.vercel.app>. `vercel.json` pins the Next.js framework preset and runs functions in `iad1`, next to the DynamoDB table in `us-east-1`. Use one Vercel project and one set of accounts for judging; do not migrate configuration late (sickway.md §4.1).
+
+Server settings must exist in the Vercel project for Production, Preview, and Development. With the Vercel CLI linked to the project, teammates can fetch them instead of passing keys around:
+
+```bash
+vercel env pull .env.local
+```
+
+`GET /api/health` is the integration checkpoint from sickway.md §14. It performs one DynamoDB write/read/delete in a throwaway partition and one minimal Gemini structured call, then reports per-service `ok` and latency. It requires the `x-health-key` header to equal `DEMO_SESSION_SECRET`; any other request gets a 404 before a service is touched, so the route cannot be used to spend model quota. Responses never include keys, ARNs, or raw provider errors.
+
+```bash
+curl -s -H "x-health-key: $DEMO_SESSION_SECRET" https://vthacks-14.vercel.app/api/health
+# {"dynamodb":{"ok":true,"latencyMs":…},"gemini":{"ok":true,"latencyMs":…}}  → 200, or 503 if either fails
+```
 
 ## Checks
 
@@ -55,6 +72,9 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/components/synthetic-banner.tsx`: the non-dismissible synthetic-data notice.
 - `src/lib/env.ts`: validated server configuration.
 - `src/lib/db.ts`: session-scoped DynamoDB helpers for the single demo table.
+- `src/lib/session.ts`: demo session tokens, session creation, and the `requireSession` route guard.
+- `src/lib/client/session-store.ts`: browser token store and `apiFetch`, which attaches the token to API calls.
+- `src/lib/http.ts`: `json` / `errorJson` responses with `Cache-Control: no-store`.
 - `src/lib/ai.ts`: server-only Gemini structured generation with schema validation, bounded retries, and session-scoped caching.
 - `src/lib/demo-routing.ts`: pure, synchronous demo routing and confirmed elapsed symptom time.
 - `src/lib/sbar.ts`: clinician brief generation with a deterministic fallback and the prepared fixture.
@@ -76,6 +96,19 @@ Cache keys hash the whitespace-normalized system and user prompts, configured mo
 
 `buildSbar({ sessionId, intake, profile, routing, usePrepared })` returns the clinician brief with its `source` always set. It asks Gemini for a draft (`generated`) from pre-rendered facts in which every gap already reads “not reported”. If generation fails, or the draft mentions a therapy or manufacturer, claims coverage was verified, or turns an unanswered field into a negative (`sbarGuardrailViolation`), it falls back to `deterministicSbar`, which assembles the same sections from the current fields with no model call. The prepared Scene 1 brief (`prepared_fixture`) is returned only when `usePrepared` is `true`, which must come from an explicit user action; a changed or failing input never selects it.
 
+## Demo sessions and pairing
+
+The home page starts an isolated synthetic session (`POST /api/demo-session`) and shows a join link. Opening `/join?t=<token>` on the second device confirms the token with `GET /api/demo-session`, stores it, and offers the student and clinician screens. Both devices then read the same `SESSION#<id>` partition. The browser keeps the token in `localStorage` and `apiFetch` sends it as the `x-demo-session` header.
+
+The token is `<sessionId>.<HMAC-SHA256(sessionId)>` signed with `DEMO_SESSION_SECRET`. Every session-scoped route must start with the guard and use only `auth.session.id` for database calls, never an ID supplied by the client:
+
+```ts
+const auth = await requireSession(request);
+if (!auth.ok) return auth.response; // 401 invalid_session or expired_session
+```
+
+Missing, malformed, tampered, swapped, unknown, and expired tokens all return 401 before any session data is read. Sessions expire after 24 hours. This limits casual cross-session access between demo runs; it is not production authentication or a claim of medical-data security (sickway.md §8, §11).
+
 ## Data layer
 
 All persistent state lives in one DynamoDB table (`DDB_TABLE`) with partition key `PK` (String), sort key `SK` (String), on-demand capacity, and TTL enabled on the `ttl` attribute. The IAM user needs only `GetItem`, `PutItem`, `UpdateItem`, `DeleteItem`, `Query`, and `BatchWriteItem` on that table; nothing uses `Scan`.
@@ -95,6 +128,10 @@ Use the helpers in `@/lib/db` instead of the AWS SDK directly. Build keys with `
 - `updateItem` sets fields on an existing item and returns `null` when nothing exists; `appendUniqueToList` adds a value to a list attribute atomically (for resource unlocks).
 - Every item gets a `ttl` 24 hours ahead unless the record defines its own, so old sessions expire without a cleanup job.
 
-Appendix A in the spec maps `app/`, `components/`, and `lib/` to this repository's `src/` directory. Future fixture JSON belongs in top-level `data/`.
+Appendix A in the spec maps `app/`, `components/`, and `lib/` to this repository's `src/` directory. Fixture JSON lives in top-level `data/`. Consumers should import `fixtures` from `@/lib/fixtures`, rather than importing individual JSON files. Keep cost, coverage, stock, and resource mock labels visible when displaying these values.
+
+The prepared Scene 1 case (`scene-1-v1`) uses a displayed fixture clock of September 19, 2026 at 10 AM EDT and an explicit onset of September 18 at 8 AM EDT (26 hours earlier). Its onset confirmation and six negative checklist answers are scripted follow-up responses, not facts inferred from the opening sentence. Medications and allergies remain unanswered (`null`). The preferred fictional pharmacy is only a setup preference; it does not represent a booking or transmission. This approved-case fixture must not prefill user consent, onset confirmation, or checklist responses. Prepared brief use requires an exact current-case match and explicit selection; audio is deferred to #17.
+
+EN and ES instructions are static demo workflow copy, not clinically validated treatment instructions or runtime translations. Spanish-speaker review and a teammate's fictional-name review remain required before sign-off. No real brand, insurer, pharmacy, or manufacturer names are intentionally used.
 
 For additional shadcn components, run `pnpm exec shadcn add <component>` from the repository root. `.npmrc` allows dependency additions at the root of this single-package pnpm workspace.
