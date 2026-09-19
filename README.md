@@ -19,7 +19,7 @@ One synthetic scenario, end to end, on two paired devices: **intake → clinicia
 | Piece | Where | Notes |
 | --- | --- | --- |
 | Screens | `src/app/{page,join,s,hcp,packet/[id]}` + `src/components/` | Next.js App Router, React, Tailwind v4, shadcn/ui. Server pages pass only a profile summary to client components; catalogs and manufacturer resources never enter a client bundle. |
-| API routes | `src/app/api/` | All ten §9 routes plus `demo-session/reset` and `health`. Every session-scoped route starts with `requireSession`. |
+| API routes | `src/app/api/` | All ten §9 routes (including the optional `followup`) plus `demo-session/reset` and `health`. Every session-scoped route starts with `requireSession`. |
 | Persistence | `src/lib/db.ts` → one DynamoDB table | `SESSION#<id>` partition per demo session; items expire by `ttl`. No in-memory fallback. |
 | Generation | `src/lib/ai.ts` → Gemini via the AI SDK | Schema-validated output, timeout, bounded retries, session-scoped cache. Used for extraction and the brief only. |
 | Rules | `demo-routing.ts`, `options.ts`, `resources.ts`, `packet.ts`, `sbar.ts` | Routing, option matching, the resource gate, attach validation, and the brief's guardrails and fallback are deterministic code, never the model. |
@@ -39,7 +39,8 @@ One synthetic scenario, end to end, on two paired devices: **intake → clinicia
 | Packet | The confirmed selection is stored once and appears on the paired student screen | “Available in demo”; no prescription, pharmacy, or clinic contact |
 | EN/ES instructions | Prewritten copy renders for the selected languages | Not live translation; “not clinically validated” |
 | Sessions, consent, reset | Signed pairing token, server-checked consent, per-session isolation, clean reset | Not production authentication, anonymity, or compliance |
-| Voice agents, follow-up | **Not implemented** (optional in the spec) | — |
+| Simulated follow-up (optional) | A two-tap made-up self-report updates an outcome chip on both screens | “Simulated self-report”; not evidence of fulfilment or a health outcome |
+| Voice agents (optional) | **Not implemented** | — |
 
 Everything about the patient, plan, prices, stock, pharmacies, therapies, and resources is fictional fixture data.
 
@@ -51,7 +52,7 @@ Everything about the patient, plan, prices, stock, pharmacies, therapies, and re
 - **Generation depends on Gemini.** When it is slow or unavailable the demo continues with labelled fallbacks (deterministic brief, manual entry). Cached generations are not labelled as cached.
 - **One scenario.** One profile, one plan, one therapy category. Anything else returns “outside this demo scenario” or “No demo option found”.
 - **Student language preference is display-only**; the clinician chooses packet languages, defaulting to the profile.
-- **Optional scope not built:** clinician voice, student voice, simulated follow-up.
+- **Optional scope not built:** clinician voice and student voice. The shared ElevenLabs key is currently rejected as invalid.
 
 ## Local development
 
