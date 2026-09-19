@@ -1,8 +1,9 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { putItemIfAbsent, sk } from "@/lib/db";
+import { getItem, putItemIfAbsent, queryByPrefix, sk, SK_PREFIX } from "@/lib/db";
 import { routeIntake } from "@/lib/demo-routing";
 import { fixtures } from "@/lib/fixtures";
+import type { EncounterQueueItem } from "@/lib/api-contracts";
 import { buildSbar } from "@/lib/sbar";
 import {
   encounterSchema,
@@ -68,4 +69,29 @@ export async function createEncounter(
   const created = await putItemIfAbsent(session.id, sk.encounter(encounter.id), encounter);
   if (!created) throw new Error("Encounter ID collision");
   return encounter;
+}
+
+/** The session's consented encounters, newest first. Only consented intakes are ever stored. */
+export async function listEncounters(sessionId: string): Promise<EncounterQueueItem[]> {
+  const encounters = await queryByPrefix(sessionId, SK_PREFIX.encounter, encounterSchema);
+  return encounters
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((encounter) => ({
+      id: encounter.id,
+      createdAt: encounter.createdAt,
+      status: encounter.status,
+      displayName: fixtures.profile.name,
+      chiefSymptoms: encounter.intake.symptoms,
+    }));
+}
+
+/** Null when the encounter is not in this session, even if the ID exists in another one. */
+export async function getEncounter(sessionId: string, encounterId: string): Promise<Encounter | null> {
+  let key: string;
+  try {
+    key = sk.encounter(encounterId);
+  } catch {
+    return null; // an ID we could never have issued
+  }
+  return getItem(sessionId, key, encounterSchema);
 }

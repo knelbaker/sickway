@@ -102,6 +102,8 @@ Cache keys hash the whitespace-normalized system and user prompts, configured mo
 
 `POST /api/intake` (session-guarded) is the hand-off from student to clinic. It stores nothing unless `consent.shareWithClinic` is literally `true` (`400 consent_required` otherwise), validates the reviewed intake including every checklist key, and then runs `routeIntake` on the server: any status sent by the client is ignored. A positive item is stored as `emergency` with no brief; an unanswered item is stored as `needs_review`; otherwise `ready`. `ready` and `needs_review` encounters get a brief from `buildSbar`, falling back to the deterministic summary. Each encounter records `fieldSources`, server-time consent, and `unlockedTherapyIds: []`, under `SESSION#<id>` / `ENC#<id>`. The response is only `{ encounterId, status }`.
 
+`GET /api/encounters` returns the caller's session queue, newest first, in a compact shape for two-second polling; `GET /api/encounters/:id` returns one full encounter. Both are session-guarded, read only the caller's partition with a single `Query` or `GetItem`, and send `Cache-Control: no-store`. An encounter ID from another session is a 404, exactly like an ID that does not exist.
+
 ## Demo sessions and pairing
 
 The home page starts an isolated synthetic session (`POST /api/demo-session`) and shows a join link. Opening `/join?t=<token>` on the second device confirms the token with `GET /api/demo-session`, stores it, and offers the student and clinician screens. Both devices then read the same `SESSION#<id>` partition. The browser keeps the token in `localStorage` and `apiFetch` sends it as the `x-demo-session` header.
