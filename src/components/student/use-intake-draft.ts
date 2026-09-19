@@ -2,6 +2,7 @@
 
 import { useReducer } from "react";
 import type { CandidateIntakeFields } from "@/lib/api-contracts";
+import type { ReviewedIntake } from "@/lib/schemas";
 import { RED_FLAG_KEYS, type Answer, type RedFlagKey } from "@/lib/red-flags";
 
 /**
@@ -24,12 +25,19 @@ export type IntakeDraft = {
   allergies: string[] | null;
   /** Untouched and "Not sure" are both null. Never defaulted to false. */
   redFlags: Record<RedFlagKey, Answer>;
+  /** Display only: which unknown answers were an explicit "Not sure" rather than untouched. */
+  notSure: Partial<Record<RedFlagKey, true>>;
 };
 
 export type DraftAction =
   | { type: "extracted"; transcript: string; fields: CandidateIntakeFields | null }
   | { type: "redFlag"; key: RedFlagKey; answer: Answer }
   | { type: "set"; field: "medsTaken" | "allergies"; value: string[] | null }
+  | { type: "edit"; field: "symptoms"; value: string[] }
+  | { type: "edit"; field: "maxTempF"; value: number | null }
+  | { type: "edit"; field: "deadlineToday"; value: string | null }
+  | { type: "onset"; onsetIso: string | null }
+  | { type: "confirmOnset"; confirmed: boolean }
   | { type: "reset" };
 
 function unanswered(): Record<RedFlagKey, Answer> {
@@ -49,6 +57,7 @@ export function emptyDraft(): IntakeDraft {
     medsTaken: null,
     allergies: null,
     redFlags: unanswered(),
+    notSure: {},
   };
 }
 
@@ -71,13 +80,39 @@ export function draftReducer(draft: IntakeDraft, action: DraftAction): IntakeDra
         medsTaken: fields && fields.medsMentioned.length > 0 ? fields.medsMentioned : null,
       };
     }
-    case "redFlag":
-      return { ...draft, redFlags: { ...draft.redFlags, [action.key]: action.answer } };
+    case "redFlag": {
+      const notSure = { ...draft.notSure };
+      if (action.answer === null) notSure[action.key] = true;
+      else delete notSure[action.key];
+      return { ...draft, redFlags: { ...draft.redFlags, [action.key]: action.answer }, notSure };
+    }
     case "set":
+    case "edit":
       return { ...draft, [action.field]: action.value };
+    case "onset":
+      // Any change to the time withdraws an earlier confirmation.
+      return { ...draft, onsetIso: action.onsetIso, onsetConfirmed: false };
+    case "confirmOnset":
+      // There is nothing to confirm without a time.
+      return { ...draft, onsetConfirmed: action.confirmed && draft.onsetIso !== null };
     case "reset":
       return emptyDraft();
   }
+}
+
+/** The payload for `POST /api/intake`. Unknown stays null; nothing is defaulted. */
+export function toReviewedIntake(draft: IntakeDraft): ReviewedIntake {
+  return {
+    symptoms: draft.symptoms,
+    onsetIso: draft.onsetIso,
+    onsetConfirmed: draft.onsetConfirmed && draft.onsetIso !== null,
+    maxTempF: draft.maxTempF,
+    medsTaken: draft.medsTaken,
+    allergies: draft.allergies,
+    redFlags: draft.redFlags,
+    deadlineToday: draft.deadlineToday,
+    transcript: draft.transcript,
+  };
 }
 
 export function useIntakeDraft() {
