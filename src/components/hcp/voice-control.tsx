@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import MatrixOrb from "@/components/ui/matrix-orb";
 import { apiFetch } from "@/lib/client/session-store";
 import { USE_TYPED_CONTROLS } from "@/lib/voice-tools";
+import { useLanguage } from "@/lib/client/language-store";
 
 /** What the agent's three client tools are allowed to do. Each returns the text the agent hears. */
 export type VoiceActions = {
@@ -18,7 +19,6 @@ export type VoiceActions = {
 
 type Line = { role: "user" | "agent"; text: string };
 
-const FALLBACK = "The typed controls below do everything voice does.";
 
 /**
  * Optional clinician voice (rendered only when VOICE_MODE=live). Voice is an
@@ -40,6 +40,7 @@ function VoiceSession({ actions }: { actions: VoiceActions }) {
   const [starting, setStarting] = useState(false);
   const lastClinicianWords = useRef("");
 
+  const v = useLanguage().t.clinician.voice;
   const conversation = useConversation({
     clientTools: {
       show_options: async ({ query }: { query?: string }) => actions.showOptions(String(query ?? "")),
@@ -58,9 +59,9 @@ function VoiceSession({ actions }: { actions: VoiceActions }) {
       if (role === "user") lastClinicianWords.current = message;
       setLines((current) => [...current.slice(-19), { role, text: message }]);
     },
-    onError: () => setNotice(`Voice had a problem. ${FALLBACK}`),
+    onError: () => setNotice(`${v.problem} ${v.fallback}`),
     onDisconnect: (details) => {
-      if (details.reason !== "user") setNotice(`Voice disconnected. ${FALLBACK}`);
+      if (details.reason !== "user") setNotice(`${v.disconnected} ${v.fallback}`);
     },
   });
 
@@ -79,7 +80,7 @@ function VoiceSession({ actions }: { actions: VoiceActions }) {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {
-        setNotice(`Microphone access was not granted. ${FALLBACK}`);
+        setNotice(`${v.micDenied} ${v.fallback}`);
         return;
       }
       // Only the permission was needed; the SDK opens its own stream.
@@ -87,7 +88,7 @@ function VoiceSession({ actions }: { actions: VoiceActions }) {
 
       const response = await apiFetch("/api/voice/conversation-token", { method: "POST" });
       if (!response.ok) {
-        setNotice(`Voice is unavailable right now. ${FALLBACK}`);
+        setNotice(`${v.unavailable} ${v.fallback}`);
         return;
       }
       const { token } = (await response.json()) as { token: string };
@@ -95,7 +96,7 @@ function VoiceSession({ actions }: { actions: VoiceActions }) {
       lastClinicianWords.current = "";
       conversation.startSession({ conversationToken: token, connectionType: "webrtc" });
     } catch {
-      setNotice(`Voice could not start. ${FALLBACK}`);
+      setNotice(`${v.failed} ${v.fallback}`);
     } finally {
       setStarting(false);
     }
@@ -106,29 +107,29 @@ function VoiceSession({ actions }: { actions: VoiceActions }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 id="voice-heading" className="display text-xl">
-            Voice (optional)
+            {v.title}
           </h3>
           <p className="text-xs leading-5 text-muted-foreground">
-            Live voice agent. It uses the same controls as typing, reads only mock data, and cannot
-            confirm or attach anything.
+            {v.body}
+            {v.englishOnly && ` ${v.englishOnly}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {/* The orb is the agent's state at a glance; its label is the status for screen readers. */}
           <MatrixOrb
             state={connected ? (conversation.isSpeaking ? "thinking" : "listening") : busy ? "thinking" : "idle"}
-            labels={{ idle: "Off", listening: "Listening", thinking: connected ? "Speaking" : "Connecting…" }}
+            labels={{ idle: v.off, listening: v.listening, thinking: connected ? v.speaking : v.connecting }}
             size={40}
             color="#c8121b"
             className="flex-row gap-2"
           />
           {connected ? (
             <Button type="button" variant="outline" className="h-11" onClick={() => conversation.endSession()}>
-              Stop voice
+              {v.stopVoice}
             </Button>
           ) : (
             <Button type="button" className="h-11" disabled={busy} onClick={() => void start()}>
-              Start voice
+              {v.start}
             </Button>
           )}
         </div>
@@ -136,16 +137,16 @@ function VoiceSession({ actions }: { actions: VoiceActions }) {
 
       {notice && (
         <Alert>
-          <AlertTitle>Voice is off</AlertTitle>
+          <AlertTitle>{v.offTitle}</AlertTitle>
           <AlertDescription>{notice}</AlertDescription>
         </Alert>
       )}
 
       {lines.length > 0 && (
-        <ol aria-label="Voice transcript" aria-live="polite" className="flex max-h-48 flex-col gap-1.5 overflow-y-auto text-sm">
+        <ol aria-label={v.transcript} aria-live="polite" className="flex max-h-48 flex-col gap-1.5 overflow-y-auto text-sm">
           {lines.map((line, index) => (
-            <li key={index} className={line.role === "user" ? "font-medium" : "text-muted-foreground"}>
-              <span className="mr-1.5 text-xs uppercase">{line.role === "user" ? "You" : "Agent"}</span>
+            <li key={index} lang="en" className={line.role === "user" ? "font-medium" : "text-muted-foreground"}>
+              <span className="mr-1.5 text-xs uppercase">{line.role === "user" ? v.you : v.agent}</span>
               {line.text}
             </li>
           ))}

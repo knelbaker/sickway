@@ -5,6 +5,7 @@ import { EncounterView } from "@/components/hcp/encounter-view";
 import { Queue } from "@/components/hcp/queue";
 import type { StudentProfileSummary } from "@/components/student/profile-summary";
 import { encountersQueueResponseSchema } from "@/lib/api-contracts";
+import { useLanguage } from "@/lib/client/language-store";
 import { sessionIdFromToken, useSessionToken } from "@/lib/client/session-store";
 import { usePolling } from "@/lib/client/use-polling";
 
@@ -17,6 +18,8 @@ export function ClinicianWorkspace(props: WorkspaceProps) {
 }
 
 function SessionWorkspace({ profile, preparedSpokenScript, voiceEnabled = false }: WorkspaceProps) {
+  const { language, t } = useLanguage();
+  const c = t.clinician;
   const queue = usePolling("/api/encounters", encountersQueueResponseSchema);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Only ever show an encounter that is in this session's queue.
@@ -25,13 +28,12 @@ function SessionWorkspace({ profile, preparedSpokenScript, voiceEnabled = false 
   return (
     // The workspace is the page, not a box on it, and on a wide screen it takes the margins too:
     // a clinician reads a brief and compares options side by side, and both want room.
-    <div lang="en" className="page-bleed flex flex-col gap-8 lg:-mx-[var(--bleed)]">
+    <div lang={language} className="page-bleed flex flex-col gap-8 lg:-mx-[var(--bleed)]">
       <header>
-        <h1 className="text-4xl sm:text-5xl">Clinician workspace</h1>
-        <p className="mt-3 max-w-[70ch] leading-7 text-ink-soft">
-          Intakes shared in this demo session. Everything shown is synthetic; the brief supports the
-          clinician and does not decide anything.
-        </p>
+        <h1 className="text-4xl sm:text-5xl">{c.title}</h1>
+        <p className="mt-3 max-w-[70ch] leading-7 text-ink-soft">{c.intro}</p>
+        {/* Only where the interface language differs from the data's: say which parts stay in English, and why. */}
+        {c.englishData && <p className="mt-2 max-w-[70ch] text-sm leading-6 text-ink-soft">{c.englishData}</p>}
       </header>
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 md:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] lg:gap-8">
         <div className="glass rounded-3xl p-4 sm:p-5 md:sticky md:top-40">
@@ -48,7 +50,7 @@ function SessionWorkspace({ profile, preparedSpokenScript, voiceEnabled = false 
             />
           ) : (
             <p className="rounded-3xl border-2 border-dashed border-ink/20 p-8 text-center leading-7 text-ink-soft">
-              {queue.data && queue.data.length > 0 ? "Open an intake from the queue to see its brief." : "Waiting for a shared intake."}
+              {queue.data && queue.data.length > 0 ? c.openIntake : c.waiting}
             </p>
           )}
         </div>

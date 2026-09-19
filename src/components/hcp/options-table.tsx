@@ -7,46 +7,54 @@ import { useElementWidth } from "@/lib/client/use-element-width";
 import { useMediaQuery } from "@/lib/client/use-media-query";
 import { formatMockDollars } from "@/lib/format";
 import type { OptionRow } from "@/lib/schemas";
+import { useLanguage } from "@/lib/client/language-store";
 
-function Mock({ children = "Mock" }: { children?: React.ReactNode }) {
+function Mock({ children }: { children: React.ReactNode }) {
   return <Badge variant="secondary">{children}</Badge>;
 }
 
+/** Fixture values (names, coverage and stock statuses) are English data, shown as written. */
+function Data({ children }: { children: React.ReactNode }) {
+  return <span lang="en">{children}</span>;
+}
+
 function Cost({ row, costCeiling }: { row: OptionRow; costCeiling: number | null }) {
+  const o = useLanguage().t.clinician.options;
   return (
     <span className="flex flex-wrap items-center gap-1.5">
       <span className="font-medium">{formatMockDollars(row.estimatedCost)}</span>
-      <Mock>Mock cost</Mock>
+      <Mock>{o.mockCost}</Mock>
       {row.exceedsCostCeiling && costCeiling !== null && (
-        <Badge variant="destructive">Above {formatMockDollars(costCeiling)} fictional ceiling</Badge>
+        <Badge variant="destructive">{o.aboveCeiling(formatMockDollars(costCeiling))}</Badge>
       )}
     </span>
   );
 }
 
 function Coverage({ row }: { row: OptionRow }) {
+  const o = useLanguage().t.clinician.options;
   return (
     <span className="flex flex-wrap items-center gap-1.5">
-      {row.coverageStatus} · {row.formularyTier}
-      <Mock>Mock coverage — not verified</Mock>
+      <Data>
+        {row.coverageStatus} · {row.formularyTier}
+      </Data>
+      <Mock>{o.mockCoverage}</Mock>
     </span>
   );
 }
 
 function Stock({ row }: { row: OptionRow }) {
+  const o = useLanguage().t.clinician.options;
   return (
     <span className="flex flex-wrap items-center gap-1.5">
-      {row.stockStatus}
-      <Mock>Mock stock</Mock>
+      <Data>{row.stockStatus}</Data>
+      <Mock>{o.mockStock}</Mock>
     </span>
   );
 }
 
 /** Seven columns, each with its mock label beside the value, need about this much room. */
 const TABLE_MIN_WIDTH = 900;
-
-const CAPTION =
-  "Synthetic demo options for the fictional plan. All costs, coverage, and stock are mock data, not verified. The clinician chooses; this list does not recommend.";
 
 function ResourcesControl({
   row,
@@ -59,17 +67,18 @@ function ResourcesControl({
   pending: boolean;
   onShow: (therapyId: string) => void;
 }) {
-  if (!row.hasManufacturerResources) return <span className="text-muted-foreground">None in demo</span>;
+  const o = useLanguage().t.clinician.options;
+  if (!row.hasManufacturerResources) return <span className="text-muted-foreground">{o.noneInDemo}</span>;
   return (
     <Button
       type="button"
       variant="outline"
       size="sm"
       disabled={pending}
-      aria-label={`Show manufacturer resources for ${row.therapyName}`}
+      aria-label={o.showResourcesFor(row.therapyName)}
       onClick={() => onShow(row.therapyId)}
     >
-      {unlocked ? "Show again" : "Show manufacturer resources"}
+      {unlocked ? o.showAgain : o.showResources}
     </Button>
   );
 }
@@ -94,6 +103,7 @@ export function OptionsTable({
   /** Optional selection control per row, supplied by the attach flow. */
   renderSelect?: (row: OptionRow) => React.ReactNode;
 }) {
+  const o = useLanguage().t.clinician.options;
   const windowWide = useMediaQuery("(min-width: 768px)", true);
   // The table sits in a column, so the window's width says little. Measure the room it really has;
   // until that is known (or where it cannot be measured) the window decides.
@@ -103,20 +113,20 @@ export function OptionsTable({
   if (!wide) {
     return (
       <div ref={ref} className="@container flex flex-col gap-3">
-        <ul aria-label="Demo options" className="grid grid-cols-1 gap-3 @xl:grid-cols-2">
+        <ul aria-label={o.list} className="grid grid-cols-1 gap-3 @xl:grid-cols-2">
           {rows.map((row) => (
             <li key={`${row.therapyId}/${row.pharmacyId}`} className="flex flex-col rounded-2xl border border-ink/12 bg-paper/70 p-4 text-sm">
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                <span className="font-medium">{row.therapyName}</span>
-                <Badge variant={row.generic ? "default" : "outline"}>{row.generic ? "Generic" : "Brand"}</Badge>
+                <span lang="en" className="font-medium">{row.therapyName}</span>
+                <Badge variant={row.generic ? "default" : "outline"}>{row.generic ? o.generic : o.brand}</Badge>
               </div>
               <dl className="mb-3 flex flex-col gap-2">
                 {(
                   [
-                    ["Pharmacy", row.pharmacyName],
-                    ["Estimated cost", <Cost key="cost" row={row} costCeiling={costCeiling} />],
-                    ["Coverage", <Coverage key="coverage" row={row} />],
-                    ["Stock", <Stock key="stock" row={row} />],
+                    [o.pharmacy, <Data key="pharmacy">{row.pharmacyName}</Data>],
+                    [o.cost, <Cost key="cost" row={row} costCeiling={costCeiling} />],
+                    [o.coverage, <Coverage key="coverage" row={row} />],
+                    [o.stock, <Stock key="stock" row={row} />],
                   ] as const
                 ).map(([label, value]) => (
                   <div key={label}>
@@ -125,7 +135,7 @@ export function OptionsTable({
                   </div>
                 ))}
                 <div>
-                  <dt className="mb-1 text-xs text-muted-foreground">Manufacturer resources</dt>
+                  <dt className="mb-1 text-xs text-muted-foreground">{o.resources}</dt>
                   <dd>
                     <ResourcesControl
                       row={row}
@@ -138,13 +148,13 @@ export function OptionsTable({
               </dl>
               {renderSelect && (
                 <label className="mt-auto flex min-h-11 cursor-pointer items-center gap-3 border-t border-ink/10 pt-2 font-medium">
-                  {renderSelect(row)} Select this option
+                  {renderSelect(row)} {o.selectThis}
                 </label>
               )}
             </li>
           ))}
         </ul>
-        <p className="text-xs leading-5 text-muted-foreground">{CAPTION}</p>
+        <p className="text-xs leading-5 text-muted-foreground">{o.caption}</p>
       </div>
     );
   }
@@ -152,16 +162,16 @@ export function OptionsTable({
   return (
     <div ref={ref}>
     <Table>
-      <TableCaption>{CAPTION}</TableCaption>
+      <TableCaption>{o.caption}</TableCaption>
       <TableHeader>
         <TableRow>
-          {renderSelect && <TableHead scope="col">Select</TableHead>}
-          <TableHead scope="col">Demo therapy</TableHead>
-          <TableHead scope="col">Pharmacy</TableHead>
-          <TableHead scope="col">Estimated cost</TableHead>
-          <TableHead scope="col">Coverage</TableHead>
-          <TableHead scope="col">Stock</TableHead>
-          <TableHead scope="col">Manufacturer resources</TableHead>
+          {renderSelect && <TableHead scope="col">{o.select}</TableHead>}
+          <TableHead scope="col">{o.therapy}</TableHead>
+          <TableHead scope="col">{o.pharmacy}</TableHead>
+          <TableHead scope="col">{o.cost}</TableHead>
+          <TableHead scope="col">{o.coverage}</TableHead>
+          <TableHead scope="col">{o.stock}</TableHead>
+          <TableHead scope="col">{o.resources}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -176,11 +186,11 @@ export function OptionsTable({
               )}
               <TableHead scope="row" className="font-medium whitespace-normal">
                 <span className="flex flex-col gap-1">
-                  {row.therapyName}
-                  <Badge variant={row.generic ? "default" : "outline"}>{row.generic ? "Generic" : "Brand"}</Badge>
+                  <Data>{row.therapyName}</Data>
+                  <Badge variant={row.generic ? "default" : "outline"}>{row.generic ? o.generic : o.brand}</Badge>
                 </span>
               </TableHead>
-              <TableCell className="whitespace-normal">{row.pharmacyName}</TableCell>
+              <TableCell className="whitespace-normal"><Data>{row.pharmacyName}</Data></TableCell>
               <TableCell>
                 <Cost row={row} costCeiling={costCeiling} />
               </TableCell>

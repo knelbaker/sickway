@@ -1,12 +1,13 @@
 "use client";
 
 import { cn } from "cn";
-import { STATUS_LABEL, STATUS_VARIANT } from "@/components/hcp/labels";
+import { STATUS_VARIANT } from "@/components/hcp/labels";
 import { PollStatus } from "@/components/poll-status";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import type { EncounterQueueItem } from "@/lib/api-contracts";
+import { useLanguage } from "@/lib/client/language-store";
 import type { PollState } from "@/lib/client/use-polling";
 
 function time(iso: string) {
@@ -24,35 +25,36 @@ export function Queue({
   selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
+  const { t } = useLanguage();
+  const c = t.clinician;
   const items = queue.data;
 
   return (
     <section aria-labelledby="queue-heading" className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
         <h2 id="queue-heading" className="display text-xl">
-          Demo queue
+          {c.queue.title}
         </h2>
         {items && (
           <span className="text-xs text-muted-foreground">
-            <AnimatedCounter value={items.length} /> shared
+            <AnimatedCounter value={items.length} /> {c.queue.shared}
           </span>
         )}
       </div>
 
       {queue.error === "session" && (
         <Alert variant="destructive">
-          <AlertTitle>Demo session ended</AlertTitle>
-          <AlertDescription>Start or join a demo session again from the home page.</AlertDescription>
+          <AlertTitle>{c.sessionEndedTitle}</AlertTitle>
+          <AlertDescription>{c.sessionEndedBody}</AlertDescription>
         </Alert>
       )}
-      <PollStatus poll={queue} />
+      <PollStatus poll={queue} localized />
 
-      {!items && !queue.error && <p className="text-sm text-muted-foreground">Loading queue…</p>}
+      {!items && !queue.error && <p className="text-sm text-muted-foreground">{c.queue.loading}</p>}
 
       {items?.length === 0 && (
         <p className="rounded-lg border border-dashed p-4 text-sm leading-6 text-muted-foreground">
-          No shared intakes yet. An intake appears here only after the student reviews it and gives
-          consent.
+          {c.queue.empty}
         </p>
       )}
 
@@ -76,9 +78,9 @@ export function Queue({
                   <span className="text-xs text-muted-foreground">{time(item.createdAt)}</span>
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  {item.chiefSymptoms.length > 0 ? item.chiefSymptoms.join(", ") : "symptoms not reported"}
+                  {item.chiefSymptoms.length > 0 ? item.chiefSymptoms.join(", ") : c.queue.noSymptoms}
                 </span>
-                <Badge variant={STATUS_VARIANT[item.status]}>{STATUS_LABEL[item.status]}</Badge>
+                <Badge variant={STATUS_VARIANT[item.status]}>{c.status[item.status]}</Badge>
               </button>
             </li>
           ))}
