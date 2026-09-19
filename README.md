@@ -29,6 +29,23 @@ Required settings:
 
 `VOICE_MODE` accepts `baseline` or `live` and defaults to `baseline` when absent or blank. `ELEVENLABS_API_KEY`, `NEXT_PUBLIC_DOORWAY_AGENT_ID`, and `NEXT_PUBLIC_INTAKE_AGENT_ID` are optional and may be blank. Voice integrations are not implemented yet. Only the agent IDs have public names; never put secrets in `NEXT_PUBLIC_` variables.
 
+## Deployment and health check
+
+`main` deploys automatically to Vercel at <https://vthacks-14.vercel.app>. `vercel.json` pins the Next.js framework preset and runs functions in `iad1`, next to the DynamoDB table in `us-east-1`. Use one Vercel project and one set of accounts for judging; do not migrate configuration late (sickway.md §4.1).
+
+Server settings must exist in the Vercel project for Production, Preview, and Development. With the Vercel CLI linked to the project, teammates can fetch them instead of passing keys around:
+
+```bash
+vercel env pull .env.local
+```
+
+`GET /api/health` is the integration checkpoint from sickway.md §14. It performs one DynamoDB write/read/delete in a throwaway partition and one minimal Gemini structured call, then reports per-service `ok` and latency. It requires the `x-health-key` header to equal `DEMO_SESSION_SECRET`; any other request gets a 404 before a service is touched, so the route cannot be used to spend model quota. Responses never include keys, ARNs, or raw provider errors.
+
+```bash
+curl -s -H "x-health-key: $DEMO_SESSION_SECRET" https://vthacks-14.vercel.app/api/health
+# {"dynamodb":{"ok":true,"latencyMs":…},"gemini":{"ok":true,"latencyMs":…}}  → 200, or 503 if either fails
+```
+
 ## Checks
 
 ```bash
