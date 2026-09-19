@@ -1,16 +1,25 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SessionGate } from "@/components/session/session-gate";
+import { StudentFlow } from "@/components/student/student-flow";
+import { fixtures } from "@/lib/fixtures";
 
 export default function StudentPage() {
+  const { profile, plans } = fixtures;
+  const plan = plans.find((row) => row.id === profile.planId);
+
+  // Only the profile summary crosses to the browser; catalogs and resources stay on the server.
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h1>Student intake</h1>
-        </CardTitle>
-        <CardDescription>
-          The synthetic student intake and review form will be available here.
-        </CardDescription>
-      </CardHeader>
-    </Card>
+    <SessionGate title="Student intake">
+      <StudentFlow
+        profile={{
+          name: profile.name,
+          age: profile.age,
+          planName: plan?.name ?? "Fictional demo plan",
+          planMockLabel: plan?.mockLabel ?? "Mock coverage — not verified",
+          instructionLanguages: profile.instructionLanguages,
+          costCeiling: profile.costCeiling ?? null,
+          fixtureClock: profile.fixtureClock,
+        }}
+      />
+    </SessionGate>
   );
 }
