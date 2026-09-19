@@ -83,6 +83,7 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/lib/intake.ts`: candidate-field extraction from the student's text and the onset suggestion.
 - `src/lib/encounters.ts`: server-side routing, field sources, brief, and persistence for a consented intake.
 - `src/lib/options.ts`: deterministic join of the fixture catalogs into labelled mock option rows.
+- `src/lib/resources.ts`: the manufacturer resource gate decision, atomic unlock, and audit events.
 - `src/lib/sbar.ts`: clinician brief generation with a deterministic fallback and the prepared fixture.
 
 `routeIntake(intake)` accepts a reviewed intake with an optional boolean `outsideScenario` marker and returns `{ branch, reasons }`. Any of the six checklist flags explicitly set to `true` yields `emergency`, even if other fields are invalid. Otherwise, unanswered (`null`) flags, missing or malformed fields, unexpected keys, and `outsideScenario: true` yield `needs_review` with explicit reasons. A valid intake with all six flags `false` yields `ready`. This is a demo routing result, not clinically validated triage or a diagnosis; temperature and other fields do not introduce additional routing rules.
@@ -109,6 +110,8 @@ Cache keys hash the whitespace-normalized system and user prompts, configured mo
 `GET /api/encounters` returns the caller's session queue, newest first, in a compact shape for two-second polling; `GET /api/encounters/:id` returns one full encounter. Both are session-guarded, read only the caller's partition with a single `Query` or `GetItem`, and send `Cache-Control: no-store`. An encounter ID from another session is a 404, exactly like an ID that does not exist.
 
 `POST /api/encounters/:id/options` (session-guarded, read-only) matches the clinician's query against the fixtures with plain keywords — no model call. “antiviral” or “flu” lists every therapy × pharmacy row for the profile's plan, generic first and then by mock cost; naming one fixture therapy lists only that therapy; anything else returns `{ found: false, message: "No demo option found" }`. Every cost, coverage, and stock value carries a mock flag, rows above the profile's cost ceiling are marked, and rows only say whether manufacturer resources exist. The route never changes `unlockedTherapyIds` and refuses `emergency` encounters with 409.
+
+`POST /api/encounters/:id/resources` is the only route that ever returns manufacturer resources. `decideUnlock` unlocks on an explicit `therapyId`, or on text that names exactly one fixture therapy by its full name; category text, vague references, several names, and unknown IDs stay locked with a reason. An unlock appends the therapy to `unlockedTherapyIds` with an atomic, unique list append, returns only that therapy's resources (each labelled “Manufacturer resource — fictional demo”), and writes an `EVT#` audit event with therapy ID, resource IDs, action, and reason; a repeat is audited as a view and never duplicates the ID. If the unlock cannot be recorded, nothing is returned. This demonstrates a UI and server rule; it does not by itself establish the absence of commercial influence, and no data is sent to any manufacturer.
 
 ## Demo sessions and pairing
 
