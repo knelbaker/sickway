@@ -1,8 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type { HTMLAttributes } from "react"
 
-import { GridReveal } from "@/components/ui/grid-reveal"
-
 const PHONE_WIDTH = 433
 const PHONE_HEIGHT = 882
 const SCREEN_X = 21.25
@@ -22,14 +20,11 @@ const RADIUS_V = (SCREEN_RADIUS / SCREEN_HEIGHT) * 100
 export interface IphoneProps extends HTMLAttributes<HTMLDivElement> {
   src?: string
   videoSrc?: string
-  /** Assemble the screenshot with a grid reveal instead of showing it at once. */
-  reveal?: boolean
 }
 
 export function Iphone({
   src,
   videoSrc,
-  reveal = false,
   className,
   style,
   ...props
@@ -80,11 +75,7 @@ export function Iphone({
             borderRadius: `${RADIUS_H}% / ${RADIUS_V}%`,
           }}
         >
-          {reveal ? (
-            <GridReveal src={src} aspect={390 / 844} className="size-full rounded-none bg-transparent" />
-          ) : (
-            <img src={src} alt="" className="block size-full object-cover object-top" />
-          )}
+          <img src={src} alt="" className="block size-full object-cover object-top" />
         </div>
       )}
 
@@ -136,15 +127,15 @@ export function Iphone({
 
         <path
           d="M154 48.5C154 38.2827 162.283 30 172.5 30H259.5C269.717 30 278 38.2827 278 48.5C278 58.7173 269.717 67 259.5 67H172.5C162.283 67 154 58.7173 154 48.5Z"
-          className="fill-[#F5F5F5] dark:fill-[#262626]"
+          className="fill-black"
         />
         <path
           d="M249 48.5C249 42.701 253.701 38 259.5 38C265.299 38 270 42.701 270 48.5C270 54.299 265.299 59 259.5 59C253.701 59 249 54.299 249 48.5Z"
-          className="fill-[#F5F5F5] dark:fill-[#262626]"
+          className="fill-[#16161a]"
         />
         <path
           d="M254 48.5C254 45.4624 256.462 43 259.5 43C262.538 43 265 45.4624 265 48.5C265 51.5376 262.538 54 259.5 54C256.462 54 254 51.5376 254 48.5Z"
-          className="fill-[#E5E5E5] dark:fill-[#404040]"
+          className="fill-[#2a2a36]"
         />
 
         <defs>
