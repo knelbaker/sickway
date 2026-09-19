@@ -4,6 +4,55 @@ A synthetic workflow prototype for student intake, a clinician brief, and a retu
 
 Prototype workflow. Not medical advice. Do not enter real health information.
 
+## What it does
+
+One synthetic scenario, end to end, on two paired devices: **intake → clinician brief → options → packet**.
+
+1. **Student (`/s`, phone).** Sees the synthetic profile and where each field comes from, types what is wrong, answers three follow-up groups, reviews and corrects every field, confirms the onset, and gives separate explicit consent. Declining keeps everything on the phone.
+2. **Clinician (`/hcp`, laptop).** The shared intake appears in the queue on its own. The clinician reads a traceable SBAR brief (with audio and the source values beside it), asks for the mock options, opens one named therapy's manufacturer resources if they choose to, selects an option, reviews a confirmation, and attaches a packet.
+3. **Student again.** “Your demo packet is ready” appears without a refresh and links to `/packet/<id>`.
+
+**Reset demo** in the header starts a clean run. Nothing is booked, prescribed, verified, or sent anywhere.
+
+## Architecture
+
+| Piece | Where | Notes |
+| --- | --- | --- |
+| Screens | `src/app/{page,join,s,hcp,packet/[id]}` + `src/components/` | Next.js App Router, React, Tailwind v4, shadcn/ui. Server pages pass only a profile summary to client components; catalogs and manufacturer resources never enter a client bundle. |
+| API routes | `src/app/api/` | All ten §9 routes plus `demo-session/reset` and `health`. Every session-scoped route starts with `requireSession`. |
+| Persistence | `src/lib/db.ts` → one DynamoDB table | `SESSION#<id>` partition per demo session; items expire by `ttl`. No in-memory fallback. |
+| Generation | `src/lib/ai.ts` → Gemini via the AI SDK | Schema-validated output, timeout, bounded retries, session-scoped cache. Used for extraction and the brief only. |
+| Rules | `demo-routing.ts`, `options.ts`, `resources.ts`, `packet.ts`, `sbar.ts` | Routing, option matching, the resource gate, attach validation, and the brief's guardrails and fallback are deterministic code, never the model. |
+| Fixtures | `data/*.json` via `src/lib/fixtures.ts` | The synthetic profile, plan, two therapies, two pharmacies, two resources, EN/ES copy, and the prepared brief. |
+| Sync | `src/lib/client/use-polling.ts` | Two-second polling, paused while a tab is hidden. No websockets, Lambda, S3, or second app. |
+
+## Implemented and mocked
+
+| Piece | What the demo establishes | Label or limitation shown |
+| --- | --- | --- |
+| Intake extraction and review | Typed text becomes candidate fields; the student reviews, corrects, and confirms | Synthetic patient; gaps stay “not reported”; onset is unconfirmed until ticked |
+| Demo routing | `emergency` / `needs_review` / `ready` decided by server rules | “Demo routing result, not a diagnosis”; not clinically validated triage |
+| Clinician brief (SBAR) | Generated from reviewed facts, or assembled deterministically when generation fails | Source badge on both screens: generated, deterministic summary, or prepared fixture |
+| Brief audio | The current brief is played or spoken, with its text always visible | “Prepared recording … Not live voice” only for the matching prepared case; otherwise “Browser speech” |
+| Options | Catalog join, generic-first sort, cost-ceiling marker | “Mock cost”, “Mock coverage — not verified”, “Mock stock” inside every cell |
+| Manufacturer resources | Locked until an explicit request for one named therapy's resources; enforced and audited on the server | “Manufacturer resource — fictional demo”; a demonstrated rule, not proof of neutrality; nothing is sent to a manufacturer |
+| Packet | The confirmed selection is stored once and appears on the paired student screen | “Available in demo”; no prescription, pharmacy, or clinic contact |
+| EN/ES instructions | Prewritten copy renders for the selected languages | Not live translation; “not clinically validated” |
+| Sessions, consent, reset | Signed pairing token, server-checked consent, per-session isolation, clean reset | Not production authentication, anonymity, or compliance |
+| Voice agents, follow-up | **Not implemented** (optional in the spec) | — |
+
+Everything about the patient, plan, prices, stock, pharmacies, therapies, and resources is fictional fixture data.
+
+## Limitations
+
+- **Not a connected service.** No booking, EHR, insurance, pharmacy, prescribing, email, or SMS. No real patient data may be entered.
+- **Not validated.** The checklist, routing, brief, and instructions have had no clinical review. Emergency wording is prototype copy.
+- **Not secure in a production sense.** The join link is a bearer token in a URL; there are no accounts, rate limits, or data-governance controls.
+- **Generation depends on Gemini.** When it is slow or unavailable the demo continues with labelled fallbacks (deterministic brief, manual entry). Cached generations are not labelled as cached.
+- **One scenario.** One profile, one plan, one therapy category. Anything else returns “outside this demo scenario” or “No demo option found”.
+- **Student language preference is display-only**; the clinician chooses packet languages, defaulting to the profile.
+- **Optional scope not built:** clinician voice, student voice, simulated follow-up.
+
 ## Local development
 
 Use Node.js 24 and pnpm 10.3.0 (the version pinned in `package.json`).
@@ -31,7 +80,7 @@ Required settings:
 
 ## Deployment and health check
 
-`main` deploys automatically to Vercel at <https://vthacks-14.vercel.app>. `vercel.json` pins the Next.js framework preset and runs functions in `iad1`, next to the DynamoDB table in `us-east-1`. Use one Vercel project and one set of accounts for judging; do not migrate configuration late (sickway.md §4.1).
+The repository is connected to a Vercel project owned by one teammate. **Known issue (September 19):** Vercel reports “Deployment was blocked” for every commit not authored by the project owner, which is how the Hobby plan treats private repositories, and <https://vthacks-14.vercel.app> currently returns Vercel's `NOT_FOUND`. Until that is resolved, the project owner must redeploy `main` from the Vercel dashboard (or push a commit themselves), and the team needs the project's real production domain for the two-device demo. Preview URLs sit behind Vercel login and cannot be used on a judge's device. `vercel.json` pins the Next.js framework preset and runs functions in `iad1`, next to the DynamoDB table in `us-east-1`. Use one Vercel project and one set of accounts for judging; do not migrate configuration late (sickway.md §4.1).
 
 Server settings must exist in the Vercel project for Production, Preview, and Development. With the Vercel CLI linked to the project, teammates can fetch them instead of passing keys around:
 
@@ -64,6 +113,10 @@ RUN_DDB_INTEGRATION=1 pnpm test src/lib/__tests__/db.integration.test.ts
 ```
 
 It writes, reads, updates, lists, and deletes one synthetic item in a throwaway session partition.
+
+### Acceptance run
+
+`pnpm acceptance [base-url]` (default `http://localhost:3000`) drives the seven acceptance checks from sickway.md §14 over HTTP as two separate clients that share only the join token: the two-device packet round trip; declined consent; an unknown checklist answer; a changed symptom; the resource gate; repeat attach and reset; and the labelled fallbacks. It uses the real services behind that URL and creates its own throwaway sessions. It complements the run on two physical devices; it does not replace it.
 
 ## Shared code
 
