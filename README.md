@@ -38,7 +38,7 @@ pnpm test
 pnpm build
 ```
 
-Vitest runs the banner smoke test and environment validation tests without loading real credentials. Use `pnpm exec vitest` for watch mode while developing.
+Vitest runs banner, environment, shared-schema, and fixture validation tests without loading real credentials. Use `pnpm exec vitest` for watch mode while developing.
 
 ## Shared code
 
@@ -46,7 +46,12 @@ Vitest runs the banner smoke test and environment validation tests without loadi
 - `src/components/ui/`: shadcn/ui components for Tailwind v4, configured in `components.json`.
 - `src/components/synthetic-banner.tsx`: the non-dismissible synthetic-data notice.
 - `src/lib/env.ts`: validated server configuration.
+- `src/lib/fixtures.ts`: the single entry point for all eight JSON fixtures; exports typed `fixtures` and `parseFixtures` for shape and cross-file validation.
 
-Appendix A in the spec maps `app/`, `components/`, and `lib/` to this repository's `src/` directory. Future fixture JSON belongs in top-level `data/`.
+Appendix A in the spec maps `app/`, `components/`, and `lib/` to this repository's `src/` directory. Fixture JSON lives in top-level `data/`. Consumers should import `fixtures` from `@/lib/fixtures`, rather than importing individual JSON files. Keep cost, coverage, stock, and resource mock labels visible when displaying these values.
+
+The prepared Scene 1 case (`scene-1-v1`) uses a displayed fixture clock of September 19, 2026 at 10 AM EDT and an explicit onset of September 18 at 8 AM EDT (26 hours earlier). Its onset confirmation and six negative checklist answers are scripted follow-up responses, not facts inferred from the opening sentence. Medications and allergies remain unanswered (`null`). The preferred fictional pharmacy is only a setup preference; it does not represent a booking or transmission. This approved-case fixture must not prefill user consent, onset confirmation, or checklist responses. Prepared brief use requires an exact current-case match and explicit selection; audio is deferred to #17.
+
+EN and ES instructions are static demo workflow copy, not clinically validated treatment instructions or runtime translations. Spanish-speaker review and a teammate's fictional-name review remain required before sign-off. No real brand, insurer, pharmacy, or manufacturer names are intentionally used.
 
 For additional shadcn components, run `pnpm exec shadcn add <component>` from the repository root. `.npmrc` allows dependency additions at the root of this single-package pnpm workspace.

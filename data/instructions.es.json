@@ -1,0 +1,24 @@
+{
+  "language": "es",
+  "mockLabel": "Texto de demostración — sin validación clínica",
+  "therapies": {
+    "therapy-generic-demo": {
+      "title": "Instrucciones del paquete de demostración",
+      "steps": [
+        "Revise la opción ficticia, la farmacia ficticia y el precio simulado de este paquete.",
+        "Este paquete no prescribe tratamientos ni proporciona instrucciones de dosificación.",
+        "No se ha reservado ninguna cita, emitido ninguna receta ni enviado información a una farmacia."
+      ],
+      "disclaimer": "Flujo de trabajo de un prototipo. No es asesoramiento médico. No introduzca información de salud real."
+    },
+    "therapy-brand-demo": {
+      "title": "Instrucciones del paquete de demostración",
+      "steps": [
+        "Revise la opción ficticia, la farmacia ficticia y el precio simulado de este paquete.",
+        "Este paquete no prescribe tratamientos ni proporciona instrucciones de dosificación.",
+        "No se ha reservado ninguna cita, emitido ninguna receta ni enviado información a una farmacia."
+      ],
+      "disclaimer": "Flujo de trabajo de un prototipo. No es asesoramiento médico. No introduzca información de salud real."
+    }
+  }
+}

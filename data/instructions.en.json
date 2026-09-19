@@ -1,0 +1,24 @@
+{
+  "language": "en",
+  "mockLabel": "Demo text — not clinically validated",
+  "therapies": {
+    "therapy-generic-demo": {
+      "title": "Demo packet instructions",
+      "steps": [
+        "Review the fictional option, pharmacy, and mock price in this demo packet.",
+        "This packet does not prescribe treatment or provide dosing instructions.",
+        "Nothing has been booked, prescribed, or sent to a pharmacy."
+      ],
+      "disclaimer": "Prototype workflow. Not medical advice. Do not enter real health information."
+    },
+    "therapy-brand-demo": {
+      "title": "Demo packet instructions",
+      "steps": [
+        "Review the fictional option, pharmacy, and mock price in this demo packet.",
+        "This packet does not prescribe treatment or provide dosing instructions.",
+        "Nothing has been booked, prescribed, or sent to a pharmacy."
+      ],
+      "disclaimer": "Prototype workflow. Not medical advice. Do not enter real health information."
+    }
+  }
+}
