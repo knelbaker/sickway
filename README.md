@@ -177,15 +177,25 @@ Cache keys hash the whitespace-normalized system and user prompts, configured mo
 
 ### Brief audio
 
-`public/demo-brief.mp3` is a prepared recording of the exact `spokenScript` in `data/demo-brief.json` (52 words, 21.9 s). “Play brief” on `/hcp` uses it only when the brief on screen would say the same words (`matchesPreparedScript` compares normalised script text, never encounter IDs). Any other brief is read by the browser's Speech Synthesis API, and if that is missing the screen says “Audio unavailable — read the brief below”. The mode is always labelled — “Prepared recording” or “Browser speech” — so a prepared clip is never mistaken for live voice, playback is always manual, and the SBAR text stays visible.
+`public/demo-brief.mp3` is a prepared recording of the exact `spokenScript` in `data/demo-brief.json` (52 words, 23.9 s). “Play brief” on `/hcp` uses it only when the brief on screen would say the same words (`matchesPreparedScript` compares normalised script text, never encounter IDs). Any other brief is read by the browser's Speech Synthesis API, and if that is missing the screen says “Audio unavailable — read the brief below”. The mode is always labelled — “Prepared recording” or “Browser speech” — so a prepared clip is never mistaken for live voice, playback is always manual, and the SBAR text stays visible.
 
-The current file was rendered with the macOS system voice because the project's ElevenLabs key was rejected as invalid. If `spokenScript` changes, or to use a better voice, regenerate the file from the same text and keep the filename:
+The current file was generated once with ElevenLabs text-to-speech (voice “Sarah”, model `eleven_multilingual_v2`, `mp3_44100_128`) from that exact text. It is a static asset: the app never calls ElevenLabs at runtime, so judging does not depend on the key or on credits. If `spokenScript` changes, regenerate the file from the new text and keep the filename, otherwise the recording will no longer match and the player will correctly fall back to browser speech:
 
 ```bash
-node -e 'process.stdout.write(require("./data/demo-brief.json").sbar.spokenScript)' > /tmp/brief.txt
-say -v Samantha -r 175 -f /tmp/brief.txt -o /tmp/brief.aiff
-ffmpeg -y -i /tmp/brief.aiff -codec:a libmp3lame -b:a 96k -ac 1 public/demo-brief.mp3
+node -e '
+process.loadEnvFile(".env.local");
+const fs = require("fs");
+const text = require("./data/demo-brief.json").sbar.spokenScript;
+const voiceId = process.argv[1]; // from GET https://api.elevenlabs.io/v1/voices
+fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
+  method: "POST",
+  headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY, "content-type": "application/json" },
+  body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
+}).then(async (r) => fs.writeFileSync("public/demo-brief.mp3", Buffer.from(await r.arrayBuffer())));
+' <voice-id>
 ```
+
+Without a key, the macOS system voice works too: `say -v Samantha -r 175 -f brief.txt -o brief.aiff && ffmpeg -y -i brief.aiff -codec:a libmp3lame -b:a 96k -ac 1 public/demo-brief.mp3`.
 
 `GET /api/packet/:id` (session-guarded, `no-store`) returns the stored packet in the §9 contract shape plus a `display` object resolved on the server from the fixtures: names, mock labels, the prewritten instruction copy for the selected languages only, and only the resources attached to that packet. The price is the one stored at attach time. A packet from another session, or an unknown ID, is a 404. `/packet/<id>` renders it with a synthetic or mock label beside every value and the status “Available in demo”; the student screen polls its shared encounter and shows an “Open demo packet” link once the status is `packet_available`.
 
