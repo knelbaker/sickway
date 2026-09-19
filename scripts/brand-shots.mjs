@@ -39,9 +39,17 @@ async function shoot({ out, width, height, scale, mobile, path, prepare }) {
   await context.addInitScript((t) => window.localStorage.setItem("sickday.demoSessionToken", t), token);
   const page = await context.newPage();
   await page.goto(base + path, { waitUntil: "domcontentloaded" });
-  // Desktop Chrome has no safe-area inset. A real iPhone does, and the banner pads itself by it,
-  // so the phone shots reserve the same space: the frame's black notch then sits on the black banner.
-  if (mobile) await page.addStyleTag({ content: ".sticky > div:first-child > div { padding-top: 54px !important; }" });
+  // Phone previews: desktop Chrome has no safe-area inset, so reserve the status-bar space a real
+  // iPhone gives, for the frame's Dynamic Island. The banner's text is hidden in these previews only:
+  // they are small pictures on a landing page that carries the banner itself, and the sentence is
+  // unreadable at that size. The app on a real phone still shows it on every screen.
+  // The frame behind the nav pill fades from cream, so no half-cut line of text shows above the pill.
+  if (mobile) {
+    await page.addStyleTag({
+      content:
+        ".sticky > div:first-child > div { padding-top: 54px !important; padding-bottom: 0 !important; } .sticky > div:first-child > div > * { display: none !important; } .sticky { background: linear-gradient(#fdf9e8 0 62%, rgba(253,249,232,0)) !important; }",
+    });
+  }
   await prepare(page);
   await page.waitForTimeout(600);
   // The Next.js dev indicator is not part of the product.
