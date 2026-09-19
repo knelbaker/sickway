@@ -85,7 +85,8 @@ await shoot({
   out: "shot-packet.png", width: 390, height: 844, scale: 2, mobile: true, path: `/packet/${attached.packetId}`,
   prepare: async (page) => {
     await page.getByText("Available in demo").waitFor();
-    await page.getByText("Available in demo").evaluate((el) => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 330));
+    // Frame the ticket itself: its scalloped top just under the nav pill, then the stub and the tear line.
+    await page.locator("article.ticket").evaluate((el) => window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 150));
   },
 });
 
