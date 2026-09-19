@@ -62,7 +62,9 @@ test("explains the empty queue, then shows a new submission on the next poll wit
 
   expect(screen.getByRole("button", { name: /Alex Demo/ })).toBeDefined();
   expect(screen.getByText("fever, body aches")).toBeDefined();
-  expect(screen.getByText("1 shared")).toBeDefined();
+  // The count is an animated counter: its digits are decorative, its sr-only label is the value.
+  const shared = screen.getByText(/^\s*shared$/);
+  expect(within(shared).getByText("1", { selector: ".sr-only" })).toBeDefined();
 });
 
 test("shows the four SBAR sections as text with a source badge that matches the stored brief", async () => {

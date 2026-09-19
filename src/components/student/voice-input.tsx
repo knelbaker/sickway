@@ -2,8 +2,8 @@
 
 import { CommitStrategy, useScribe } from "@elevenlabs/react";
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import MatrixOrb from "@/components/ui/matrix-orb";
 import { useLanguage } from "@/lib/client/language-store";
 import { apiFetch } from "@/lib/client/session-store";
 
@@ -76,9 +76,13 @@ export function VoiceInput({ onTranscript, disabled }: { onTranscript: (text: st
             {starting ? d.starting : d.start}
           </Button>
         )}
-        <Badge variant="outline" role="status">
-          {scribe.isConnected ? d.listening : d.off}
-        </Badge>
+        <MatrixOrb
+          state={scribe.isConnected ? "listening" : starting ? "thinking" : "idle"}
+          labels={{ idle: d.off, listening: d.listening, thinking: d.starting }}
+          size={40}
+          color="#c8121b"
+          className="flex-row gap-2"
+        />
       </div>
       {scribe.isConnected && (
         <p aria-live="polite" className="min-h-5 text-sm text-muted-foreground">

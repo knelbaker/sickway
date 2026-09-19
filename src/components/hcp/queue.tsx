@@ -5,6 +5,7 @@ import { STATUS_LABEL, STATUS_VARIANT } from "@/components/hcp/labels";
 import { PollStatus } from "@/components/poll-status";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 import type { EncounterQueueItem } from "@/lib/api-contracts";
 import type { PollState } from "@/lib/client/use-polling";
 
@@ -31,7 +32,11 @@ export function Queue({
         <h2 id="queue-heading" className="text-base font-semibold">
           Demo queue
         </h2>
-        {items && <span className="text-xs text-muted-foreground">{items.length} shared</span>}
+        {items && (
+          <span className="text-xs text-muted-foreground">
+            <AnimatedCounter value={items.length} /> shared
+          </span>
+        )}
       </div>
 
       {queue.error === "session" && (

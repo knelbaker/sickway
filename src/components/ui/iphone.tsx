@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import type { HTMLAttributes } from "react"
 
+import { GridReveal } from "@/components/ui/grid-reveal"
+
 const PHONE_WIDTH = 433
 const PHONE_HEIGHT = 882
 const SCREEN_X = 21.25
@@ -20,11 +22,14 @@ const RADIUS_V = (SCREEN_RADIUS / SCREEN_HEIGHT) * 100
 export interface IphoneProps extends HTMLAttributes<HTMLDivElement> {
   src?: string
   videoSrc?: string
+  /** Assemble the screenshot with a grid reveal instead of showing it at once. */
+  reveal?: boolean
 }
 
 export function Iphone({
   src,
   videoSrc,
+  reveal = false,
   className,
   style,
   ...props
@@ -75,11 +80,11 @@ export function Iphone({
             borderRadius: `${RADIUS_H}% / ${RADIUS_V}%`,
           }}
         >
-          <img
-            src={src}
-            alt=""
-            className="block size-full object-cover object-top"
-          />
+          {reveal ? (
+            <GridReveal src={src} aspect={390 / 844} className="size-full rounded-none bg-transparent" />
+          ) : (
+            <img src={src} alt="" className="block size-full object-cover object-top" />
+          )}
         </div>
       )}
 

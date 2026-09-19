@@ -30,6 +30,14 @@ The look comes from the logo (`public/brand/sickway-logo.png`, redrawn as SVG in
 - **One red line.** The logo's stroke is the progress thread in the student stepper and slides between steps in the landing page's scroll story. The clinician brief uses large S / B / A / R letters; the packet is a perforated paper ticket.
 - **Motion** is decoration, never information: reveals on the landing page only, `MotionConfig reducedMotion="user"`, and a global `prefers-reduced-motion` rule.
 - **MagicUI** components (vendored in `src/components/ui/`): `blur-fade`, `border-beam`, `dot-pattern`, `iphone`, `safari`. The device frames show **real screenshots of this app**: run `pnpm shots:brand` (with `pnpm dev` running) to regenerate `public/brand/shot-*.png` after a UI change. No testimonials, ratings, or usage numbers are shown, because there are none.
+- **RareUI** components (MIT, vendored in `src/components/ui/`, added with `pnpm dlx shadcn@latest add swamimalode07/rare-ui/<name>`), each doing one job:
+  - `fluid-orb`: the red light rising behind the hero devices. Decorative, `aria-hidden`, still under reduced motion.
+  - `animated-counter`: the three facts under the hero (true product facts, never usage numbers) and the live count in the clinician queue. Its digits are decorative; an `sr-only` label carries the value.
+  - `step-player` and `grid-reveal`: the "Follow one sick day" stage. Play walks the page through the three steps, and each real screenshot assembles from a grid as its step arrives. Scroll position stays the single source of truth for the active step.
+  - `hook-sidebar`: the "on this page" rail, shown from 1440px where there is a margin for it. It follows the scroll position.
+  - `task-list` and `folder-component`: the closing section, a four-move guide to trying the demo (ticks stay in memory on that screen and are sent nowhere) beside the packet as a folder.
+  - `matrix-orb`: the state of the optional voice features (off, connecting, listening, speaking) for the clinician agent and student dictation. Its label is the `role="status"` text.
+  - Local changes to the vendored files: brand colours and translatable labels on the step player; a red theme, card titles, and keyboard access (`role="button"`, Enter/Space, focus ring) on the folder; 44px rows and AA contrast on the sidebar; and `useSafeReducedMotion` (`src/lib/client/`) in every component that changes its markup under reduced motion, which otherwise causes a hydration mismatch. `step-player` adds the `flubber` dependency, typed in `src/types/flubber.d.ts`.
 
 ## Architecture
 
