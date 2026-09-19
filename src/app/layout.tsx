@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Figtree, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
-import { NoticeEquivalent } from "@/components/notice-equivalent";
+import { Disclaimer } from "@/components/disclaimer";
 import { SessionSupersededNotice } from "@/components/session/reset-controls";
 import { SiteHeader } from "@/components/site-header";
 import { SyntheticBanner } from "@/components/synthetic-banner";
@@ -55,12 +55,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <SiteHeader />
         </div>
         <div className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-32 sm:px-6 lg:pb-16">
-          <p className="mb-6 text-xs leading-5 text-muted-foreground">
-            <span lang="en">Prototype workflow. Not medical advice. Do not enter real health information.</span>
-            <NoticeEquivalent notice="disclaimer" className="block" />
-          </p>
           <SessionSupersededNotice />
           <main>{children}</main>
+          {/* Required on every screen. It sits under the content so each page opens on its own heading. */}
+          <Disclaimer className="mt-12 border-t border-ink/10 pt-5 text-xs text-muted-foreground" />
         </div>
       </body>
     </html>
