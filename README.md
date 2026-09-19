@@ -41,7 +41,7 @@ One synthetic scenario, end to end, on two paired devices: **intake → clinicia
 | Sessions, consent, reset | Signed pairing token, server-checked consent, per-session isolation, clean reset | Not production authentication, anonymity, or compliance |
 | Simulated follow-up (optional) | A two-tap made-up self-report updates an outcome chip on both screens | “Simulated self-report”; not evidence of fulfilment or a health outcome |
 | Clinician voice (optional, off by default) | A live ElevenLabs agent operates the same options, resources, and confirm-dialog controls | “Live voice agent … cannot confirm or attach anything”; the resource gate judges the clinician's own words |
-| Student voice (optional) | **Not implemented** | — |
+| Student dictation (optional, off by default) | Live speech-to-text fills the editable description box; the same extract → review → consent flow follows | “Listening — live speech to text”; cannot consent or submit |
 
 Everything about the patient, plan, prices, stock, pharmacies, therapies, and resources is fictional fixture data.
 
@@ -53,7 +53,7 @@ Everything about the patient, plan, prices, stock, pharmacies, therapies, and re
 - **Generation depends on Gemini.** When it is slow or unavailable the demo continues with labelled fallbacks (deterministic brief, manual entry). Cached generations are not labelled as cached.
 - **One scenario.** One profile, one plan, one therapy category. Anything else returns “outside this demo scenario” or “No demo option found”.
 - **Student language preference is display-only**; the clinician chooses packet languages, defaulting to the profile.
-- **Optional scope not built:** student voice. Clinician voice exists but is off unless `VOICE_MODE=live`, and has not been rehearsed in a noisy room.
+- **Optional voice is unrehearsed.** Clinician voice and student dictation exist but are off unless `VOICE_MODE=live`, and nobody has yet used them with a real microphone or in a noisy room.
 
 ## Local development
 
@@ -211,7 +211,9 @@ Off by default (`VOICE_MODE=baseline`): no microphone control renders and nothin
 - **The key stays on the server.** The agent is private. `POST /api/voice/conversation-token` (session-guarded, 404 unless live) mints a short-lived WebRTC token, so an agent ID alone cannot start a conversation or spend credits.
 - **Failure is quiet.** A denied microphone, an unavailable token, an error, or a dropped connection shows “Voice is off … The typed controls below do everything voice does.” The session ends when the encounter view closes.
 
-Identify the actual voice mode used when presenting (sickway.md §16): this is a live agent; the brief's “Prepared recording” is not.
+**Student dictation.** With `VOICE_MODE=live`, `/s` also shows **Dictate instead** under the description box. It is ElevenLabs realtime speech-to-text (`scribe_v2_realtime`) and nothing more: there is no agent on the student side. What it hears is appended to the same editable text box, so the student reads and corrects it before pressing Continue, and the text then goes through the same `POST /api/extract` and is stored as `intake.transcript`. Dictation cannot answer follow-ups, confirm the onset, give consent, or submit; those exist only as on-screen controls. `POST /api/voice/scribe-token` (session-guarded, 404 unless live) mints the single-use token. A denied microphone, an unavailable token, or a recognition error shows a notice and leaves typing untouched; the microphone closes when the step goes away. `NEXT_PUBLIC_INTAKE_AGENT_ID` is unused.
+
+Identify the actual voice mode used when presenting (sickway.md §16): the clinician side is a live agent and the student side is live speech-to-text; the brief's “Prepared recording” is neither.
 
 ### Fallbacks and failure rehearsal
 

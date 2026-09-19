@@ -1,6 +1,7 @@
 import { SessionGate } from "@/components/session/session-gate";
 import { StudentFlow } from "@/components/student/student-flow";
 import { fixtures } from "@/lib/fixtures";
+import { voiceAvailability } from "@/lib/voice-server";
 
 export default function StudentPage() {
   const { profile, plans } = fixtures;
@@ -10,6 +11,7 @@ export default function StudentPage() {
   return (
     <SessionGate title="Student intake">
       <StudentFlow
+        voiceEnabled={voiceAvailability().studentDictation}
         preparedIntake={profile.intake}
         profile={{
           name: profile.name,
