@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BRIEF_AUDIO_LABEL, briefAudioMode, PREPARED_BRIEF_AUDIO_SRC } from "@/lib/voice";
+import { useLanguage } from "@/lib/client/language-store";
+import { briefAudioMode, PREPARED_BRIEF_AUDIO_SRC } from "@/lib/voice";
 
 const noSubscription = () => () => {};
 
@@ -13,6 +14,7 @@ const noSubscription = () => () => {};
  * voice (§10), and the brief's text stays visible whatever happens here.
  */
 export function BriefAudio({ script, preparedScript }: { script: string; preparedScript: string }) {
+  const b = useLanguage().t.clinician.brief;
   const speechSynthesisSupported = useSyncExternalStore(
     noSubscription,
     () => "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
@@ -67,15 +69,15 @@ export function BriefAudio({ script, preparedScript }: { script: string; prepare
     <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md bg-muted/50 p-3">
       {mode !== "unavailable" && (
         <Button type="button" className="h-11 min-w-28" onClick={playing ? stop : play}>
-          {playing ? "Stop" : "Play brief"}
+          {playing ? b.stop : b.play}
         </Button>
       )}
       <Badge variant="outline" role="status">
-        {BRIEF_AUDIO_LABEL[mode]}
+        {b.audio[mode]}
       </Badge>
       {mode === "prepared_recording" && (
         <>
-          <span className="text-xs text-muted-foreground">Recorded in advance for this exact seeded case. Not live voice.</span>
+          <span className="text-xs text-muted-foreground">{b.preparedNote}</span>
           <audio
             ref={audioRef}
             src={PREPARED_BRIEF_AUDIO_SRC}
@@ -89,7 +91,7 @@ export function BriefAudio({ script, preparedScript }: { script: string; prepare
         </>
       )}
       {mode === "browser_speech" && (
-        <span className="text-xs text-muted-foreground">Your browser reads the current brief aloud.</span>
+        <span className="text-xs text-muted-foreground">{b.browserNote}</span>
       )}
     </div>
   );

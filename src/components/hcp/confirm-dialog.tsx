@@ -12,8 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatMockDollars } from "@/lib/format";
 import type { ManufacturerResource, OptionRow } from "@/lib/schemas";
-
-const LANGUAGE_NAMES: Record<string, string> = { en: "English", es: "Spanish" };
+import { useLanguage } from "@/lib/client/language-store";
 
 /** The clinician reviews exactly what will be stored before anything is attached (§5, §7.5). */
 export function ConfirmDialog({
@@ -33,49 +32,51 @@ export function ConfirmDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const { t } = useLanguage();
+  const c = t.clinician.confirm;
+  const o = t.clinician.options;
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !pending && onCancel()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Review packet before attaching</DialogTitle>
+          <DialogTitle>{c.title}</DialogTitle>
           <DialogDescription>
-            You chose these demo options. Confirming makes a packet available to the student in this
-            demo session only.
+            {c.body}
           </DialogDescription>
         </DialogHeader>
 
         <dl className="flex flex-col gap-2 text-sm">
           <div className="flex flex-wrap justify-between gap-2">
-            <dt className="text-muted-foreground">Demo therapy</dt>
-            <dd className="font-medium">{row.therapyName}</dd>
+            <dt className="text-muted-foreground">{o.therapy}</dt>
+            <dd lang="en" className="font-medium">{row.therapyName}</dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2">
-            <dt className="text-muted-foreground">Fictional pharmacy</dt>
-            <dd className="font-medium">{row.pharmacyName}</dd>
+            <dt className="text-muted-foreground">{c.pharmacy}</dt>
+            <dd lang="en" className="font-medium">{row.pharmacyName}</dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2">
-            <dt className="text-muted-foreground">Estimated cost</dt>
+            <dt className="text-muted-foreground">{o.cost}</dt>
             <dd className="flex flex-wrap items-center gap-1.5 font-medium">
-              {formatMockDollars(row.estimatedCost)} <Badge variant="secondary">Mock cost</Badge>
+              {formatMockDollars(row.estimatedCost)} <Badge variant="secondary">{o.mockCost}</Badge>
             </dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2">
-            <dt className="text-muted-foreground">Coverage</dt>
+            <dt className="text-muted-foreground">{o.coverage}</dt>
             <dd className="flex flex-wrap items-center gap-1.5">
-              {row.coverageStatus} <Badge variant="secondary">Mock coverage — not verified</Badge>
+              <span lang="en">{row.coverageStatus}</span> <Badge variant="secondary">{o.mockCoverage}</Badge>
             </dd>
           </div>
           <div className="flex flex-wrap justify-between gap-2">
-            <dt className="text-muted-foreground">Instructions</dt>
+            <dt className="text-muted-foreground">{c.instructions}</dt>
             <dd className="font-medium">
-              {languages.map((code) => LANGUAGE_NAMES[code] ?? code).join(" and ")} — prewritten demo text
+              {languages.map((code) => t.clinician.sources.languageNames[code] ?? code).join(` ${t.common.and} `)} — {c.prewritten}
             </dd>
           </div>
           <div className="flex flex-col gap-1">
-            <dt className="text-muted-foreground">Manufacturer resources included</dt>
+            <dt className="text-muted-foreground">{c.included}</dt>
             <dd>
               {resources.length === 0 ? (
-                "None"
+                c.none
               ) : (
                 <ul className="flex flex-col gap-1">
                   {resources.map((resource) => (
@@ -90,16 +91,15 @@ export function ConfirmDialog({
         </dl>
 
         <p className="rounded-md bg-muted p-3 text-sm leading-6">
-          Nothing is transmitted to a pharmacy, clinic, insurer, or manufacturer. No prescription is
-          written and no appointment is made.
+          {c.nothingSent}
         </p>
 
         <DialogFooter>
           <Button type="button" variant="outline" className="h-11" disabled={pending} onClick={onCancel}>
-            Cancel
+            {c.cancel}
           </Button>
           <Button type="button" variant="brand" className="h-11" disabled={pending} onClick={onConfirm}>
-            {pending ? "Attaching…" : "Confirm and attach"}
+            {pending ? c.attaching : c.confirm}
           </Button>
         </DialogFooter>
       </DialogContent>

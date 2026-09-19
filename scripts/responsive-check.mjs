@@ -25,12 +25,12 @@ const flagValues = new Set(["--shots", "--lang"].map((flag) => args.indexOf(flag
 const base = (args.find((arg, index) => !arg.startsWith("--") && !flagValues.has(index)) ?? "http://localhost:3000").replace(/\/$/, "");
 if (shotsDir) mkdirSync(shotsDir, { recursive: true });
 
-// Spanish copy is longer than English, so the student-facing states are audited in it too (issue #61).
+// Spanish copy is longer than English, so every state, student and clinician, is audited in it too (issue #61).
 const langIndex = args.indexOf("--lang");
 const lang = langIndex >= 0 && args[langIndex + 1] === "es" ? "es" : "en";
 const TEXT = {
-  en: { start: "Start demo session", joinLabel: "Join link for the second device", joined: "Joined demo session", describe: "What is going on today?", go: "Continue", manual: "Enter details myself", checklist: "1. Are any of these happening?", prepared: "Use prepared demo instead", consent: "Share with the demo clinic?", openPacket: "Open demo packet", available: "Available in demo", unavailable: "Packet unavailable", reset: "Reset demo" },
-  es: { start: "Iniciar sesión de demostración", joinLabel: "Enlace para unir el segundo dispositivo", joined: "Se unió a la sesión de demostración", describe: "¿Qué le pasa hoy?", go: "Continuar", manual: "Escribir los datos yo mismo/a", checklist: "1. ¿Le está pasando algo de esto?", prepared: "Usar la demostración preparada", consent: "¿Compartir con la clínica de demostración?", openPacket: "Abrir el paquete de demostración", available: "Disponible en la demostración", unavailable: "Paquete no disponible", reset: "Reiniciar demostración" },
+  en: { start: "Start demo session", joinLabel: "Join link for the second device", joined: "Joined demo session", describe: "What is going on today?", go: "Continue", manual: "Enter details myself", checklist: "1. Are any of these happening?", prepared: "Use prepared demo instead", consent: "Share with the demo clinic?", openPacket: "Open demo packet", available: "Available in demo", unavailable: "Packet unavailable", reset: "Reset demo", queue: "Demo queue", ready: "Ready", quick: "Show antiviral demo options", mockCost: "Mock cost", showFor: /Show manufacturer resources for/, unlockedFor: "Unlocked for", selectRow: /Select Fictional Generic Antiviral Demo at Fictional Demo Pharmacy A/, review: "Review and confirm" },
+  es: { start: "Iniciar sesión de demostración", joinLabel: "Enlace para unir el segundo dispositivo", joined: "Se unió a la sesión de demostración", describe: "¿Qué le pasa hoy?", go: "Continuar", manual: "Escribir los datos yo mismo/a", checklist: "1. ¿Le está pasando algo de esto?", prepared: "Usar la demostración preparada", consent: "¿Compartir con la clínica de demostración?", openPacket: "Abrir el paquete de demostración", available: "Disponible en la demostración", unavailable: "Paquete no disponible", reset: "Reiniciar demostración", queue: "Cola de demostración", ready: "Lista", quick: "Mostrar las opciones antivirales de demostración", mockCost: "Costo simulado", showFor: /Mostrar los recursos del fabricante de/, unlockedFor: "Desbloqueados solo para", selectRow: /Elegir Fictional Generic Antiviral Demo en Fictional Demo Pharmacy A/, review: "Revisar y confirmar" },
 }[lang];
 
 // 640 stands in for a 1280px desktop window at 200% zoom.
@@ -101,17 +101,17 @@ const STATES = [
   },
   { name: "packet", path: `/packet/${attached.packetId}`, ready: `text=${TEXT.available}` },
   { name: "packet-unavailable", path: "/packet/not-a-real-packet", ready: `text=${TEXT.unavailable}` },
-  { name: "clinician-queue", path: "/hcp", ready: "text=Demo queue" },
+  { name: "clinician-queue", path: "/hcp", ready: `text=${TEXT.queue}` },
   {
     name: "clinician-encounter-options",
     path: "/hcp",
-    ready: "text=Unlocked for",
+    ready: `text=${TEXT.unlockedFor}`,
     act: async (page) => {
-      await page.locator("ul >> role=button").filter({ hasText: "Ready" }).first().click();
-      await page.getByRole("button", { name: "Show antiviral demo options" }).click();
-      await page.getByText("Mock cost").first().waitFor();
-      await page.getByRole("button", { name: /Show manufacturer resources for/ }).first().click();
-      await page.getByText("Unlocked for").waitFor();
+      await page.locator("ul >> role=button").filter({ hasText: TEXT.ready }).first().click();
+      await page.getByRole("button", { name: TEXT.quick }).click();
+      await page.getByText(TEXT.mockCost).first().waitFor();
+      await page.getByRole("button", { name: TEXT.showFor }).first().click();
+      await page.getByText(TEXT.unlockedFor).waitFor();
     },
   },
   {
@@ -119,10 +119,10 @@ const STATES = [
     path: "/hcp",
     ready: "role=dialog",
     act: async (page) => {
-      await page.locator("ul >> role=button").filter({ hasText: "Ready" }).first().click();
-      await page.getByRole("button", { name: "Show antiviral demo options" }).click();
-      await page.getByRole("radio", { name: /Select Fictional Generic Antiviral Demo at Fictional Demo Pharmacy A/ }).check();
-      await page.getByRole("button", { name: "Review and confirm" }).click();
+      await page.locator("ul >> role=button").filter({ hasText: TEXT.ready }).first().click();
+      await page.getByRole("button", { name: TEXT.quick }).click();
+      await page.getByRole("radio", { name: TEXT.selectRow }).check();
+      await page.getByRole("button", { name: TEXT.review }).click();
     },
   },
   {
