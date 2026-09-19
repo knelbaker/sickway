@@ -7,8 +7,16 @@ import type { OptionRow } from "@/lib/schemas";
  * can unlock manufacturer resources; rows only say whether resources exist.
  */
 
+/**
+ * Letters and digits only, so typed punctuation and speech-to-text spacing
+ * ("anti-viral", "anti viral") match the same fixture words and names.
+ */
+export function squash(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 /** Words that select the one supported demo category. */
-const CATEGORY_WORDS = ["antiviral", "anti-viral", "flu"];
+const CATEGORY_WORDS = ["antiviral"];
 
 export type OptionsMatch = { found: true; rows: OptionRow[] } | { found: false };
 
@@ -53,8 +61,8 @@ export function buildOptionRows(): OptionRow[] {
 
 /** The fixture therapy a text names, if it names exactly one. Shared with the resource gate. */
 export function namedTherapyIds(text: string): string[] {
-  const lower = text.toLowerCase();
-  return fixtures.therapies.filter((therapy) => lower.includes(therapy.name.toLowerCase())).map((therapy) => therapy.id);
+  const squashed = squash(text);
+  return fixtures.therapies.filter((therapy) => squashed.includes(squash(therapy.name))).map((therapy) => therapy.id);
 }
 
 /**
@@ -70,6 +78,6 @@ export function matchOptions(query: string): OptionsMatch {
   if (named.length > 0) {
     return { found: true, rows: rows.filter((row) => named.includes(row.therapyId)) };
   }
-  if (CATEGORY_WORDS.some((word) => lower.includes(word))) return { found: true, rows };
+  if (CATEGORY_WORDS.some((word) => squash(query).includes(word)) || /\bflu\b/.test(lower)) return { found: true, rows };
   return { found: false };
 }

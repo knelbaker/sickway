@@ -1,6 +1,7 @@
 import { ClinicianWorkspace } from "@/components/hcp/clinician-workspace";
 import { SessionGate } from "@/components/session/session-gate";
 import { fixtures } from "@/lib/fixtures";
+import { voiceAvailability } from "@/lib/voice-server";
 
 export default function ClinicianPage() {
   const { profile, plans, brief } = fixtures;
@@ -10,6 +11,7 @@ export default function ClinicianPage() {
   return (
     <SessionGate title="Clinician workspace">
       <ClinicianWorkspace
+        voiceEnabled={voiceAvailability().clinicianAgent}
         preparedSpokenScript={brief.sbar.spokenScript}
         profile={{
           name: profile.name,

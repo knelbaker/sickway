@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/hcp/confirm-dialog";
 import type { UnlockedResources } from "@/components/hcp/manufacturer-drawer";
-import { OptionsPanel } from "@/components/hcp/options-panel";
+import { OptionsPanel, type OptionsActions } from "@/components/hcp/options-panel";
+import { VoiceControl, type VoiceActions } from "@/components/hcp/voice-control";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { attachResponseSchema } from "@/lib/api-contracts";
 import { apiFetch } from "@/lib/client/session-store";
 import type { Encounter, InstructionLanguage, OptionRow } from "@/lib/schemas";
+import { describeOptions, describeResources, findOptionRow, PROPOSED_MESSAGE, USE_TYPED_CONTROLS } from "@/lib/voice-tools";
 
 const LANGUAGES: { code: InstructionLanguage; name: string }[] = [
   { code: "en", name: "English" },
@@ -38,10 +40,13 @@ export function VisitPanel({
   encounter,
   costCeiling,
   preferredLanguages,
+  voiceEnabled = false,
 }: {
   encounter: Encounter;
   costCeiling: number | null;
   preferredLanguages: string[];
+  /** True only when the server runs with VOICE_MODE=live and a configured agent. */
+  voiceEnabled?: boolean;
 }) {
   const [rows, setRows] = useState<OptionRow[]>([]);
   const [unlocked, setUnlocked] = useState<UnlockedResources>({});
@@ -61,6 +66,41 @@ export function VisitPanel({
   // Only resources the server unlocked, and only for the chosen therapy, are ever offered.
   const offered = selected ? (unlocked[selected.therapyId]?.resources ?? []) : [];
   const included = offered.filter((resource) => resourceIds.includes(resource.id));
+
+  // The optional voice layer drives these same controls. It can open the confirmation
+  // dialog but has no way to confirm: only the on-screen button calls confirm().
+  const optionsActions = useRef<OptionsActions | null>(null);
+  const latest = useRef({ rows, canAttach, done });
+  useEffect(() => {
+    latest.current = { rows, canAttach, done };
+  });
+  const voiceActions = useMemo<VoiceActions>(
+    () => ({
+      showOptions: async (query) =>
+        optionsActions.current ? describeOptions(await optionsActions.current.showOptions(query)) : USE_TYPED_CONTROLS,
+      requestResources: async (clinicianWords) =>
+        optionsActions.current
+          ? describeResources(await optionsActions.current.requestResources(clinicianWords))
+          : USE_TYPED_CONTROLS,
+      proposePacket: ({ therapyName, pharmacyName, languages: requested }) => {
+        const current = latest.current;
+        if (current.done) return "This encounter already has a packet. Nothing was changed.";
+        if (!current.canAttach) return "A packet cannot be attached to this encounter. Nothing was changed.";
+        if (current.rows.length === 0) return "The options are not on screen yet. Call show_options first.";
+        const row = findOptionRow(current.rows, therapyName, pharmacyName);
+        if (!row) {
+          return "That therapy and pharmacy pair is not in the options table. Ask the clinician which row they mean. Nothing was changed.";
+        }
+        setSelectedKey(rowKey(row));
+        setResourceIds([]);
+        setLanguages(requested === "en" ? ["en"] : requested === "es" ? ["es"] : ["en", "es"]);
+        setError(null);
+        setReviewing(true);
+        return PROPOSED_MESSAGE;
+      },
+    }),
+    [],
+  );
 
   async function confirm() {
     if (!selected || pending) return;
@@ -96,7 +136,11 @@ export function VisitPanel({
 
   return (
     <div className="flex flex-col gap-4">
+      {voiceEnabled && canAttach && !done && <VoiceControl actions={voiceActions} />}
       <OptionsPanel
+        onActions={(actions) => {
+          optionsActions.current = actions;
+        }}
         encounterId={encounter.id}
         costCeiling={costCeiling}
         unlockedTherapyIds={encounter.unlockedTherapyIds}

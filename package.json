@@ -12,12 +12,14 @@
     "lint": "eslint",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "acceptance": "node scripts/acceptance.mjs"
+    "acceptance": "node scripts/acceptance.mjs",
+    "voice:agent": "node scripts/voice-agent.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.76",
     "@aws-sdk/client-dynamodb": "^3.1136.0",
     "@aws-sdk/lib-dynamodb": "^3.1136.0",
+    "@elevenlabs/react": "^1.15.2",
     "ai": "^7.0.107",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
