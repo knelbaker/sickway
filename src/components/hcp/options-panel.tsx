@@ -79,11 +79,7 @@ export function OptionsPanel({
     }
     const therapyName = knownRows?.find((row) => row.therapyId === result.therapyId)?.therapyName ?? result.therapyId;
     setLockedReason(null);
-    setUnlocked((current) => {
-      const next = { ...current, [result.therapyId]: { therapyName, resources: result.resources } };
-      onUnlocked?.(next);
-      return next;
-    });
+    setUnlocked((current) => ({ ...current, [result.therapyId]: { therapyName, resources: result.resources } }));
     return { kind: "unlocked", therapyName, resources: result.resources };
   }
 
@@ -116,6 +112,16 @@ export function OptionsPanel({
       setPending(false);
     }
   }
+
+  // Tell the parent after the state has settled, never from inside a state updater
+  // (that runs during render and must not update another component).
+  const onUnlockedRef = useRef(onUnlocked);
+  useEffect(() => {
+    onUnlockedRef.current = onUnlocked;
+  });
+  useEffect(() => {
+    onUnlockedRef.current?.(unlocked);
+  }, [unlocked]);
 
   // Voice uses exactly these two calls. They always see the latest state through the ref.
   const actionsRef = useRef<OptionsActions | null>(null);

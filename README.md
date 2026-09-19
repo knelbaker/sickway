@@ -120,6 +120,12 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 
 `pnpm acceptance [base-url]` (default `http://localhost:3000`) drives the seven acceptance checks from sickway.md §14 over HTTP as two separate clients that share only the join token: the two-device packet round trip; declined consent; an unknown checklist answer; a changed symptom; the resource gate; repeat attach and reset; and the labelled fallbacks. It uses the real services behind that URL and creates its own throwaway sessions. It complements the run on two physical devices; it does not replace it.
 
+### Responsive audit
+
+`pnpm check:responsive [base-url] [--shots <dir>]` (needs `pnpm dev` running and Google Chrome installed) drives headless Chrome through 13 screen states — home, join, every student step, the returned packet, the clinician queue, options with unlocked resources, the confirmation and reset dialogs — at 320, 375, 390, 640 (a 1280 px window at 200% zoom), 768, and 1280 CSS pixels. It fails on page-wide sideways scrolling, content cut off inside a box that hides its overflow, any control whose touch target (the control or the label that activates it) is under 44 × 44 px, or a missing synthetic-data banner or disclaimer. `--shots` saves full-page screenshots. It uses synthetic data and its own demo session, and it does not replace looking at a real phone.
+
+Layout rules it protects: grids use `minmax(0, 1fr)` columns so wide content can never widen a card; badges wrap instead of clipping; every `Button` and `Input` is at least 44 px tall; checkbox and radio rows use the whole label as the target; and below 768 px the clinician's options render as one card per option instead of a seven-column table (`useMediaQuery`, so only one set of controls exists), with the same mock labels beside every value.
+
 ## Shared code
 
 - `src/app/`: routes and the shared shell.
@@ -134,6 +140,7 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/lib/env.ts`: validated server configuration.
 - `src/lib/db.ts`: session-scoped DynamoDB helpers for the single demo table.
 - `src/lib/session.ts`: demo session tokens, session creation, and the `requireSession` route guard.
+- `src/lib/client/use-media-query.ts`: `matchMedia` as a hook, for the one place a phone needs a different structure (options cards vs table).
 - `src/lib/client/use-polling.ts`: two-second polling that pauses while the tab is hidden and keeps the last good data on errors.
 - `src/lib/client/session-store.ts`: browser token store and `apiFetch`, which attaches the token to API calls.
 - `src/lib/http.ts`: `json` / `errorJson` responses with `Cache-Control: no-store`.

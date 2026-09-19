@@ -39,8 +39,8 @@ export function PreparedDemoSummary({ intake }: { intake: ReviewedIntake }) {
         ].map(([label, value]) => (
           <div key={label} className="flex flex-wrap justify-between gap-x-3">
             <dt className="text-muted-foreground">{label}</dt>
-            <dd className="flex items-center gap-2 font-medium">
-              {value} <Badge variant="outline" className="font-normal">demo fixture</Badge>
+            <dd className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right font-medium">
+              {value} <Badge variant="outline" className="shrink-0 font-normal">demo fixture</Badge>
             </dd>
           </div>
         ))}

@@ -205,7 +205,7 @@ export function VisitPanel({
                     )
                   }
                 />
-                <Label htmlFor={`language-${language.code}`} className="font-normal">
+                <Label htmlFor={`language-${language.code}`} className="min-h-11 flex-1 items-center font-normal">
                   {language.name}
                   {preferredLanguages.includes(language.code) && (
                     <span className="text-xs text-muted-foreground"> — profile preference</span>
@@ -233,7 +233,7 @@ export function VisitPanel({
                       )
                     }
                   />
-                  <Label htmlFor={`resource-${resource.id}`} className="font-normal">
+                  <Label htmlFor={`resource-${resource.id}`} className="min-h-11 flex-1 items-center font-normal">
                     {resource.title}
                   </Label>
                 </div>

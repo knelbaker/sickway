@@ -110,7 +110,7 @@ export function ReviewForm({
             }
           />
         </FieldRow>
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <Checkbox
             id="confirm-onset"
             className="mt-0.5 size-5"
@@ -118,7 +118,7 @@ export function ReviewForm({
             disabled={draft.onsetIso === null}
             onCheckedChange={(checked) => dispatch({ type: "confirmOnset", confirmed: checked === true })}
           />
-          <Label htmlFor="confirm-onset" className="text-sm leading-6 font-normal">
+          <Label htmlFor="confirm-onset" className="min-h-11 flex-1 items-center text-sm leading-6 font-normal">
             {onsetText ? `I confirm it started around ${onsetText}.` : "Add a time above to confirm it."}
           </Label>
         </div>

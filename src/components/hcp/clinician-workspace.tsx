@@ -34,9 +34,9 @@ function SessionWorkspace({ profile, preparedSpokenScript, voiceEnabled = false 
           clinician and does not decide anything.
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+      <CardContent className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <Queue queue={queue} selectedId={openId} onSelect={setSelectedId} />
-        <div>
+        <div className="min-w-0">
           {openId ? (
             <EncounterView
               key={openId}

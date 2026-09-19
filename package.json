@@ -13,7 +13,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "acceptance": "node scripts/acceptance.mjs",
-    "voice:agent": "node scripts/voice-agent.mjs"
+    "voice:agent": "node scripts/voice-agent.mjs",
+    "check:responsive": "node scripts/responsive-check.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.76",
@@ -44,6 +45,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "jsdom": "^29.1.1",
+    "playwright-core": "^1.63.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.1"

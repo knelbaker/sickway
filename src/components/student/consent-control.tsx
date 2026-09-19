@@ -27,7 +27,7 @@ export function ConsentControl({
       <h2 id="consent-heading" className="text-base font-semibold">
         Share with the demo clinic?
       </h2>
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3">
         <Checkbox
           id="consent"
           className="mt-0.5 size-5"
@@ -35,7 +35,7 @@ export function ConsentControl({
           disabled={pending}
           onCheckedChange={(checked) => onConsentChange(checked === true)}
         />
-        <Label htmlFor="consent" className="text-sm leading-6 font-normal">
+        <Label htmlFor="consent" className="min-h-11 flex-1 items-center text-sm leading-6 font-normal">
           I agree to share this synthetic intake with the demo clinic in this demo session.
         </Label>
       </div>

@@ -32,10 +32,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <SyntheticBanner />
         <header className="border-b">
           <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-            <Link href="/" className="font-semibold tracking-tight">
+            <Link href="/" className="inline-flex min-h-11 items-center font-semibold tracking-tight">
               Sick Day + Doorway
             </Link>
-            <nav aria-label="Main navigation" className="flex gap-2">
+            <nav aria-label="Main navigation" className="flex flex-wrap gap-1 sm:gap-2">
               <Button variant="ghost" asChild>
                 <Link href="/s">Student</Link>
               </Button>
