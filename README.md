@@ -31,7 +31,7 @@ The look comes from the logo (`public/brand/sickway-logo.png`, redrawn as SVG in
 - **Motion** is decoration, never information: reveals on the landing page only, `MotionConfig reducedMotion="user"`, and a global `prefers-reduced-motion` rule.
 - **MagicUI** components (vendored in `src/components/ui/`): `blur-fade`, `border-beam`, `dot-pattern`, `iphone`, `safari`. The device frames show **real screenshots of this app**: run `pnpm shots:brand` (with `pnpm dev` running) to regenerate `public/brand/shot-*.png` after a UI change. No testimonials, ratings, or usage numbers are shown, because there are none.
 - **RareUI** components (MIT, vendored in `src/components/ui/`, added with `pnpm dlx shadcn@latest add swamimalode07/rare-ui/<name>`), each doing one job:
-  - `fluid-orb`: the red light rising behind the hero devices. Decorative, `aria-hidden`, still under reduced motion.
+  - `fluid-orb`: the closing beat at the end of the landing page, alone with room around it, above the repeated headline and a button back to the start. Decorative, `aria-hidden`, still under reduced motion. Nothing sits behind the hero devices.
   - `animated-counter`: the three facts under the hero (true product facts, never usage numbers) and the live count in the clinician queue. Its digits are decorative; an `sr-only` label carries the value.
   - `step-player` and `grid-reveal`: the "Follow one sick day" stage. Play walks the page through the three steps, and each real screenshot assembles from a grid as its step arrives. Scroll position stays the single source of truth for the active step.
   - `hook-sidebar`: the "on this page" rail, shown from 1440px where there is a margin for it. It follows the scroll position.

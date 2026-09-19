@@ -9,6 +9,7 @@ import { SessionPanel } from "@/components/session/session-panel";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { BorderBeam } from "@/components/ui/border-beam";
+import { Button } from "@/components/ui/button";
 import { DotPattern } from "@/components/ui/dot-pattern";
 import FluidOrb from "@/components/ui/fluid-orb";
 import FolderComponent from "@/components/ui/folder-component";
@@ -114,6 +115,7 @@ export function Landing() {
       </section>
 
       <TryIt />
+      <Closing />
 
       <footer className="flex flex-col gap-4 border-t border-ink/10 pt-8 text-sm text-ink-soft sm:flex-row sm:items-center sm:justify-between">
         <span lang="en" className="inline-flex items-center gap-3">
@@ -139,10 +141,7 @@ function Hero() {
         </BlurFade>
         <BlurFade delay={0.15}>
           <p className="max-w-[54ch] text-lg leading-8 sm:text-xl sm:leading-9">{copy.sub}</p>
-          <div className="mt-4 max-w-[54ch] border-l-[3px] border-dashed border-ink-soft pl-4 text-ink-soft">
-            <p className="leading-7">{copy.honest}</p>
-            <Disclaimer className="mt-1.5 text-sm leading-6" />
-          </div>
+          <Disclaimer className="mt-4 border-l-[3px] border-dashed border-ink-soft pl-4 text-sm leading-6 text-ink-soft" />
         </BlurFade>
         <BlurFade delay={0.25}>
           <div className="flex flex-col gap-3 pt-2">
@@ -152,16 +151,7 @@ function Hero() {
         </BlurFade>
       </div>
 
-      <BlurFade delay={0.3} className="relative isolate mx-auto w-full max-w-xl lg:max-w-none">
-        {/* The red line, as light: a slow orb rising behind the two devices. It scales with the
-            column and is turned over so its red half shows above the laptop, clear of the captions. */}
-        <FluidOrb
-          aria-hidden
-          size={340}
-          color="#ee121d"
-          style={{ width: "min(300px, 52%)", height: "auto", aspectRatio: "1" }}
-          className="pointer-events-none absolute -top-[22%] right-[13%] -z-10 rotate-180"
-        />
+      <BlurFade delay={0.3} className="mx-auto w-full max-w-xl lg:max-w-none">
         {/* Two rows shared by both figures, so the devices stand on one line and the captions on another. */}
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.27fr)] grid-rows-[auto_auto] items-end gap-x-4 gap-y-3 sm:gap-x-7">
           <figure className="row-span-2 grid grid-rows-subgrid">
@@ -210,12 +200,15 @@ function PageRail() {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting) setCurrent(SECTION_IDS.indexOf(entry.target.id as (typeof SECTION_IDS)[number]));
+          if (!entry.isIntersecting) continue;
+          // The closing beat has no rail item of its own; it belongs to the last one.
+          const index = SECTION_IDS.indexOf(entry.target.id as (typeof SECTION_IDS)[number]);
+          setCurrent(index === -1 ? SECTION_IDS.length - 1 : index);
         }
       },
       { rootMargin: "-45% 0px -45% 0px" },
     );
-    for (const id of SECTION_IDS) {
+    for (const id of [...SECTION_IDS, "closing"]) {
       const element = document.getElementById(id);
       if (element) observer.observe(element);
     }
@@ -274,6 +267,32 @@ function TryIt() {
           <p className="mt-3 max-w-[48ch] leading-7 text-ink-soft">{copy.folderBody}</p>
           <p className="mt-3 text-sm text-ink-soft">{copy.folderHint}</p>
         </div>
+      </BlurFade>
+    </section>
+  );
+}
+
+/** The last beat: the orb alone, with room around it, and one way back to the start. */
+function Closing() {
+  const { t } = useLanguage();
+
+  return (
+    <section id="closing" aria-labelledby="closing-title" className="flex flex-col items-center text-center">
+      <BlurFade inView>
+        <FluidOrb
+          aria-hidden
+          size={220}
+          color="#ee121d"
+          className="mx-auto shadow-[0_36px_70px_-18px_rgba(238,18,29,0.55)]"
+        />
+      </BlurFade>
+      <BlurFade inView delay={0.1}>
+        <h2 id="closing-title" className="display mt-10 max-w-[12ch] text-5xl sm:text-7xl">
+          {t.landing.headline}
+        </h2>
+        <Button variant="brand" className="mt-8 min-h-12 px-7 text-base" onClick={() => scrollToId("start")}>
+          {t.landing.closingCta}
+        </Button>
       </BlurFade>
     </section>
   );
