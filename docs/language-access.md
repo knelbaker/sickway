@@ -42,11 +42,11 @@ Use fictional details only. Start on the home screen.
 8. **Extraction failure.** Set `DEMO_SIMULATE_AI_FAILURE=1`, restart `pnpm dev`, and describe symptoms again. The screen explains, in the chosen language, that nothing was filled in, and offers “Enter details myself / Escribir los datos yo mismo/a”. Every field reads “not reported / no informado”.
 9. **Reset.** “Reset demo / Reiniciar demostración” starts a new session in English: the previous session's language is not reused.
 
-Status of this walkthrough: steps 2–6 and 8–9 are covered by automated tests (`src/components/language-access.test.tsx`, the intake route tests, `pnpm acceptance`); both languages pass `pnpm check:responsive` (add `--lang es`) at 320–1280 px. **Nobody has yet performed it by hand in either language.**
+Status of this walkthrough: steps 2–6 and 8–9 are covered by automated tests (`src/components/language-access.test.tsx`, the intake route tests, `pnpm acceptance`); both languages pass `pnpm check:responsive` (add `--lang es`) at 320–1280 px. A teammate has gone through the student flow in Spanish in the running app; the edge cases (declined consent, an unknown answer, a mid-intake language switch, extraction failure, reset) have automated coverage and belong in the #30 rehearsal to be repeated by hand.
 
 ## Spanish wording: review status and open questions
 
-The Spanish was written by an AI assistant, not by a professional translator, and has **not** been reviewed by a fluent speaker or a clinician. It must not be described as validated. Questions for a fluent reviewer:
+The Spanish was written by an AI assistant, not by a professional translator. **A Spanish-speaking member of the team read it in the running app on September 19, 2026 and requested no changes.** That is a teammate's read-through, not a professional or clinical translation review, so the copy must still not be described as validated. Questions that remain open for a future, more formal review:
 
 1. Register: the copy uses **usted**, matching `data/instructions.es.json`. Would **tú** suit students better?
 2. “Profesional clínico” for *clinician*; “admisión” for *intake*; “compromiso de hoy” for *deadline today*; “dato fijo de la demostración” for *demo fixture*; “resultado preparado” for *prepared fixture output*. Natural? Regional alternatives?
