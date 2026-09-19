@@ -318,7 +318,7 @@ Keep model configuration, timeouts, schema validation, and bounded retries in `l
 | Brief audio | Current brief is played or spoken | Prepared recording only for matching fixture |
 | Options and resources | Catalog join, sort, unlock, and audit execute | All coverage, prices, stock, and resources mocked |
 | Packet | Selection is stored and appears on paired student screen | No prescription or external delivery |
-| EN/ES copy | Prewritten demo text renders for the student journey and the packet; switching language preserves the draft, unknowns, and consent | Not live translation or clinically validated; Spanish wording not yet reviewed by a fluent speaker; clinician workspace is English only |
+| EN/ES copy | Prewritten demo text renders for the student journey and the packet; switching language preserves the draft, unknowns, and consent | Not live translation or clinically validated; Spanish wording read through by a teammate, not professionally reviewed; clinician workspace is English only |
 | Optional voice | Speech operates the same tools, if implemented | Do not claim live voice for prerecorded segments |
 | Optional follow-up | Synthetic self-report updates a chip | No verified fulfillment or health outcome |
 | Privacy/security | Synthetic-only input, consent gate, session checks | No anonymity, compliance, or production-security claim |
