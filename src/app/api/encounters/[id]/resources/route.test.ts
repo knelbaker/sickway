@@ -74,8 +74,19 @@ describe("decideUnlock", () => {
     });
   });
 
+  it.each([
+    `Show ${BRAND_NAME} options and sample costs`,
+    `what does ${BRAND_NAME} cost at pharmacy A?`,
+    BRAND_NAME,
+  ])("keeps %j locked: naming a therapy without asking for its resources is not enough", (text) => {
+    expect(decideUnlock({ text })).toEqual({
+      unlock: false,
+      reason: "That asked about a therapy, not its manufacturer resources. Resources remain locked.",
+    });
+  });
+
   it("stays locked when more than one therapy is named", () => {
-    const text = fixtures.therapies.map((therapy) => therapy.name).join(" and ");
+    const text = `manufacturer resources for ${fixtures.therapies.map((therapy) => therapy.name).join(" and ")}`;
 
     expect(decideUnlock({ text }).unlock).toBe(false);
   });

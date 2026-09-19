@@ -26,7 +26,13 @@ export function findResource(resourceId: string): ManufacturerResource | undefin
   return fixtures.resources.find((resource) => resource.id === resourceId);
 }
 
-/** Pure decision: an explicit therapy ID, or text that names exactly one fixture therapy. */
+/** Words that show the clinician is asking for manufacturer resources rather than options or prices. */
+const RESOURCE_WORDS = /\b(resources?|manufacturer|co-?pay|savings|assistance|card|educational?|materials?)\b/i;
+
+/**
+ * Pure decision: an explicit therapy ID, or text that both names exactly one
+ * fixture therapy and asks for its manufacturer resources.
+ */
 export function decideUnlock(request: { therapyId?: string; text?: string }): GateDecision {
   if (request.therapyId !== undefined) {
     return fixtures.therapies.some((therapy) => therapy.id === request.therapyId)
@@ -34,7 +40,15 @@ export function decideUnlock(request: { therapyId?: string; text?: string }): Ga
       : { unlock: false, reason: "Therapy not found in demo. Resources remain locked." };
   }
 
-  const named = namedTherapyIds(request.text ?? "");
+  const text = request.text ?? "";
+  const named = namedTherapyIds(text);
+  // Naming a therapy is not enough: asking for its options or price must not unlock anything.
+  if (named.length > 0 && !RESOURCE_WORDS.test(text)) {
+    return {
+      unlock: false,
+      reason: "That asked about a therapy, not its manufacturer resources. Resources remain locked.",
+    };
+  }
   if (named.length === 1) return { unlock: true, therapyId: named[0], reason: "named_therapy_request" };
   if (named.length > 1) {
     return { unlock: false, reason: "More than one therapy was named. Request one therapy at a time. Resources remain locked." };
