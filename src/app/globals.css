@@ -229,7 +229,8 @@
   /* The hero's device column grows into the empty right margin on wide screens, so the
    laptop and phone can be large without squeezing the headline. Never past the viewport. */
 @media (min-width: 1024px) {
-  .hero-bleed {
+  .hero-bleed,
+  .page-bleed {
     /* Only the amount lives here. This file's classes sit in the components layer, where
        utilities such as w-full override them, so the width and margin are set with utilities. */
     --bleed: max(0px, min(15rem, (100vw - 72rem) / 2 - 1.5rem));

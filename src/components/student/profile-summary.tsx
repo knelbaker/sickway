@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/lib/client/language-store";
 import { formatIsoWallTime, formatMockDollars } from "@/lib/format";
@@ -28,18 +29,34 @@ function ProfileSource() {
   return <Badge variant="outline">{t.common.sourceProfile}</Badge>;
 }
 
-/** Profile fields come from the loaded fixture, never from what the student types (§6.1). */
+/**
+ * Profile fields come from the loaded fixture, never from what the student types (§6.1).
+ *
+ * It opens as one line (who the made-up patient is, with the plan's mock label) so the
+ * question the student came to answer is the first thing under the stepper, even on a
+ * phone. Everything else is one tap away, and nothing is removed.
+ */
 export function ProfileSummary({ profile }: { profile: StudentProfileSummary }) {
   const { language, t } = useLanguage();
   return (
-    <section aria-labelledby="profile-heading" className="rounded-lg border bg-muted/30 p-4">
-      <h2 id="profile-heading" className="mb-3 text-sm font-semibold">
-        {t.profile.title}
-      </h2>
+    <section aria-labelledby="profile-heading">
+      <details className="group rounded-2xl border border-ink/12 bg-paper/70">
+        <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl px-4 py-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+          <h2 id="profile-heading" className="font-semibold">
+            {t.profile.title}
+          </h2>
+          {/* Name and age live here only; the plan keeps its mock label beside it, in the details. */}
+          <span className="flex flex-wrap items-center gap-2 text-ink-soft">
+            <span className="sr-only">{t.profile.nameAge}: </span>
+            {profile.name}, {profile.age} <ProfileSource />
+          </span>
+          <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-ink-soft">
+            {t.profile.details}
+            <ChevronDown aria-hidden className="size-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" />
+          </span>
+        </summary>
+        <div className="border-t border-ink/10 px-4 pt-3 pb-4">
       <dl className="flex flex-col gap-2 text-sm">
-        <Row label={t.profile.nameAge}>
-          {profile.name}, {profile.age} <ProfileSource />
-        </Row>
         <Row label={t.profile.plan}>
           {profile.planName} <Badge variant="secondary">{profile.planMockLabel}</Badge> <ProfileSource />
         </Row>
@@ -59,6 +76,8 @@ export function ProfileSummary({ profile }: { profile: StudentProfileSummary }) 
         {t.profile.clockNote}
       </p>
       <p className="mt-2 text-xs leading-5 text-muted-foreground">{t.profile.explain}</p>
+        </div>
+      </details>
     </section>
   );
 }

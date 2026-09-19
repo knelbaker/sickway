@@ -19,7 +19,7 @@ export function ManufacturerDrawer({
   const therapies = Object.entries(unlocked);
 
   return (
-    <section aria-labelledby="manufacturer-heading" className="rounded-lg border p-4">
+    <section aria-labelledby="manufacturer-heading" className="rounded-2xl border border-ink/12 bg-paper/70 p-4">
       <h3 id="manufacturer-heading" className="flex items-center gap-2 text-sm font-semibold">
         {therapies.length === 0 ? <LockIcon aria-hidden className="size-4" /> : <LockOpenIcon aria-hidden className="size-4" />}
         Manufacturer resources

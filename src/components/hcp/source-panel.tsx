@@ -27,8 +27,8 @@ export function SourcePanel({ encounter, profile }: { encounter: Encounter; prof
   const onset = formatIsoWallTime(intake.onsetIso);
 
   return (
-    <section aria-labelledby="sources-heading" className="rounded-lg border p-4">
-      <h3 id="sources-heading" className="text-sm font-semibold">
+    <section aria-labelledby="sources-heading" className="glass rounded-3xl p-5 sm:p-6">
+      <h3 id="sources-heading" className="display text-xl">
         Source values
       </h3>
       <p className="mb-2 text-xs leading-5 text-muted-foreground">

@@ -170,9 +170,9 @@ export function OptionsPanel({
   }
 
   return (
-    <section aria-labelledby="options-heading" className="flex flex-col gap-4 rounded-lg border p-4">
+    <section aria-labelledby="options-heading" className="flex flex-col gap-4 glass rounded-3xl p-5 sm:p-6">
       <div>
-        <h3 id="options-heading" className="text-sm font-semibold">
+        <h3 id="options-heading" className="display text-xl">
           Access options
         </h3>
         <p className="text-xs leading-5 text-muted-foreground">

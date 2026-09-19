@@ -157,6 +157,7 @@ const en = {
 
   profile: {
     title: "Synthetic demo patient",
+    details: "Details",
     nameAge: "Name and age",
     plan: "Plan",
     languages: "Instruction languages",
@@ -510,6 +511,7 @@ const es: Messages = {
 
   profile: {
     title: "Paciente de demostración sintético",
+    details: "Detalles",
     nameAge: "Nombre y edad",
     plan: "Plan",
     languages: "Idiomas de las instrucciones",
