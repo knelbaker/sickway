@@ -1,0 +1,118 @@
+name: Bug report
+description: Report reproducible behavior that differs from the spec or intended workflow.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Include enough evidence for another contributor to reproduce, diagnose, fix, and verify the problem. Use synthetic demo data only; remove secrets and personal or health information from logs and screenshots.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Bug summary
+      description: State what is broken, where it occurs, and the user or workflow it affects.
+      placeholder: On `/hcp`, ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Describe the correct result and link the relevant requirement or `sickway.md` section when possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Describe what happened, including exact messages, status values, or visible state.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Start from a known state and include the inputs used. Say whether the problem reproduces after creating a fresh demo session.
+      placeholder: |
+        1. Create a fresh demo session.
+        2. Open ...
+        3. Enter ...
+        4. Observe ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      options:
+        - Every time
+        - Intermittent
+        - Happened once
+        - Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include local or deployed URL, branch or commit, browser and version, device or viewport, and any relevant service mode (live, deterministic, or prepared fixture).
+      placeholder: |
+        URL/environment:
+        Branch/commit:
+        Browser/device:
+        Service or fixture mode:
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add sanitized logs, stack traces, screenshots, recordings, request/response details, or failing test output. Do not include secrets or real patient data.
+      placeholder: Paste or attach sanitized evidence here.
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact and workaround
+      description: Explain what the bug blocks, whether it affects the core demo path, and any reliable workaround.
+      placeholder: |
+        Impact:
+        Workaround:
+    validations:
+      required: true
+
+  - type: textarea
+    id: suspected-area
+    attributes:
+      label: Suspected area or prior investigation
+      description: List relevant files, routes, recent changes, hypotheses, or diagnostics already attempted. Write "Unknown" if needed.
+      placeholder: Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      description: List the behavior and regression checks that will demonstrate the fix.
+      placeholder: |
+        - [ ] The reproduction steps now result in ...
+        - [ ] The related success path still ...
+        - [ ] `npm ...` passes.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: safety-check
+    attributes:
+      label: Data check
+      options:
+        - label: This report contains no secrets, real patient data, or other sensitive personal information.
+          required: true

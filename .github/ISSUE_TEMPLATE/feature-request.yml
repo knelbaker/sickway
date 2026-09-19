@@ -1,0 +1,116 @@
+name: Feature request
+description: Propose a product change before turning it into implementation tasks.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The required hackathon flow is defined in `sickway.md`. Explain how this proposal supports that flow and identify any change to the current scope or non-goals.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: Describe the user, their situation, and the unmet need. Avoid starting with a preferred implementation.
+      placeholder: When a student or clinician ..., they need ..., because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the experience from the user's perspective, including important states and failure behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: value
+    attributes:
+      label: Value to the core demo
+      description: Explain how this strengthens the intake → clinician brief → options → packet workflow or why it should change that workflow.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: spec-status
+    attributes:
+      label: Relationship to the design spec
+      options:
+        - Implements required scope
+        - Implements optional scope after the core flow passes
+        - Clarifies existing behavior
+        - Changes current scope or a non-goal
+        - Not yet determined
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-flow
+    attributes:
+      label: User flow and states
+      description: Walk through the proposed interaction. Cover success, missing or unexpected input, loading, empty, and error states when relevant.
+      placeholder: |
+        1. The user ...
+        2. The system ...
+        3. If ..., then ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-goals
+      description: List what this proposal includes and excludes.
+      placeholder: |
+        In scope:
+        - ...
+
+        Out of scope:
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Provide observable criteria that can later be copied into implementation tasks.
+      placeholder: |
+        - [ ] Given ..., when ..., then ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-context
+    attributes:
+      label: Technical and design context
+      description: Link mockups and related issues, and note likely routes, APIs, fixture changes, services, dependencies, or constraints. Separate known requirements from open design ideas.
+      placeholder: |
+        References:
+        Likely affected areas:
+        Constraints:
+    validations:
+      required: true
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks and open questions
+      description: Address demo reliability, time, accessibility, data handling, misleading claims, external services, and unresolved product decisions as applicable. Write "None" if there are none.
+      placeholder: None
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Proposal checks
+      options:
+        - label: The proposal uses synthetic data and preserves visible mock/demo labels where applicable.
+          required: true
+        - label: The proposal does not imply real booking, prescribing, coverage verification, fulfillment, or external transmission.
+          required: true
+        - label: Any departure from `sickway.md` is identified above for an explicit product decision.
+          required: true
