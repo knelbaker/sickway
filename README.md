@@ -146,7 +146,9 @@ const auth = await requireSession(request);
 if (!auth.ok) return auth.response; // 401 invalid_session or expired_session
 ```
 
-Missing, malformed, tampered, swapped, unknown, and expired tokens all return 401 before any session data is read. Sessions expire after 24 hours. This limits casual cross-session access between demo runs; it is not production authentication or a claim of medical-data security (sickway.md §8, §11).
+Missing, malformed, tampered, swapped, unknown, and expired tokens all return 401 before any session data is read.
+
+**Reset.** “Reset demo” in the header (always behind a confirmation) calls `POST /api/demo-session/reset`, which creates a fresh session and marks the old `META` with the new token. From then on every route answers the old token with `409 { error: "session_superseded", joinToken }` and no data, so the paired device shows “The demo was reset on the other device” with a one-tap “Join the new session”; old join links follow the same pointer. The student and clinician screens are keyed by session ID, so a new token clears the draft, consent, selections, the open encounter, audio, and polled data, and per-session browser storage keys mean nothing from an earlier run can render. Old sessions are not deleted; they expire by `ttl` and are never reused. Sessions expire after 24 hours. This limits casual cross-session access between demo runs; it is not production authentication or a claim of medical-data security (sickway.md §8, §11).
 
 ## Data layer
 

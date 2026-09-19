@@ -21,10 +21,17 @@ vi.mock("@/lib/db", () => ({
     return true;
   },
   getItem: async (sessionId: string, sortKey: string) => store.get(`${sessionId}|${sortKey}`) ?? null,
+  updateItem: async (sessionId: string, sortKey: string, fields: Record<string, unknown>) => {
+    const item = store.get(`${sessionId}|${sortKey}`);
+    if (!item) return null;
+    Object.assign(item, fields);
+    return item;
+  },
 }));
 
 import {
   createDemoSession,
+  resetDemoSession,
   createSessionToken,
   requireSession,
   SESSION_HEADER,
@@ -154,5 +161,31 @@ describe("requireSession", () => {
 
     expect(auth.ok).toBe(false);
     if (!auth.ok) expect(await auth.response.json()).toEqual({ error: "expired_session" });
+  });
+});
+
+describe("resetDemoSession", () => {
+  it("creates a different session and leaves the old one answering only with the new token", async () => {
+    const old = await createDemoSession();
+
+    const next = await resetDemoSession(old.session);
+    const oldAuth = await requireSession(request(old.token));
+    const newAuth = await requireSession(request(next.token));
+
+    expect(next.session.id).not.toBe(old.session.id);
+    expect(newAuth.ok).toBe(true);
+    expect(oldAuth.ok).toBe(false);
+    if (oldAuth.ok) return;
+    expect(oldAuth.response.status).toBe(409);
+    expect(await oldAuth.response.json()).toEqual({ error: "session_superseded", joinToken: next.token });
+  });
+
+  it("never exposes the supersededByToken marker as part of the session", async () => {
+    const old = await createDemoSession();
+    const next = await resetDemoSession(old.session);
+
+    const auth = await requireSession(request(next.token));
+
+    expect(auth.ok && Object.keys(auth.session).sort()).toEqual(["createdAt", "fixtureClock", "id", "profileId", "ttl"]);
   });
 });

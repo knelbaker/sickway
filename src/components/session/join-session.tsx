@@ -22,17 +22,24 @@ export function JoinSession({ token }: { token: string | null }) {
     if (!token) return;
     let cancelled = false;
 
-    fetch("/api/demo-session", { headers: { "x-demo-session": token }, cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error();
-        const session = demoSessionResponseSchema.parse(await response.json());
-        if (cancelled) return;
-        setSessionToken(token);
-        setState({ status: "joined", sessionId: session.sessionId });
-      })
-      .catch(() => {
-        if (!cancelled) setState({ status: "failed" });
-      });
+    // A join link from before a reset leads on to the session that replaced it.
+    async function join(candidate: string, hops: number): Promise<void> {
+      const response = await fetch("/api/demo-session", { headers: { "x-demo-session": candidate }, cache: "no-store" });
+      if (response.status === 409 && hops > 0) {
+        const { joinToken } = (await response.json()) as { joinToken?: string };
+        if (joinToken) return join(joinToken, hops - 1);
+      }
+      if (!response.ok) throw new Error();
+      const session = demoSessionResponseSchema.parse(await response.json());
+      if (cancelled) return;
+      setSessionToken(candidate);
+      setState({ status: "joined", sessionId: session.sessionId });
+    }
+
+    join(token, 5)
+.catch(() => {
+      if (!cancelled) setState({ status: "failed" });
+    });
 
     return () => {
       cancelled = true;
