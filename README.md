@@ -82,6 +82,7 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/lib/demo-routing.ts`: pure, synchronous demo routing and confirmed elapsed symptom time.
 - `src/lib/intake.ts`: candidate-field extraction from the student's text and the onset suggestion.
 - `src/lib/encounters.ts`: server-side routing, field sources, brief, and persistence for a consented intake.
+- `src/lib/options.ts`: deterministic join of the fixture catalogs into labelled mock option rows.
 - `src/lib/sbar.ts`: clinician brief generation with a deterministic fallback and the prepared fixture.
 
 `routeIntake(intake)` accepts a reviewed intake with an optional boolean `outsideScenario` marker and returns `{ branch, reasons }`. Any of the six checklist flags explicitly set to `true` yields `emergency`, even if other fields are invalid. Otherwise, unanswered (`null`) flags, missing or malformed fields, unexpected keys, and `outsideScenario: true` yield `needs_review` with explicit reasons. A valid intake with all six flags `false` yields `ready`. This is a demo routing result, not clinically validated triage or a diagnosis; temperature and other fields do not introduce additional routing rules.
@@ -106,6 +107,8 @@ Cache keys hash the whitespace-normalized system and user prompts, configured mo
 `POST /api/intake` (session-guarded) is the hand-off from student to clinic. It stores nothing unless `consent.shareWithClinic` is literally `true` (`400 consent_required` otherwise), validates the reviewed intake including every checklist key, and then runs `routeIntake` on the server: any status sent by the client is ignored. A positive item is stored as `emergency` with no brief; an unanswered item is stored as `needs_review`; otherwise `ready`. `ready` and `needs_review` encounters get a brief from `buildSbar`, falling back to the deterministic summary. Each encounter records `fieldSources`, server-time consent, and `unlockedTherapyIds: []`, under `SESSION#<id>` / `ENC#<id>`. The response is only `{ encounterId, status }`.
 
 `GET /api/encounters` returns the caller's session queue, newest first, in a compact shape for two-second polling; `GET /api/encounters/:id` returns one full encounter. Both are session-guarded, read only the caller's partition with a single `Query` or `GetItem`, and send `Cache-Control: no-store`. An encounter ID from another session is a 404, exactly like an ID that does not exist.
+
+`POST /api/encounters/:id/options` (session-guarded, read-only) matches the clinician's query against the fixtures with plain keywords — no model call. “antiviral” or “flu” lists every therapy × pharmacy row for the profile's plan, generic first and then by mock cost; naming one fixture therapy lists only that therapy; anything else returns `{ found: false, message: "No demo option found" }`. Every cost, coverage, and stock value carries a mock flag, rows above the profile's cost ceiling are marked, and rows only say whether manufacturer resources exist. The route never changes `unlockedTherapyIds` and refuses `emergency` encounters with 409.
 
 ## Demo sessions and pairing
 
