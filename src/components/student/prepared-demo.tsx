@@ -26,7 +26,13 @@ export function PreparedDemoSummary({ intake }: { intake: ReviewedIntake }) {
           {t.prepared.body} {t.prepared.scriptLanguageNote}
         </AlertDescription>
       </Alert>
-      <dl className="flex flex-col gap-1.5 rounded-lg border p-3 text-sm">
+      {/* Every value below is scripted. Say so once where it can be read at a glance; each row still
+          carries the same attribution for screen readers, so no value is ever unattributed. */}
+      <p className="flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+        {t.prepared.allFixture}
+        <Badge variant="outline" className="font-normal">{t.prepared.fixture}</Badge>
+      </p>
+      <dl className="flex flex-col rounded-2xl border border-ink/12 bg-paper/70 px-4 text-sm">
         {[
           [t.prepared.words, `“${intake.transcript}”`],
           [t.prepared.symptoms, intake.symptoms.join(", ") || NOT_REPORTED],
@@ -40,10 +46,10 @@ export function PreparedDemoSummary({ intake }: { intake: ReviewedIntake }) {
             return [t.followUps.redFlags[key].label, answer === true ? t.common.yes : answer === false ? t.prepared.noScripted : NOT_REPORTED];
           }),
         ].map(([label, value]) => (
-          <div key={label} className="flex flex-wrap justify-between gap-x-3">
+          <div key={label} className="flex flex-wrap justify-between gap-x-6 gap-y-0.5 border-t border-ink/10 py-2.5 first:border-t-0">
             <dt className="text-muted-foreground">{label}</dt>
-            <dd className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right font-medium">
-              {value} <Badge variant="outline" className="shrink-0 font-normal">{t.prepared.fixture}</Badge>
+            <dd className="text-right font-medium">
+              {value} <span className="sr-only">{t.prepared.fixture}</span>
             </dd>
           </div>
         ))}

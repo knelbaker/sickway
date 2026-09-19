@@ -313,6 +313,7 @@ const en = {
     allergies: "Allergies",
     noScripted: "No (scripted)",
     fixture: "demo fixture",
+    allFixture: "Every value below comes from the",
     scriptLanguageNote: "",
   },
 
@@ -666,6 +667,7 @@ const es: Messages = {
     allergies: "Alergias",
     noScripted: "No (con guion)",
     fixture: "dato fijo",
+    allFixture: "Cada valor de abajo es un",
     scriptLanguageNote: "El caso preparado está escrito en inglés. Esta demostración no traduce.",
   },
 
