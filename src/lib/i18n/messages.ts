@@ -8,8 +8,8 @@ import type { RedFlagKey } from "@/lib/red-flags";
  *
  * Writing rules: short sentences, everyday words, and a plain explanation the
  * first time a healthcare or demo term appears. The Spanish uses "usted", like
- * the existing packet instructions. It has not had professional or clinical
- * translation review.
+ * the existing packet instructions. A Spanish-speaking teammate read it through
+ * (2026-09-19); it has not had professional or clinical translation review.
  *
  * `es` is typed as `Messages`, so a missing or extra Spanish key fails typecheck.
  */
