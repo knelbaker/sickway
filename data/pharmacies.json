@@ -1,0 +1,46 @@
+[
+  {
+    "id": "pharmacy-demo-a",
+    "name": "Fictional Demo Pharmacy A",
+    "prices": [
+      {
+        "therapyId": "therapy-generic-demo",
+        "planId": "plan-fictional-ppo",
+        "estimatedCost": 12,
+        "costMock": true,
+        "stockStatus": "Mock in stock",
+        "stockMock": true
+      },
+      {
+        "therapyId": "therapy-brand-demo",
+        "planId": "plan-fictional-ppo",
+        "estimatedCost": 45,
+        "costMock": true,
+        "stockStatus": "Mock in stock",
+        "stockMock": true
+      }
+    ]
+  },
+  {
+    "id": "pharmacy-demo-b",
+    "name": "Fictional Demo Pharmacy B",
+    "prices": [
+      {
+        "therapyId": "therapy-generic-demo",
+        "planId": "plan-fictional-ppo",
+        "estimatedCost": 18,
+        "costMock": true,
+        "stockStatus": "Mock in stock",
+        "stockMock": true
+      },
+      {
+        "therapyId": "therapy-brand-demo",
+        "planId": "plan-fictional-ppo",
+        "estimatedCost": 55,
+        "costMock": true,
+        "stockStatus": "Mock unavailable",
+        "stockMock": true
+      }
+    ]
+  }
+]

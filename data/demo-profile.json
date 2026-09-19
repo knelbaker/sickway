@@ -1,0 +1,38 @@
+{
+  "id": "demo-student-01",
+  "name": "Alex Demo",
+  "age": 20,
+  "synthetic": true,
+  "fixtureVersion": "scene-1-v1",
+  "planId": "plan-fictional-ppo",
+  "preferredPharmacyId": "pharmacy-demo-a",
+  "instructionLanguages": [
+    "en",
+    "es"
+  ],
+  "costCeiling": 25,
+  "costMock": true,
+  "fixtureClock": "2026-09-19T10:00:00-04:00",
+  "intake": {
+    "symptoms": [
+      "fever",
+      "whole-body aches"
+    ],
+    "onsetIso": "2026-09-18T08:00:00-04:00",
+    "onsetConfirmed": true,
+    "maxTempF": 102,
+    "medsTaken": null,
+    "allergies": null,
+    "redFlags": {
+      "breathing_chest_pain": false,
+      "confusion_fainting": false,
+      "stiff_neck_rash": false,
+      "high_temperature": false,
+      "dehydration": false,
+      "sudden_severe_headache": false
+    },
+    "deadlineToday": "Exam at 2 PM",
+    "transcript": "I woke up with a 102 fever, my whole body aches, it started yesterday morning, and I have an exam at 2."
+  },
+  "seedNote": "Prepared case only: onset confirmation and each negative checklist answer are explicitly scripted demo follow-up responses. They must not prefill user confirmation, checklist answers, or consent."
+}

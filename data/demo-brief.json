@@ -1,0 +1,12 @@
+{
+  "profileId": "demo-student-01",
+  "fixtureVersion": "scene-1-v1",
+  "sbar": {
+    "situation": "Alex Demo, age 20, reports fever to 102°F and whole-body aches, with an exam at 2 PM.",
+    "background": "The prepared case explicitly confirms onset at 8 AM on September 18, 2026, 26 hours before the displayed fixture clock. Medications and allergies are not reported. The fictional out-of-state PPO has mock coverage, not verified.",
+    "assessment": "Demo routing result: campus clinic. Each checklist answer is explicitly negative in the scripted follow-up; this is not a diagnosis.",
+    "recommendation": "Review the synthetic intake with the demo clinic. Booking is not connected.",
+    "spokenScript": "Alex Demo, age twenty, reports fever to 102 degrees and whole-body aches, with an exam at two. Confirmed onset was twenty-six hours before the fixture clock. Scripted checklist responses are negative; medications and allergies are not reported. Demo routing indicates campus clinic review. Coverage is mock and unverified. Booking is not connected.",
+    "source": "prepared_fixture"
+  }
+}
