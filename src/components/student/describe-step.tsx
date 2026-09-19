@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { VoiceInput } from "@/components/student/voice-input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,10 +21,13 @@ type Notice = { title: string; body: string } | null;
 export function DescribeStep({
   onExtracted,
   onUsePrepared,
+  voiceEnabled = false,
 }: {
   onExtracted: (transcript: string, fields: CandidateIntakeFields | null) => void;
   /** Explicit choice of the scripted case. Never triggered by a failure or by what was typed. */
   onUsePrepared: () => void;
+  /** True only when the server runs with VOICE_MODE=live. */
+  voiceEnabled?: boolean;
 }) {
   const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
@@ -83,6 +87,14 @@ export function DescribeStep({
       <p className="text-xs leading-5 text-muted-foreground">
         Use fictional details only. Do not enter real health information.
       </p>
+      {voiceEnabled && (
+        <VoiceInput
+          disabled={pending}
+          onTranscript={(heard) =>
+            setText((current) => `${current.trim()}${current.trim() ? " " : ""}${heard}`.slice(0, MAX_LENGTH))
+          }
+        />
+      )}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" className="h-11" disabled={pending || text.trim() === ""}>
           {pending ? "Reading…" : "Continue"}

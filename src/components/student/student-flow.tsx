@@ -24,7 +24,7 @@ import { usePolling } from "@/lib/client/use-polling";
 
 type Step = "describe" | "followups" | "review" | "prepared";
 
-type FlowProps = { profile: StudentProfileSummary; preparedIntake: ReviewedIntake };
+type FlowProps = { profile: StudentProfileSummary; preparedIntake: ReviewedIntake; voiceEnabled?: boolean };
 
 const SUBMIT_ERRORS: Record<string, string> = {
   consent_required: "Consent is required before anything is shared. Nothing was sent.",
@@ -82,7 +82,7 @@ function SubmittedStatus({ submitted, profile }: { submitted: IntakeResponse; pr
   );
 }
 
-function SessionIntake({ sessionId, profile, preparedIntake }: FlowProps & { sessionId: string | null }) {
+function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = false }: FlowProps & { sessionId: string | null }) {
   const [draft, dispatch] = useIntakeDraft();
   const [step, setStep] = useState<Step>("describe");
   const [consent, setConsent] = useState(false);
@@ -152,6 +152,7 @@ function SessionIntake({ sessionId, profile, preparedIntake }: FlowProps & { ses
               setStep("followups");
             }}
             onUsePrepared={() => setStep("prepared")}
+            voiceEnabled={voiceEnabled}
           />
         )}
 
