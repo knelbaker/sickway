@@ -11,6 +11,9 @@ const STORAGE_KEY = "sickday.demoSessionToken";
 const SESSION_HEADER = "x-demo-session";
 const listeners = new Set<() => void>();
 
+/** Set when the server says this device's session was reset elsewhere. In memory only. */
+let supersededByToken: string | null = null;
+
 function notify() {
   for (const listener of listeners) listener();
 }
@@ -22,12 +25,19 @@ export function getSessionToken(): string | null {
 
 export function setSessionToken(token: string): void {
   window.localStorage.setItem(STORAGE_KEY, token);
+  supersededByToken = null;
   notify();
 }
 
 export function clearSessionToken(): void {
   window.localStorage.removeItem(STORAGE_KEY);
+  supersededByToken = null;
   notify();
+}
+
+/** The token of the session that replaced this one, once the server has reported a reset. */
+export function useSupersededByToken(): string | null {
+  return useSyncExternalStore(subscribe, () => supersededByToken, () => null);
 }
 
 /** The part before the signature. Display and cache-key use only; the server never trusts it. */
@@ -53,12 +63,23 @@ export function useSessionToken(): string | null | undefined {
 }
 
 /** `fetch` for session-scoped API routes; attaches the pairing token. */
-export function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   const token = getSessionToken();
   if (token) headers.set(SESSION_HEADER, token);
   if (init.body !== undefined && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  return fetch(path, { ...init, headers, cache: "no-store" });
+  const response = await fetch(path, { ...init, headers, cache: "no-store" });
+
+  if (response.status === 409) {
+    const body: unknown = await response.clone().json().catch(() => null);
+    const { error, joinToken } = (body ?? {}) as { error?: string; joinToken?: string };
+    // Ignore a late reply that belongs to a token this device has already left.
+    if (error === "session_superseded" && joinToken && token === getSessionToken()) {
+      supersededByToken = joinToken;
+      notify();
+    }
+  }
+  return response;
 }

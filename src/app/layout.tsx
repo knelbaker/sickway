@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ResetDemoButton, SessionSupersededNotice } from "@/components/session/reset-controls";
 import { SyntheticBanner } from "@/components/synthetic-banner";
 import { Button } from "@/components/ui/button";
 import "./globals.css";
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Button variant="ghost" asChild>
                 <Link href="/hcp">Clinician</Link>
               </Button>
+              <ResetDemoButton />
             </nav>
           </div>
         </header>
@@ -49,6 +51,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             Prototype workflow. Not medical advice. Do not enter real health
             information.
           </p>
+          <SessionSupersededNotice />
           <main>{children}</main>
         </div>
       </body>

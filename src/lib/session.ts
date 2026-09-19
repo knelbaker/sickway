@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
-import { getItem, putItemIfAbsent, sk, ttlFromNow } from "@/lib/db";
+import { z } from "zod";
+import { getItem, putItemIfAbsent, sk, ttlFromNow, updateItem } from "@/lib/db";
 import { env } from "@/lib/env";
 import { fixtures } from "@/lib/fixtures";
 import { errorJson } from "@/lib/http";
@@ -16,6 +17,11 @@ import { demoSessionSchema, type DemoSession } from "@/lib/schemas";
  */
 
 export const SESSION_HEADER = "x-demo-session";
+
+/** META as stored. A reset marks the old session with the token of the one that replaced it. */
+const storedSessionSchema = demoSessionSchema.extend({
+  supersededByToken: z.string().min(1).optional(),
+});
 
 function sign(sessionId: string): string {
   return createHmac("sha256", env.DEMO_SESSION_SECRET).update(sessionId).digest("base64url");
@@ -55,6 +61,16 @@ export async function createDemoSession(): Promise<{ session: DemoSession; token
   return { session, token: createSessionToken(session.id) };
 }
 
+/**
+ * Reset (sickway.md §8): a fresh session replaces the current one. The old
+ * session is never reused; it is marked so the paired device can follow.
+ */
+export async function resetDemoSession(current: DemoSession): Promise<{ session: DemoSession; token: string }> {
+  const next = await createDemoSession();
+  await updateItem(current.id, sk.meta(), { supersededByToken: next.token }, storedSessionSchema);
+  return next;
+}
+
 export type SessionCheck =
   | { ok: true; session: DemoSession }
   | { ok: false; response: Response };
@@ -75,10 +91,17 @@ export async function requireSession(request: Request): Promise<SessionCheck> {
   const sessionId = verifySessionToken(request.headers.get(SESSION_HEADER));
   if (!sessionId) return unauthorized("invalid_session");
 
-  const session = await getItem(sessionId, sk.meta(), demoSessionSchema);
+  const stored = await getItem(sessionId, sk.meta(), storedSessionSchema);
   // DynamoDB TTL deletion is asynchronous; never honour an expired record.
-  if (!session || session.ttl <= Math.floor(Date.now() / 1000)) {
+  if (!stored || stored.ttl <= Math.floor(Date.now() / 1000)) {
     return unauthorized("expired_session");
   }
-  return { ok: true, session };
+  // After a reset the old session serves no data at all, only the way to the new one.
+  if (stored.supersededByToken) {
+    return {
+      ok: false,
+      response: errorJson(409, "session_superseded", { joinToken: stored.supersededByToken }),
+    };
+  }
+  return { ok: true, session: demoSessionSchema.parse(stored) };
 }

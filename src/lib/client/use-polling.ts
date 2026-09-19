@@ -52,7 +52,8 @@ export function usePolling<T>(
       try {
         const response = await apiFetch(path!);
         if (cancelled) return;
-        if (response.status === 401) return fail("session");
+        // 409: the session was reset elsewhere; apiFetch has already raised the join prompt.
+        if (response.status === 401 || response.status === 409) return fail("session");
         if (response.status === 404) return fail("not_found");
         if (!response.ok) return fail("unavailable");
         const data = schemaRef.current.parse(await response.json());
