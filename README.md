@@ -38,7 +38,7 @@ pnpm test
 pnpm build
 ```
 
-Vitest runs the banner smoke test and environment validation tests without loading real credentials. Use `pnpm exec vitest` for watch mode while developing.
+Vitest covers the banner, environment validation, shared contracts, and deterministic demo routing without loading real credentials. Use `pnpm exec vitest` for watch mode while developing.
 
 ## Shared code
 
@@ -46,6 +46,11 @@ Vitest runs the banner smoke test and environment validation tests without loadi
 - `src/components/ui/`: shadcn/ui components for Tailwind v4, configured in `components.json`.
 - `src/components/synthetic-banner.tsx`: the non-dismissible synthetic-data notice.
 - `src/lib/env.ts`: validated server configuration.
+- `src/lib/demo-routing.ts`: pure, synchronous demo routing and confirmed elapsed symptom time.
+
+`routeIntake(intake)` accepts a reviewed intake with an optional boolean `outsideScenario` marker and returns `{ branch, reasons }`. Any of the six checklist flags explicitly set to `true` yields `emergency`, even if other fields are invalid. Otherwise, unanswered (`null`) flags, missing or malformed fields, unexpected keys, and `outsideScenario: true` yield `needs_review` with explicit reasons. A valid intake with all six flags `false` yields `ready`. This is a demo routing result, not clinically validated triage or a diagnosis; temperature and other fields do not introduce additional routing rules.
+
+`elapsedSinceOnset(intake, fixtureClock)` returns `{ hours, onsetIso, fixtureClock, source }` only for a confirmed onset and valid ISO timestamps with explicit timezones. `source` identifies `onsetIso` as `student_review` and `fixtureClock` as `demo_fixture`. Unconfirmed, missing, invalid, or future onset times return `null`. Elapsed hours use the supplied fixture clock, preserve fractional values, and never use the system clock or a treatment-window countdown.
 
 Appendix A in the spec maps `app/`, `components/`, and `lib/` to this repository's `src/` directory. Future fixture JSON belongs in top-level `data/`.
 
