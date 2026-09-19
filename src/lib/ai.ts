@@ -24,6 +24,15 @@ export type StructuredResult<T> =
       reason: "timeout" | "invalid_output" | "provider_error" | "cache_error";
     };
 
+/**
+ * Rehearsal switch (sickway.md §15): DEMO_SIMULATE_AI_FAILURE=1 makes every
+ * generation fail so the labelled fallbacks can be practised. It is ignored on
+ * production deployments, so it cannot be triggered during judging.
+ */
+export function aiFailureSimulated(): boolean {
+  return env.DEMO_SIMULATE_AI_FAILURE === "1" && process.env.VERCEL_ENV !== "production";
+}
+
 function normalize(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
@@ -42,6 +51,8 @@ export async function generateStructured<T>({
   prompt: string;
   promptVersion: string;
 }): Promise<StructuredResult<T>> {
+  if (aiFailureSimulated()) return { ok: false, reason: "provider_error" };
+
   const key = sk.cache(
     createHash("sha256")
       .update(JSON.stringify({

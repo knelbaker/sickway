@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { StudentFlow } from "@/components/student/student-flow";
 import { draftReducer, emptyDraft, toReviewedIntake } from "@/components/student/use-intake-draft";
 import { intakeRequestSchema, sampleExtractRequest, sampleExtractResponse } from "@/lib/api-contracts";
+import { sampleIntakeRequest } from "@/lib/api-contracts";
 
 const TOKEN = `${"a".repeat(32)}.signature`;
 const profile = {
@@ -72,7 +73,7 @@ describe("onset confirmation", () => {
 describe("review, consent, and submit", () => {
   test("keeps Submit disabled until the separate consent box is ticked, and starts unticked", async () => {
     stubApi(() => Response.json({ encounterId: "e1", status: "ready" }, { status: 201 }));
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     await reachReview();
 
     const consent = screen.getByRole("checkbox", { name: /I agree to share this synthetic intake/ });
@@ -86,7 +87,7 @@ describe("review, consent, and submit", () => {
 
   test("declining keeps the intake on this screen and makes no intake request", async () => {
     const fetchMock = stubApi(() => Response.json({}, { status: 500 }));
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     await reachReview();
 
     fireEvent.click(screen.getByRole("button", { name: "Decline" }));
@@ -98,7 +99,7 @@ describe("review, consent, and submit", () => {
 
   test("submits the edited, reviewed values with literal consent and an unconfirmed onset by default", async () => {
     const fetchMock = stubApi(() => Response.json({ encounterId: "e1", status: "ready" }, { status: 201 }));
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     await reachReview();
 
     fireEvent.change(screen.getByLabelText("Highest temperature (°F)"), { target: { value: "100.4" } });
@@ -124,7 +125,7 @@ describe("review, consent, and submit", () => {
 
   test("sends a confirmed onset only after the student ticks the confirmation", async () => {
     const fetchMock = stubApi(() => Response.json({ encounterId: "e1", status: "ready" }, { status: 201 }));
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     await reachReview();
 
     fireEvent.click(screen.getByRole("checkbox", { name: /I confirm it started around/ }));
@@ -138,7 +139,7 @@ describe("review, consent, and submit", () => {
 
   test("sends skipped checklist items as null and shows them as not answered in review", async () => {
     const fetchMock = stubApi(() => Response.json({ encounterId: "e1", status: "needs_review" }, { status: 201 }));
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     await reachReview({ answerAllNo: false });
 
     expect(screen.getAllByText("Not answered")).toHaveLength(6);
@@ -152,7 +153,7 @@ describe("review, consent, and submit", () => {
 
   test("keeps the review on screen with a clear message when the server refuses", async () => {
     stubApi(() => Response.json({ error: "consent_required" }, { status: 400 }));
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     await reachReview();
 
     fireEvent.click(screen.getByRole("checkbox", { name: /I agree to share/ }));
@@ -167,7 +168,7 @@ describe("review, consent, and submit", () => {
 describe("status after sharing", () => {
   async function submitWithStatus(status: string) {
     stubApi(() => Response.json({ encounterId: "e1", status }, { status: 201 }));
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     await reachReview();
     fireEvent.click(screen.getByRole("checkbox", { name: /I agree to share/ }));
     fireEvent.click(screen.getByRole("button", { name: "Submit to demo clinic" }));
@@ -206,12 +207,12 @@ describe("status after sharing", () => {
     await submitWithStatus("ready");
     cleanup();
 
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     expect(screen.getByText("Shared with the demo clinic")).toBeDefined();
     cleanup();
 
     window.localStorage.setItem("sickday.demoSessionToken", `${"b".repeat(32)}.signature`);
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     expect(screen.queryByText("Shared with the demo clinic")).toBeNull();
     expect(screen.getByLabelText("What is going on today?")).toBeDefined();
   });

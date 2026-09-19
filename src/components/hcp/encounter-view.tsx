@@ -4,6 +4,7 @@ import { BriefAudio } from "@/components/hcp/brief-audio";
 import { BriefView } from "@/components/hcp/brief-view";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/components/hcp/labels";
 import { SourcePanel } from "@/components/hcp/source-panel";
+import { PollStatus } from "@/components/poll-status";
 import { VisitPanel } from "@/components/hcp/visit-panel";
 import type { StudentProfileSummary } from "@/components/student/profile-summary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,7 +23,8 @@ export function EncounterView({
   profile: StudentProfileSummary;
   preparedSpokenScript: string;
 }) {
-  const { data: encounter, error } = usePolling(`/api/encounters/${encounterId}`, encounterDetailResponseSchema);
+  const poll = usePolling(`/api/encounters/${encounterId}`, encounterDetailResponseSchema);
+  const { data: encounter, error } = poll;
 
   if (!encounter) {
     if (error === "not_found") {
@@ -42,11 +44,7 @@ export function EncounterView({
           {profile.name}
         </h2>
         <div className="flex flex-wrap items-center gap-2">
-          {error === "unavailable" && (
-            <span role="status" className="text-xs text-muted-foreground">
-              Reconnecting… showing the last update
-            </span>
-          )}
+          <PollStatus poll={poll} />
           <Badge variant={STATUS_VARIANT[encounter.status]} aria-live="polite">
             {STATUS_LABEL[encounter.status]}
           </Badge>

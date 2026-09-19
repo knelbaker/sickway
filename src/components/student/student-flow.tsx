@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { BriefSourceBadge } from "@/components/brief-source-badge";
+import { PollStatus } from "@/components/poll-status";
 import { CandidateSummary } from "@/components/student/candidate-summary";
 import { ConsentControl } from "@/components/student/consent-control";
 import { DescribeStep } from "@/components/student/describe-step";
 import { ListQuestion, RedFlagChecklist } from "@/components/student/follow-ups";
+import { PreparedDemoSummary } from "@/components/student/prepared-demo";
 import { ProfileSummary, type StudentProfileSummary } from "@/components/student/profile-summary";
 import { ReviewForm } from "@/components/student/review-form";
 import { StatusView } from "@/components/student/status-view";
@@ -14,9 +17,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { encounterDetailResponseSchema, intakeResponseSchema, type IntakeResponse } from "@/lib/api-contracts";
 import { apiFetch, sessionIdFromToken, useSessionToken } from "@/lib/client/session-store";
+import type { ReviewedIntake } from "@/lib/schemas";
 import { usePolling } from "@/lib/client/use-polling";
 
-type Step = "describe" | "followups" | "review";
+type Step = "describe" | "followups" | "review" | "prepared";
+
+type FlowProps = { profile: StudentProfileSummary; preparedIntake: ReviewedIntake };
 
 const SUBMIT_ERRORS: Record<string, string> = {
   consent_required: "Consent is required before anything is shared. Nothing was sent.",
@@ -45,14 +51,15 @@ function readSubmitted(sessionId: string | null): IntakeResponse | null {
  * Keyed by session, so a new or reset session starts from a clean screen with
  * consent unchecked.
  */
-export function StudentFlow({ profile }: { profile: StudentProfileSummary }) {
+export function StudentFlow(props: FlowProps) {
   const sessionId = sessionIdFromToken(useSessionToken() ?? null);
-  return <SessionIntake key={sessionId ?? "unpaired"} sessionId={sessionId} profile={profile} />;
+  return <SessionIntake key={sessionId ?? "unpaired"} sessionId={sessionId} {...props} />;
 }
 
 /** Polls the shared encounter so the returned packet appears here without a refresh (§3 Scene 3). */
 function SubmittedStatus({ submitted, profile }: { submitted: IntakeResponse; profile: StudentProfileSummary }) {
-  const { data: encounter, error } = usePolling(`/api/encounters/${submitted.encounterId}`, encounterDetailResponseSchema);
+  const poll = usePolling(`/api/encounters/${submitted.encounterId}`, encounterDetailResponseSchema);
+  const encounter = poll.data;
 
   return (
     <div className="flex flex-col gap-2">
@@ -61,16 +68,17 @@ function SubmittedStatus({ submitted, profile }: { submitted: IntakeResponse; pr
         packetId={encounter?.packetId}
         profile={profile}
       />
-      {error === "unavailable" && (
-        <p role="status" className="text-xs text-muted-foreground">
-          Reconnecting… showing the last update.
+      {encounter?.sbar && (
+        <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          Clinic brief: <BriefSourceBadge source={encounter.sbar.source} />
         </p>
       )}
+      <PollStatus poll={poll} />
     </div>
   );
 }
 
-function SessionIntake({ sessionId, profile }: { sessionId: string | null; profile: StudentProfileSummary }) {
+function SessionIntake({ sessionId, profile, preparedIntake }: FlowProps & { sessionId: string | null }) {
   const [draft, dispatch] = useIntakeDraft();
   const [step, setStep] = useState<Step>("describe");
   const [consent, setConsent] = useState(false);
@@ -96,7 +104,11 @@ function SessionIntake({ sessionId, profile }: { sessionId: string | null; profi
     try {
       const response = await apiFetch("/api/intake", {
         method: "POST",
-        body: JSON.stringify({ intake: toReviewedIntake(draft), consent: { shareWithClinic: true } }),
+        body: JSON.stringify(
+          step === "prepared"
+            ? { usePreparedDemo: true, consent: { shareWithClinic: true } }
+            : { intake: toReviewedIntake(draft), consent: { shareWithClinic: true } },
+        ),
       });
       const body: unknown = await response.json().catch(() => null);
       if (!response.ok) {
@@ -135,6 +147,7 @@ function SessionIntake({ sessionId, profile }: { sessionId: string | null; profi
               dispatch({ type: "extracted", transcript, fields });
               setStep("followups");
             }}
+            onUsePrepared={() => setStep("prepared")}
           />
         )}
 
@@ -168,6 +181,45 @@ function SessionIntake({ sessionId, profile }: { sessionId: string | null; profi
               </Button>
               <Button type="button" variant="outline" className="h-11" onClick={startOver}>
                 Start over
+              </Button>
+            </div>
+          </>
+        )}
+
+        {!submitted && step === "prepared" && (
+          <>
+            <PreparedDemoSummary intake={preparedIntake} />
+            <ConsentControl
+              consent={consent}
+              pending={pending}
+              onConsentChange={(next) => {
+                setConsent(next);
+                setDeclined(false);
+              }}
+              onSubmit={submit}
+              onDecline={() => {
+                setConsent(false);
+                setDeclined(true);
+                setError(null);
+              }}
+            />
+            {declined && (
+              <Alert aria-live="polite">
+                <AlertTitle>Not shared</AlertTitle>
+                <AlertDescription>
+                  The prepared case stays on this screen. The demo clinic cannot see it and nothing was sent.
+                </AlertDescription>
+              </Alert>
+            )}
+            {error && (
+              <Alert variant="destructive" aria-live="assertive">
+                <AlertTitle>Not shared</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <div>
+              <Button type="button" variant="outline" className="h-11" disabled={pending} onClick={startOver}>
+                Back to typing my own
               </Button>
             </div>
           </>

@@ -8,6 +8,7 @@ import {
   sampleExtractRequest,
   sampleExtractResponse,
 } from "@/lib/api-contracts";
+import { sampleIntakeRequest } from "@/lib/api-contracts";
 
 const profile = {
   name: "Alex Demo",
@@ -36,7 +37,7 @@ afterEach(() => {
 
 describe("StudentFlow", () => {
   test("shows the synthetic profile with its source and the fixture clock before anything is typed", () => {
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
 
     expect(screen.getByText(/Alex Demo, 20/)).toBeDefined();
     expect(screen.getByText("Mock coverage — not verified")).toBeDefined();
@@ -49,7 +50,7 @@ describe("StudentFlow", () => {
   test("sends the text with the session token, then shows candidate fields and three follow-up groups", async () => {
     const fetchMock = vi.fn().mockResolvedValue(Response.json(sampleExtractResponse));
     vi.stubGlobal("fetch", fetchMock);
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
 
     describeSymptoms();
 
@@ -69,7 +70,7 @@ describe("StudentFlow", () => {
 
   test("starts with no checklist item selected", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(sampleExtractResponse)));
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
     describeSymptoms();
     await screen.findByText("1. Are any of these happening?");
 
@@ -78,7 +79,7 @@ describe("StudentFlow", () => {
 
   test("stops with a visible message for input outside the demo scenario", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(sampleExtractOutsideScenarioResponse)));
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
 
     describeSymptoms("Where do I park my car for the game?");
 
@@ -92,7 +93,7 @@ describe("StudentFlow", () => {
       "fetch",
       vi.fn().mockResolvedValue(Response.json({ error: "extraction_unavailable" }, { status: 503 })),
     );
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
 
     describeSymptoms();
     fireEvent.click(await screen.findByRole("button", { name: "Enter details myself" }));
@@ -106,7 +107,7 @@ describe("StudentFlow", () => {
   test("does not submit an empty description", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
-    render(<StudentFlow profile={profile} />);
+    render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
 
     expect((screen.getByRole("button", { name: "Continue" }) as HTMLButtonElement).disabled).toBe(true);
     expect(fetchMock).not.toHaveBeenCalled();

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PollStatus } from "@/components/poll-status";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,8 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 /** The returned packet. Everything here is synthetic; the status is "available in demo" and nothing more. */
 export function PacketView({ packetId }: { packetId: string }) {
-  const { data: packet, error } = usePolling(`/api/packet/${encodeURIComponent(packetId)}`, packetViewSchema, REFRESH_MS);
+  const poll = usePolling(`/api/packet/${encodeURIComponent(packetId)}`, packetViewSchema, REFRESH_MS);
+  const { data: packet, error } = poll;
 
   if (!packet) {
     if (!error) return <p className="text-sm text-muted-foreground">Loading packet…</p>;
@@ -130,6 +132,8 @@ export function PacketView({ packetId }: { packetId: string }) {
             or clinic was contacted, and no coverage was checked.
           </AlertDescription>
         </Alert>
+
+        {poll.error === "unavailable" && <PollStatus poll={poll} />}
 
         <div>
           <Button variant="outline" asChild>

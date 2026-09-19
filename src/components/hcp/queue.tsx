@@ -2,6 +2,7 @@
 
 import { cn } from "cn";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/components/hcp/labels";
+import { PollStatus } from "@/components/poll-status";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import type { EncounterQueueItem } from "@/lib/api-contracts";
@@ -39,11 +40,7 @@ export function Queue({
           <AlertDescription>Start or join a demo session again from the home page.</AlertDescription>
         </Alert>
       )}
-      {queue.error === "unavailable" && (
-        <p role="status" className="text-xs text-muted-foreground">
-          Reconnecting… {items ? "Showing the last update." : ""}
-        </p>
-      )}
+      <PollStatus poll={queue} />
 
       {!items && !queue.error && <p className="text-sm text-muted-foreground">Loading queue…</p>}
 

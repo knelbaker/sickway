@@ -23,6 +23,8 @@ const envSchema = z.object({
   ELEVENLABS_API_KEY: optionalString,
   NEXT_PUBLIC_DOORWAY_AGENT_ID: optionalString,
   NEXT_PUBLIC_INTAKE_AGENT_ID: optionalString,
+  // Rehearsal only: "1" makes every generation fail. Ignored on production deployments.
+  DEMO_SIMULATE_AI_FAILURE: optionalString,
 });
 
 const result = envSchema.safeParse(process.env);

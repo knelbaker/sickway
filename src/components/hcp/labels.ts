@@ -1,4 +1,4 @@
-import type { EncounterStatus, SbarSource } from "@/lib/schemas";
+import type { EncounterStatus } from "@/lib/schemas";
 
 export const STATUS_LABEL: Record<EncounterStatus, string> = {
   needs_review: "Needs review",
@@ -16,12 +16,7 @@ export const STATUS_VARIANT: Record<EncounterStatus, "default" | "secondary" | "
   packet_available: "secondary",
 };
 
-/** Shown beside every brief so nothing prepared or assembled is mistaken for live generation (§10). */
-export const BRIEF_SOURCE_LABEL: Record<SbarSource, string> = {
-  generated: "Generated from the reviewed intake",
-  deterministic: "Deterministic summary — assembled without the model",
-  prepared_fixture: "Prepared fixture output",
-};
+export { BRIEF_SOURCE_LABEL } from "@/components/brief-source-badge";
 
 export const FIELD_SOURCE_LABEL: Record<string, string> = {
   synthetic_profile: "synthetic profile",

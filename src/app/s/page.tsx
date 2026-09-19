@@ -10,6 +10,7 @@ export default function StudentPage() {
   return (
     <SessionGate title="Student intake">
       <StudentFlow
+        preparedIntake={profile.intake}
         profile={{
           name: profile.name,
           age: profile.age,

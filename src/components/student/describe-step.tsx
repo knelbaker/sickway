@@ -19,8 +19,11 @@ type Notice = { title: string; body: string } | null;
  */
 export function DescribeStep({
   onExtracted,
+  onUsePrepared,
 }: {
   onExtracted: (transcript: string, fields: CandidateIntakeFields | null) => void;
+  /** Explicit choice of the scripted case. Never triggered by a failure or by what was typed. */
+  onUsePrepared: () => void;
 }) {
   const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
@@ -89,6 +92,15 @@ export function DescribeStep({
             Enter details myself
           </Button>
         )}
+      </div>
+      <div className="border-t pt-3">
+        <Button type="button" variant="ghost" className="h-11 px-2" disabled={pending} onClick={onUsePrepared}>
+          Use prepared demo instead
+        </Button>
+        <p className="text-xs leading-5 text-muted-foreground">
+          Loads the scripted demo case. It is labelled as prepared fixture output on every screen and
+          is never used in place of something you typed.
+        </p>
       </div>
       {notice && (
         <Alert variant={manualOffer ? "destructive" : "default"}>

@@ -27,7 +27,7 @@ Required settings:
 - `AWS_REGION`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY`
 - `DDB_TABLE` and `DEMO_SESSION_SECRET`
 
-`VOICE_MODE` accepts `baseline` or `live` and defaults to `baseline` when absent or blank. `ELEVENLABS_API_KEY`, `NEXT_PUBLIC_DOORWAY_AGENT_ID`, and `NEXT_PUBLIC_INTAKE_AGENT_ID` are optional and may be blank. Voice integrations are not implemented yet. Only the agent IDs have public names; never put secrets in `NEXT_PUBLIC_` variables.
+`DEMO_SIMULATE_AI_FAILURE` is optional and for rehearsal only (see Fallbacks). `VOICE_MODE` accepts `baseline` or `live` and defaults to `baseline` when absent or blank. `ELEVENLABS_API_KEY`, `NEXT_PUBLIC_DOORWAY_AGENT_ID`, and `NEXT_PUBLIC_INTAKE_AGENT_ID` are optional and may be blank. Voice integrations are not implemented yet. Only the agent IDs have public names; never put secrets in `NEXT_PUBLIC_` variables.
 
 ## Deployment and health check
 
@@ -134,6 +134,17 @@ ffmpeg -y -i /tmp/brief.aiff -codec:a libmp3lame -b:a 96k -ac 1 public/demo-brie
 ```
 
 `GET /api/packet/:id` (session-guarded, `no-store`) returns the stored packet in the §9 contract shape plus a `display` object resolved on the server from the fixtures: names, mock labels, the prewritten instruction copy for the selected languages only, and only the resources attached to that packet. The price is the one stored at attach time. A packet from another session, or an unknown ID, is a 404. `/packet/<id>` renders it with a synthetic or mock label beside every value and the status “Available in demo”; the student screen polls its shared encounter and shows an “Open demo packet” link once the status is `packet_available`.
+
+### Fallbacks and failure rehearsal
+
+Nothing prepared is ever substituted silently (sickway.md §4.1, §15):
+
+- **Brief.** If generation fails, or a draft breaks a guardrail, the brief is the deterministic summary of the *current* input. Both screens label the brief's source: “Generated from the reviewed intake”, “Deterministic summary — assembled without the model”, or “Prepared fixture output”.
+- **Extraction.** If it fails, the student is offered “Enter details myself”; nothing is pre-filled.
+- **Prepared demo.** “Use prepared demo instead” on `/s` is the only way to the scripted case. The browser sends `{ usePreparedDemo: true, consent }` and no intake; the server stores the fixture intake and the fixture brief with every student field sourced as `demo_fixture`. Consent is still a separate, unticked control. This is also the one case whose audio uses the prepared recording.
+- **Polling views** (`/hcp` queue and encounter, the student status, the packet page) share `PollStatus`: “Live · updated 2:05:11 PM”, or an amber “Reconnecting… showing data from 2:05:11 PM” when a request fails or no fresh data has arrived for six seconds. The last good data stays on screen and polling recovers on its own.
+
+To rehearse a model outage, set `DEMO_SIMULATE_AI_FAILURE=1` in `.env.local` and restart `pnpm dev`: every generation then fails immediately and the flow must complete through the labelled fallbacks. The switch is ignored when `VERCEL_ENV` is `production`, so it cannot fire on the judging deployment; leave it unset there anyway.
 
 ## Demo sessions and pairing
 

@@ -33,8 +33,9 @@ export function BriefAudio({ script, preparedScript }: { script: string; prepare
 
   // Stop when the brief changes or the view closes, so audio never outlives the text it belongs to.
   useEffect(() => {
+    const audio = audioRef.current;
     return () => {
-      audioRef.current?.pause();
+      audio?.pause();
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     };
   }, [script]);
