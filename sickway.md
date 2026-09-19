@@ -175,7 +175,7 @@ Voice is an input layer over this flow. The clinician agent uses the same option
 ### 6.3 Red-flag demo checklist
 Retain the original scenario's checklist categories: breathing/chest pain, confusion/fainting, stiff neck/rash, high temperature, dehydration, and sudden severe headache. These are prototype fields, not a validated clinical screening instrument.
 
-- A positive flag takes the emergency branch and bypasses the routine demo flow.
+- A positive flag takes the emergency branch and bypasses routine options and packet attachment. Every consented intake still gets an SBAR and audio from its reviewed answers, shown with the routing warning and source values for live demos.
 - An unknown flag keeps the intake in `needs_review`; do not display “no red flags.”
 - Check the reviewed values on the server as well as in the UI.
 - Emergency messaging and any broader triage rules require clinical review before real-world use. A disclaimer does not make them validated.

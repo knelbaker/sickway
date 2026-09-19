@@ -102,6 +102,29 @@ describe("GET /api/encounters", () => {
 });
 
 describe("GET /api/encounters/:id", () => {
+  it("supplies a current-input brief for older emergency encounters saved without one", async () => {
+    await seed(SESSION_A, "enc-legacy", "2026-09-19T14:00:00.000Z", {
+      status: "emergency",
+      sbar: undefined,
+      intake: {
+        ...sampleEncounterDetailResponse.intake,
+        symptoms: ["dizziness"],
+        redFlags: { ...sampleEncounterDetailResponse.intake.redFlags, confusion_fainting: true, dehydration: null },
+      },
+    });
+
+    const response = await detail("enc-legacy");
+    const body = encounterDetailResponseSchema.parse(await response.json());
+    expect(response.status).toBe(200);
+    expect(body.status).toBe("emergency");
+    expect(body.sbar?.source).toBe("deterministic");
+    expect(body.sbar?.situation).toContain("dizziness");
+    expect(body.sbar?.assessment).toContain("Answered yes: Confusion or fainting");
+    expect(body.sbar?.assessment).toContain("Not answered: Dehydration");
+    sessionIs(SESSION_B);
+    expect((await detail("enc-legacy")).status).toBe(404);
+  });
+
   it("returns the full encounter including the brief, sources, and unlocked therapies", async () => {
     await seed(SESSION_A, "enc-1", "2026-09-19T14:00:00.000Z");
 

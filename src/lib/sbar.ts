@@ -67,7 +67,7 @@ function checklistSentence(yes: string[], unanswered: string[]): string {
   if (unanswered.length > 0) parts.push(`Not answered: ${list(unanswered)}.`);
   if (yes.length === 0 && unanswered.length === 0) {
     parts.push("Every demo checklist item was answered no by the student.");
-  } else {
+  } else if (yes.length + unanswered.length < RED_FLAG_KEYS.length) {
     parts.push("All other checklist items were answered no.");
   }
   return parts.join(" ");
@@ -169,8 +169,8 @@ export function sbarGuardrailViolation(
   if (intake.medsTaken === null && /\b(no|not taking any|denies) (medications?|meds)\b/i.test(text)) {
     return "invents a negative for medications";
   }
-  const unanswered = RED_FLAG_KEYS.some((key) => intake.redFlags[key] === null);
-  if (unanswered && /\bno red flags?\b/i.test(text)) {
+  const flaggedOrUnanswered = RED_FLAG_KEYS.some((key) => intake.redFlags[key] !== false);
+  if (flaggedOrUnanswered && /\bno red flags?\b/i.test(text)) {
     return "invents a clean checklist";
   }
   return null;
@@ -192,6 +192,16 @@ export async function generateSbar(
   });
   if (!result.ok) return null;
   if (sbarGuardrailViolation(result.data, intake)) return null;
+  if (routing.branch !== "ready") {
+    const facts = sbarFacts(intake, profile, routing);
+    // A generated brief must preserve every positive/unknown checklist answer
+    // in both the visible assessment and audio, and retain the routed next step.
+    if (
+      !result.data.assessment.includes(facts.checklistSummary) ||
+      !result.data.spokenScript.includes(facts.checklistSummary) ||
+      result.data.recommendation !== facts.nextStep
+    ) return null;
+  }
   return { ...result.data, source: "generated" };
 }
 

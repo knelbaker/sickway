@@ -122,7 +122,10 @@ await check("3. Unknown red flag never yields a clean or routine result", async 
 
   const emergency = await phone("POST", "/api/intake", { intake: { ...seeded, redFlags: { ...NO_FLAGS, breathing_chest_pain: true } }, consent: { shareWithClinic: true } });
   expect(emergency.body?.status === "emergency", "a positive flag did not take the emergency branch");
-  return "needs_review stored; attach refused (409); positive flag → emergency";
+  const emergencyDetail = await laptop("GET", `/api/encounters/${emergency.body.encounterId}`);
+  expect(emergencyDetail.body?.sbar?.assessment?.includes("Answered yes: Breathing difficulty or chest pain"), "emergency SBAR is missing the positive answer");
+  expect(emergencyDetail.body?.sbar?.spokenScript?.includes("Breathing difficulty or chest pain"), "emergency audio is missing the positive answer");
+  return "needs_review stored; attach refused (409); positive flag → emergency with SBAR and current audio";
 });
 
 await check("4. A changed symptom does not reuse the seeded brief or audio", async () => {

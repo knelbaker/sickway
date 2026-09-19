@@ -140,8 +140,8 @@ describe("sbarGuardrailViolation", () => {
     expect(sbarGuardrailViolation({ ...generated, ...changes }, seeded)).toBe(reason);
   });
 
-  it("rejects 'no red flags' when a checklist item is unanswered", () => {
-    const intake = intakeWith({ redFlags: { ...seeded.redFlags, dehydration: null } });
+  it.each([true, null])("rejects 'no red flags' when a checklist item is %s", (answer) => {
+    const intake = intakeWith({ redFlags: { ...seeded.redFlags, dehydration: answer } });
 
     expect(sbarGuardrailViolation({ ...generated, assessment: "No red flags." }, intake)).toBe(
       "invents a clean checklist",
@@ -150,6 +150,33 @@ describe("sbarGuardrailViolation", () => {
 });
 
 describe("generateSbar", () => {
+  it.each([true, null])("falls back when a generated brief omits a checklist answer of %s", async (answer) => {
+    const intake = intakeWith({ redFlags: { ...seeded.redFlags, dehydration: answer } });
+    generateStructured.mockResolvedValue({ ok: true, data: generated, cached: false });
+
+    const brief = await buildSbar({ sessionId: "s1", intake, profile, routing: routeIntake(intake) });
+    expect(brief.source).toBe("deterministic");
+    expect(brief.assessment).toContain("Dehydration or unable to keep liquids down");
+    expect(brief.spokenScript).toContain("Dehydration or unable to keep liquids down");
+  });
+
+  it("accepts a generated emergency brief that preserves positive and unknown answers", async () => {
+    const intake = intakeWith({
+      symptoms: ["dizziness"],
+      redFlags: { ...seeded.redFlags, confusion_fainting: true, dehydration: null },
+    });
+    const routing = routeIntake(intake);
+    const { source: _source, ...draft } = deterministicSbar(intake, profile, routing);
+    void _source;
+    generateStructured.mockResolvedValue({ ok: true, data: draft, cached: false });
+
+    const brief = await buildSbar({ sessionId: "s1", intake, profile, routing });
+    expect(brief.source).toBe("generated");
+    expect(brief.situation).toContain("dizziness");
+    expect(brief.assessment).toContain("Answered yes: Confusion or fainting");
+    expect(brief.assessment).toContain("Not answered: Dehydration");
+  });
+
   it("returns a generated brief and sends only pre-rendered facts to the model", async () => {
     generateStructured.mockResolvedValue({ ok: true, data: generated, cached: false });
 

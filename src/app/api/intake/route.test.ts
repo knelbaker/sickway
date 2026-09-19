@@ -19,6 +19,7 @@ vi.mock("@/lib/ai", () => ({ generateStructured }));
 
 import { sampleIntakeRequest } from "@/lib/api-contracts";
 import { encounterSchema } from "@/lib/schemas";
+import { RED_FLAG_DEFINITIONS, RED_FLAG_KEYS } from "@/lib/red-flags";
 import { POST } from "./route";
 
 const session = {
@@ -120,16 +121,37 @@ describe("POST /api/intake", () => {
     expect(encounter.sbar?.assessment).toContain("Not answered: Dehydration");
   });
 
-  it("stores emergency for a positive checklist item, with no brief and no model call", async () => {
+  it.each(RED_FLAG_DEFINITIONS)("stores an emergency SBAR for yes to $key even when generation fails", async ({ key, label }) => {
+    generateStructured.mockResolvedValue({ ok: false, reason: "timeout" });
     const response = await POST(
-      post(withIntake({ redFlags: { ...sampleIntakeRequest.intake.redFlags, breathing_chest_pain: true } })),
+      post(withIntake({ symptoms: ["dizziness"], redFlags: { ...sampleIntakeRequest.intake.redFlags, [key]: true } })),
     );
 
+    expect(response.status).toBe(201);
     expect((await response.json()).status).toBe("emergency");
     const [{ encounter }] = storedEncounters();
     expect(encounter.status).toBe("emergency");
-    expect(encounter.sbar).toBeUndefined();
-    expect(generateStructured).not.toHaveBeenCalled();
+    expect(encounter.sbar?.source).toBe("deterministic");
+    expect(encounter.sbar?.situation).toContain("dizziness");
+    expect(encounter.sbar?.assessment).toContain(`Answered yes: ${label}`);
+    expect(encounter.sbar?.spokenScript).toContain(label);
+    expect(encounter.sbar?.recommendation).toContain("routine demo flow is bypassed");
+  });
+
+  it.each([true, null])("summarizes all checklist answers set to %s without inventing any no answers", async (answer) => {
+    generateStructured.mockResolvedValue({ ok: false, reason: "timeout" });
+    const response = await POST(post(withIntake({
+      redFlags: Object.fromEntries(RED_FLAG_KEYS.map((key) => [key, answer])),
+    })));
+
+    expect(response.status).toBe(201);
+    const [{ encounter }] = storedEncounters();
+    expect(encounter.status).toBe(answer === true ? "emergency" : "needs_review");
+    for (const { label } of RED_FLAG_DEFINITIONS) {
+      expect(encounter.sbar?.assessment).toContain(label);
+      expect(encounter.sbar?.spokenScript).toContain(label);
+    }
+    expect(encounter.sbar?.assessment).not.toContain("answered no");
   });
 
   it("stores a deterministic brief for the current input when the model fails", async () => {

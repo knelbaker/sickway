@@ -61,8 +61,8 @@ export function EncounterView({
           <AlertTitle>Emergency branch — routine demo flow bypassed</AlertTitle>
           <AlertDescription>
             <p>
-              The student answered yes to: {positive.map((flag) => flag.label).join("; ")}. No brief,
-              options, or packet path is offered for this encounter.
+              The student answered yes to: {positive.map((flag) => flag.label).join("; ")}. Review
+              the SBAR and source values below. Options and a packet path are unavailable for this encounter.
             </p>
             <p className="mt-2">Prototype rule execution, not a validated screening result.</p>
           </AlertDescription>
