@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ListQuestion, RedFlagChecklist } from "@/components/student/follow-ups";
 import { StudentFlow } from "@/components/student/student-flow";
+import { RED_FLAG_KEYS, type Answer, type RedFlagKey } from "@/lib/red-flags";
 import {
   sampleExtractOutsideScenarioResponse,
   sampleExtractRequest,
@@ -113,9 +114,11 @@ describe("StudentFlow", () => {
 });
 
 describe("RedFlagChecklist", () => {
+  const unanswered = Object.fromEntries(RED_FLAG_KEYS.map((key) => [key, null])) as Record<RedFlagKey, Answer>;
+
   test("reports Yes, No, and Not sure as true, false, and null per item", () => {
     const onAnswer = vi.fn();
-    render(<RedFlagChecklist onAnswer={onAnswer} />);
+    render(<RedFlagChecklist answers={unanswered} notSure={{}} onAnswer={onAnswer} />);
     const group = (name: string) => screen.getByRole("radiogroup", { name });
 
     fireEvent.click(within(group("Sudden severe headache")).getByRole("radio", { name: "Yes" }));
@@ -128,6 +131,23 @@ describe("RedFlagChecklist", () => {
       ["stiff_neck_rash", null],
     ]);
     expect(screen.getAllByRole("radiogroup")).toHaveLength(6);
+  });
+
+  test("shows an untouched item as unselected and an explicit Not sure as selected", () => {
+    render(
+      <RedFlagChecklist
+        answers={{ ...unanswered, dehydration: false }}
+        notSure={{ stiff_neck_rash: true }}
+        onAnswer={vi.fn()}
+      />,
+    );
+    const checked = (group: string, name: string) =>
+      within(screen.getByRole("radiogroup", { name: group })).getByRole("radio", { name }).getAttribute("aria-checked");
+
+    expect(checked("Dehydration or unable to keep liquids down", "No")).toBe("true");
+    expect(checked("Stiff neck or new rash", "Not sure")).toBe("true");
+    expect(checked("Confusion or fainting", "Not sure")).toBe("false");
+    expect(checked("Confusion or fainting", "No")).toBe("false");
   });
 });
 

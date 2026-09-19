@@ -12,13 +12,24 @@ const ANSWERS = [
   { label: "Not sure", value: null },
 ] satisfies { label: string; value: Answer }[];
 
-/** Six separate questions, each Yes / No / Not sure. Untouched and "Not sure" both stay unknown. */
+/**
+ * Six separate questions, each Yes / No / Not sure. Untouched and "Not sure"
+ * both stay unknown. Controlled by the draft so answers survive moving between steps.
+ */
 export function RedFlagChecklist({
+  answers,
+  notSure,
   onAnswer,
 }: {
+  answers: Record<RedFlagKey, Answer>;
+  notSure: Partial<Record<RedFlagKey, true>>;
   onAnswer: (key: RedFlagKey, answer: Answer) => void;
 }) {
-  const [selected, setSelected] = useState<Partial<Record<RedFlagKey, number>>>({});
+  const selectedIndex = (key: RedFlagKey) => {
+    if (answers[key] === true) return 0;
+    if (answers[key] === false) return 1;
+    return notSure[key] ? 2 : null;
+  };
 
   return (
     <fieldset className="flex flex-col gap-4">
@@ -36,11 +47,8 @@ export function RedFlagChecklist({
           <ChoiceGroup
             label={flag.label}
             choices={ANSWERS}
-            selected={selected[flag.key] ?? null}
-            onSelect={(index, answer) => {
-              setSelected((current) => ({ ...current, [flag.key]: index }));
-              onAnswer(flag.key, answer);
-            }}
+            selected={selectedIndex(flag.key)}
+            onSelect={(_index, answer) => onAnswer(flag.key, answer)}
           />
         </div>
       ))}
