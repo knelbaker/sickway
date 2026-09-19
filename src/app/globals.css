@@ -237,10 +237,19 @@
   }
 }
 
-.ticket-edge {
+/* The returned packet is a ticket: a stub and a body, each a rounded piece of paper. Where the two
+     meet, their rounded corners leave the side notches, and a dashed line is the perforation.
+     The shadow is a filter, so it follows the scalloped outline; a box-shadow would be masked away.
+     Padding and colour are utilities on the elements: utilities override this layer. */
+  .ticket {
     --notch: 9px;
+    filter: drop-shadow(0 22px 34px rgba(60, 40, 0, 0.16)) drop-shadow(0 2px 5px rgba(60, 40, 0, 0.1));
+  }
+  .ticket-top {
     mask: radial-gradient(var(--notch) at 50% 0, #0000 98%, #000) 50% 0 / calc(var(--notch) * 3.2) 100% repeat-x;
-    padding-top: calc(var(--notch) * 1.6);
+  }
+  .ticket-bottom {
+    mask: radial-gradient(var(--notch) at 50% 100%, #0000 98%, #000) 50% 100% / calc(var(--notch) * 3.2) 100% repeat-x;
   }
 }
 

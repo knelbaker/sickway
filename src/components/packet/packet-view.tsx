@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { SickwayMark } from "@/components/brand/sickway-logo";
 import { PollStatus } from "@/components/poll-status";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -58,17 +59,31 @@ export function PacketView({ packetId }: { packetId: string }) {
   const { display } = packet;
 
   return (
-    <Card lang={language} className="ticket-edge mx-auto w-full max-w-2xl rounded-t-none">
-      <CardHeader>
-        <CardTitle>
-          <h1>{p.title(display.patientName)}</h1>
-        </CardTitle>
-        <CardDescription className="flex flex-wrap items-center gap-2">
-          <Badge>{p.available}</Badge>
-          <span>{p.synthetic}</span>
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-6">
+    <article lang={language} className="ticket mx-auto mt-2 w-full max-w-2xl sm:mt-4">
+      {/* The stub: what this is, and the one number a student looks for, with its mock label beside it. */}
+      <header className="ticket-top flex flex-col gap-5 rounded-b-[1.75rem] bg-[#fffdf6] px-6 pt-10 pb-7 sm:px-9">
+        <SickwayMark className="h-7 self-start" />
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-3xl sm:text-4xl">{p.title(display.patientName)}</h1>
+            <p className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink-soft">
+              <Badge>{p.available}</Badge>
+              <span>{p.synthetic}</span>
+            </p>
+          </div>
+          <dl className="shrink-0 sm:text-right">
+            <dt className="text-sm text-ink-soft">{p.cost}</dt>
+            <dd className="mt-1 flex flex-wrap items-center gap-2 sm:justify-end">
+              <span className="display text-5xl leading-none">{formatMockDollars(packet.mockPrice)}</span>
+              <Badge variant="secondary">{p.mockCost}</Badge>
+            </dd>
+          </dl>
+        </div>
+      </header>
+
+      <div className="ticket-bottom relative flex flex-col gap-6 rounded-t-[1.75rem] bg-[#fffdf6] px-6 pt-8 pb-12 sm:px-9">
+        {/* The perforation, between the two side notches. */}
+        <span aria-hidden className="absolute inset-x-7 top-0 border-t-2 border-dashed border-ink/25" />
         <dl className="text-sm">
           <Row label={p.therapy}>
             <span className="font-medium">{display.therapyName}</span>
@@ -79,10 +94,6 @@ export function PacketView({ packetId }: { packetId: string }) {
             <span className="font-medium">{display.pharmacyName}</span>
             <Badge variant="secondary">{p.fictionalPharmacy}</Badge>
             <span className="text-muted-foreground">{display.stockStatus}</span>
-          </Row>
-          <Row label={p.cost}>
-            <span className="font-medium">{formatMockDollars(packet.mockPrice)}</span>
-            <Badge variant="secondary">{p.mockCost}</Badge>
           </Row>
           <Row label={p.coverage}>
             <span>
@@ -121,7 +132,7 @@ export function PacketView({ packetId }: { packetId: string }) {
         ))}
 
         {display.resources.length > 0 && (
-          <section aria-labelledby="packet-resources" className="rounded-lg border p-4">
+          <section aria-labelledby="packet-resources" className="rounded-2xl border border-ink/12 p-5">
             <h2 id="packet-resources" className="mb-2 text-sm font-semibold">
               {p.included}
             </h2>
@@ -153,7 +164,7 @@ export function PacketView({ packetId }: { packetId: string }) {
             <Link href="/s">{p.back}</Link>
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </article>
   );
 }
