@@ -36,7 +36,11 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#000000",
+  // The browser's top bar matches the banner under it: cream on a phone, black from 640px up.
+  themeColor: [
+    { media: "(max-width: 639px)", color: "#fdf9e8" },
+    { media: "(min-width: 640px)", color: "#000000" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
