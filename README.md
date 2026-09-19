@@ -77,6 +77,7 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/lib/http.ts`: `json` / `errorJson` responses with `Cache-Control: no-store`.
 - `src/lib/ai.ts`: server-only Gemini structured generation with schema validation, bounded retries, and session-scoped caching.
 - `src/lib/demo-routing.ts`: pure, synchronous demo routing and confirmed elapsed symptom time.
+- `src/lib/sbar.ts`: clinician brief generation with a deterministic fallback and the prepared fixture.
 
 `routeIntake(intake)` accepts a reviewed intake with an optional boolean `outsideScenario` marker and returns `{ branch, reasons }`. Any of the six checklist flags explicitly set to `true` yields `emergency`, even if other fields are invalid. Otherwise, unanswered (`null`) flags, missing or malformed fields, unexpected keys, and `outsideScenario: true` yield `needs_review` with explicit reasons. A valid intake with all six flags `false` yields `ready`. This is a demo routing result, not clinically validated triage or a diagnosis; temperature and other fields do not introduce additional routing rules.
 
@@ -92,6 +93,8 @@ The helper uses the Google provider with `GOOGLE_GENERATIVE_AI_API_KEY` and `GEM
 - Failure: `{ ok: false, reason }`, where `reason` is `timeout`, `invalid_output`, `provider_error`, or `cache_error`. Provider errors and output are not exposed, and fixtures are never substituted. Cache read/write failures are explicit failures; a failed write does not retry generation.
 
 Cache keys hash the whitespace-normalized system and user prompts, configured model, and prompt version under `SESSION#<sessionId>` / `CACHE#<hash>`. Original prompts are passed to Gemini. Records inherit the database helper's 24-hour TTL; expired records are ignored even before DynamoDB removes them. Cached JSON is revalidated on every hit. Bump `promptVersion` whenever the prompt contract or schema changes. Concurrent first requests can each generate output; the cache does not coalesce in-flight requests.
+
+`buildSbar({ sessionId, intake, profile, routing, usePrepared })` returns the clinician brief with its `source` always set. It asks Gemini for a draft (`generated`) from pre-rendered facts in which every gap already reads “not reported”. If generation fails, or the draft mentions a therapy or manufacturer, claims coverage was verified, or turns an unanswered field into a negative (`sbarGuardrailViolation`), it falls back to `deterministicSbar`, which assembles the same sections from the current fields with no model call. The prepared Scene 1 brief (`prepared_fixture`) is returned only when `usePrepared` is `true`, which must come from an explicit user action; a changed or failing input never selects it.
 
 ## Demo sessions and pairing
 
@@ -125,6 +128,10 @@ Use the helpers in `@/lib/db` instead of the AWS SDK directly. Build keys with `
 - `updateItem` sets fields on an existing item and returns `null` when nothing exists; `appendUniqueToList` adds a value to a list attribute atomically (for resource unlocks).
 - Every item gets a `ttl` 24 hours ahead unless the record defines its own, so old sessions expire without a cleanup job.
 
-Appendix A in the spec maps `app/`, `components/`, and `lib/` to this repository's `src/` directory. Future fixture JSON belongs in top-level `data/`.
+Appendix A in the spec maps `app/`, `components/`, and `lib/` to this repository's `src/` directory. Fixture JSON lives in top-level `data/`. Consumers should import `fixtures` from `@/lib/fixtures`, rather than importing individual JSON files. Keep cost, coverage, stock, and resource mock labels visible when displaying these values.
+
+The prepared Scene 1 case (`scene-1-v1`) uses a displayed fixture clock of September 19, 2026 at 10 AM EDT and an explicit onset of September 18 at 8 AM EDT (26 hours earlier). Its onset confirmation and six negative checklist answers are scripted follow-up responses, not facts inferred from the opening sentence. Medications and allergies remain unanswered (`null`). The preferred fictional pharmacy is only a setup preference; it does not represent a booking or transmission. This approved-case fixture must not prefill user consent, onset confirmation, or checklist responses. Prepared brief use requires an exact current-case match and explicit selection; audio is deferred to #17.
+
+EN and ES instructions are static demo workflow copy, not clinically validated treatment instructions or runtime translations. Spanish-speaker review and a teammate's fictional-name review remain required before sign-off. No real brand, insurer, pharmacy, or manufacturer names are intentionally used.
 
 For additional shadcn components, run `pnpm exec shadcn add <component>` from the repository root. `.npmrc` allows dependency additions at the root of this single-package pnpm workspace.
