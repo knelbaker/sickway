@@ -1,5 +1,6 @@
 "use client";
 
+import { BriefAudio } from "@/components/hcp/brief-audio";
 import { BriefView } from "@/components/hcp/brief-view";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/components/hcp/labels";
 import { SourcePanel } from "@/components/hcp/source-panel";
@@ -11,7 +12,15 @@ import { usePolling } from "@/lib/client/use-polling";
 import { RED_FLAG_DEFINITIONS } from "@/lib/red-flags";
 
 /** One encounter, polled so status changes such as "packet available" appear without a refresh. */
-export function EncounterView({ encounterId, profile }: { encounterId: string; profile: StudentProfileSummary }) {
+export function EncounterView({
+  encounterId,
+  profile,
+  preparedSpokenScript,
+}: {
+  encounterId: string;
+  profile: StudentProfileSummary;
+  preparedSpokenScript: string;
+}) {
   const { data: encounter, error } = usePolling(`/api/encounters/${encounterId}`, encounterDetailResponseSchema);
 
   if (!encounter) {
@@ -68,7 +77,11 @@ export function EncounterView({ encounterId, profile }: { encounterId: string; p
         </Alert>
       )}
 
-      {encounter.sbar && <BriefView sbar={encounter.sbar} />}
+      {encounter.sbar && (
+        <BriefView sbar={encounter.sbar}>
+          <BriefAudio script={encounter.sbar.spokenScript} preparedScript={preparedSpokenScript} />
+        </BriefView>
+      )}
 
       <SourcePanel encounter={encounter} profile={profile} />
     </article>
