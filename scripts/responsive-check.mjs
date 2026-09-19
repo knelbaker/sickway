@@ -5,6 +5,7 @@
  * desktop widths, and reports:
  *   - page-wide horizontal overflow (and the elements causing it),
  *   - content clipped sideways inside a box that hides its overflow (unreachable on a phone),
+ *   - content that only fits by scrolling sideways inside its own box (a table in a narrow column),
  *   - interactive controls smaller than 44 × 44 CSS pixels,
  *   - whether the synthetic-data banner and the disclaimer are present.
  *
@@ -175,6 +176,17 @@ function measure({ minTarget, banner, disclaimer }) {
     }
   }
 
+  // A box that scrolls sideways keeps the page from overflowing, but its content still does not fit:
+  // the clinician's options table once lost its first two columns this way, at desktop width.
+  const sideways = [];
+  for (const el of document.body.querySelectorAll("*")) {
+    if (!visible(el) || ["INPUT", "TEXTAREA"].includes(el.tagName)) continue;
+    const overflowX = getComputedStyle(el).overflowX;
+    if ((overflowX === "auto" || overflowX === "scroll") && el.scrollWidth > el.clientWidth + 8) {
+      sideways.push(`${describe(el)} → ${el.scrollWidth - el.clientWidth}px wider than its box`);
+    }
+  }
+
   // A dialog covers the page; only its own controls can be tapped.
   const scope = document.querySelector('[role="dialog"]') ?? document.body;
   const small = [];
@@ -194,6 +206,7 @@ function measure({ minTarget, banner, disclaimer }) {
     pageOverflow: Math.max(0, Math.round(pageOverflow)),
     offenders: offenders.slice(0, 6),
     clipped: [...new Set(clipped)].slice(0, 6),
+    sideways: [...new Set(sideways)].slice(0, 6),
     small: [...new Set(small)].slice(0, 12),
     banner: text.includes(banner),
     disclaimer: text.includes(disclaimer),
@@ -241,6 +254,7 @@ async function auditWidth(width) {
     else {
       if (result.pageOverflow > 1) problems.push(`page scrolls sideways by ${result.pageOverflow}px: ${result.offenders.join("; ") || "(wide container)"}`);
       if (result.clipped.length) problems.push(`content cut off: ${result.clipped.join("; ")}`);
+      if (result.sideways.length) problems.push(`content scrolls sideways: ${result.sideways.join("; ")}`);
       if (result.small.length) problems.push(`controls under ${MIN_TARGET}px: ${result.small.join("; ")}`);
       if (!result.banner) problems.push("synthetic-data banner missing");
       if (!result.disclaimer) problems.push("disclaimer missing");

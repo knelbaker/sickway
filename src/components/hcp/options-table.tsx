@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useElementWidth } from "@/lib/client/use-element-width";
 import { useMediaQuery } from "@/lib/client/use-media-query";
 import { formatMockDollars } from "@/lib/format";
 import type { OptionRow } from "@/lib/schemas";
@@ -40,6 +41,9 @@ function Stock({ row }: { row: OptionRow }) {
     </span>
   );
 }
+
+/** Seven columns, each with its mock label beside the value, need about this much room. */
+const TABLE_MIN_WIDTH = 900;
 
 const CAPTION =
   "Synthetic demo options for the fictional plan. All costs, coverage, and stock are mock data, not verified. The clinician chooses; this list does not recommend.";
@@ -90,19 +94,23 @@ export function OptionsTable({
   /** Optional selection control per row, supplied by the attach flow. */
   renderSelect?: (row: OptionRow) => React.ReactNode;
 }) {
-  const wide = useMediaQuery("(min-width: 768px)", true);
+  const windowWide = useMediaQuery("(min-width: 768px)", true);
+  // The table sits in a column, so the window's width says little. Measure the room it really has;
+  // until that is known (or where it cannot be measured) the window decides.
+  const [ref, width] = useElementWidth<HTMLDivElement>();
+  const wide = windowWide && (width === null || width >= TABLE_MIN_WIDTH);
 
   if (!wide) {
     return (
-      <div className="flex flex-col gap-3">
-        <ul aria-label="Demo options" className="flex flex-col gap-3">
+      <div ref={ref} className="@container flex flex-col gap-3">
+        <ul aria-label="Demo options" className="grid grid-cols-1 gap-3 @xl:grid-cols-2">
           {rows.map((row) => (
-            <li key={`${row.therapyId}/${row.pharmacyId}`} className="rounded-lg border p-3 text-sm">
+            <li key={`${row.therapyId}/${row.pharmacyId}`} className="flex flex-col rounded-2xl border border-ink/12 bg-paper/70 p-4 text-sm">
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <span className="font-medium">{row.therapyName}</span>
                 <Badge variant={row.generic ? "default" : "outline"}>{row.generic ? "Generic" : "Brand"}</Badge>
               </div>
-              <dl className="flex flex-col gap-2">
+              <dl className="mb-3 flex flex-col gap-2">
                 {(
                   [
                     ["Pharmacy", row.pharmacyName],
@@ -129,7 +137,7 @@ export function OptionsTable({
                 </div>
               </dl>
               {renderSelect && (
-                <label className="mt-2 flex min-h-11 items-center gap-3 border-t pt-2 font-medium">
+                <label className="mt-auto flex min-h-11 cursor-pointer items-center gap-3 border-t border-ink/10 pt-2 font-medium">
                   {renderSelect(row)} Select this option
                 </label>
               )}
@@ -142,6 +150,7 @@ export function OptionsTable({
   }
 
   return (
+    <div ref={ref}>
     <Table>
       <TableCaption>{CAPTION}</TableCaption>
       <TableHeader>
@@ -189,5 +198,6 @@ export function OptionsTable({
         })}
       </TableBody>
     </Table>
+    </div>
   );
 }

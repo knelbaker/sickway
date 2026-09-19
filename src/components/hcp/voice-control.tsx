@@ -102,10 +102,10 @@ function VoiceSession({ actions }: { actions: VoiceActions }) {
   }
 
   return (
-    <section aria-labelledby="voice-heading" className="flex flex-col gap-3 rounded-lg border p-4">
+    <section aria-labelledby="voice-heading" className="flex flex-col gap-3 glass rounded-3xl p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 id="voice-heading" className="text-sm font-semibold">
+          <h3 id="voice-heading" className="display text-xl">
             Voice (optional)
           </h3>
           <p className="text-xs leading-5 text-muted-foreground">

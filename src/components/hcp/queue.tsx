@@ -29,7 +29,7 @@ export function Queue({
   return (
     <section aria-labelledby="queue-heading" className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 id="queue-heading" className="text-base font-semibold">
+        <h2 id="queue-heading" className="display text-xl">
           Demo queue
         </h2>
         {items && (
@@ -65,8 +65,9 @@ export function Queue({
                 aria-current={item.id === selectedId}
                 onClick={() => onSelect(item.id)}
                 className={cn(
-                  "flex w-full flex-col gap-1.5 rounded-lg border p-3 text-left outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
-                  item.id === selectedId && "border-primary bg-muted",
+                  "relative flex w-full cursor-pointer flex-col gap-1.5 overflow-hidden rounded-2xl border border-ink/12 bg-paper/70 p-3.5 pl-5 text-left outline-none transition-colors duration-200 hover:border-ink/40 focus-visible:ring-3 focus-visible:ring-ring/50",
+                  // The open intake carries the one red line.
+                  item.id === selectedId && "border-ink bg-paper before:absolute before:inset-y-3 before:left-2 before:w-[3px] before:rounded-full before:bg-brand-red",
                   item.status === "emergency" && "border-destructive/60",
                 )}
               >

@@ -41,9 +41,9 @@ export function EncounterView({
   const positive = RED_FLAG_DEFINITIONS.filter((flag) => encounter.intake.redFlags[flag.key] === true);
 
   return (
-    <article aria-labelledby="encounter-heading" className="flex flex-col gap-4">
+    <article aria-labelledby="encounter-heading" className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="encounter-heading" className="text-base font-semibold">
+        <h2 id="encounter-heading" className="display text-3xl">
           {profile.name}
         </h2>
         <div className="flex flex-wrap items-center gap-2">

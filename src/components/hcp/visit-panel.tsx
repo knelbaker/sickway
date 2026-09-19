@@ -182,9 +182,9 @@ export function VisitPanel({
       )}
 
       {canAttach && !done && selected && (
-        <section aria-labelledby="attach-heading" className="flex flex-col gap-4 rounded-lg border-2 p-4">
+        <section aria-labelledby="attach-heading" className="flex flex-col gap-4 rounded-3xl border-2 border-ink bg-paper/80 p-5 sm:p-6">
           <div>
-            <h3 id="attach-heading" className="text-sm font-semibold">
+            <h3 id="attach-heading" className="display text-xl">
               Packet for the student
             </h3>
             <p className="text-sm text-muted-foreground">
