@@ -40,12 +40,40 @@ pnpm build
 
 Vitest runs the banner smoke test and environment validation tests without loading real credentials. Use `pnpm exec vitest` for watch mode while developing.
 
+The DynamoDB round trip is opt-in, so `pnpm test` never touches AWS. With the AWS settings in `.env.local` or `.env`, run:
+
+```bash
+RUN_DDB_INTEGRATION=1 pnpm test src/lib/__tests__/db.integration.test.ts
+```
+
+It writes, reads, updates, lists, and deletes one synthetic item in a throwaway session partition.
+
 ## Shared code
 
 - `src/app/`: routes and the shared shell.
 - `src/components/ui/`: shadcn/ui components for Tailwind v4, configured in `components.json`.
 - `src/components/synthetic-banner.tsx`: the non-dismissible synthetic-data notice.
 - `src/lib/env.ts`: validated server configuration.
+- `src/lib/db.ts`: session-scoped DynamoDB helpers for the single demo table.
+
+## Data layer
+
+All persistent state lives in one DynamoDB table (`DDB_TABLE`) with partition key `PK` (String), sort key `SK` (String), on-demand capacity, and TTL enabled on the `ttl` attribute. The IAM user needs only `GetItem`, `PutItem`, `UpdateItem`, `DeleteItem`, `Query`, and `BatchWriteItem` on that table; nothing uses `Scan`.
+
+| Record | `PK` | `SK` |
+| --- | --- | --- |
+| Session metadata | `SESSION#<sessionId>` | `META` |
+| Encounter | `SESSION#<sessionId>` | `ENC#<encounterId>` |
+| Packet | `SESSION#<sessionId>` | `PKT#<packetId>` |
+| Audit event | `SESSION#<sessionId>` | `EVT#<timestamp>#<eventId>` |
+| Generation cache | `SESSION#<sessionId>` | `CACHE#<hash>` |
+
+Use the helpers in `@/lib/db` instead of the AWS SDK directly. Build keys with `pk`, `sk`, and `SK_PREFIX`. Every helper takes the demo session ID first and only touches that session's partition, so there is no way to read an encounter or packet by ID alone. Reads take a Zod schema and return validated records with `PK` and `SK` removed.
+
+- `putItem` creates or replaces; `putItemIfAbsent` returns `false` without overwriting when the item exists (for idempotent attach).
+- `getItem` returns `null` when the item is not in the session; `queryByPrefix` lists a session's items by sort-key prefix.
+- `updateItem` sets fields on an existing item and returns `null` when nothing exists; `appendUniqueToList` adds a value to a list attribute atomically (for resource unlocks).
+- Every item gets a `ttl` 24 hours ahead unless the record defines its own, so old sessions expire without a cleanup job.
 
 Appendix A in the spec maps `app/`, `components/`, and `lib/` to this repository's `src/` directory. Future fixture JSON belongs in top-level `data/`.
 
