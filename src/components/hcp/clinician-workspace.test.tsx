@@ -53,7 +53,7 @@ async function open(id: string) {
 }
 
 test("explains the empty queue, then shows a new submission on the next poll without a refresh", async () => {
-  render(<ClinicianWorkspace profile={profile} />);
+  render(<ClinicianWorkspace profile={profile} preparedSpokenScript="Prepared script." />);
   await tick();
   expect(screen.getByText(/appears here only after the student reviews it and gives consent/)).toBeDefined();
 
@@ -68,7 +68,7 @@ test("explains the empty queue, then shows a new submission on the next poll wit
 test("shows the four SBAR sections as text with a source badge that matches the stored brief", async () => {
   queue = sampleEncountersQueueResponse;
   encounters["enc-demo-001"] = encounter();
-  render(<ClinicianWorkspace profile={profile} />);
+  render(<ClinicianWorkspace profile={profile} preparedSpokenScript="Prepared script." />);
   await tick();
   await open("enc-demo-001");
 
@@ -86,7 +86,7 @@ test.each([
 ] as const)("labels a %s brief", async (source, label) => {
   queue = sampleEncountersQueueResponse;
   encounters["enc-demo-001"] = encounter({ sbar: { ...sampleEncounterDetailResponse.sbar!, source } });
-  render(<ClinicianWorkspace profile={profile} />);
+  render(<ClinicianWorkspace profile={profile} preparedSpokenScript="Prepared script." />);
   await tick();
   await open("enc-demo-001");
 
@@ -103,7 +103,7 @@ test("shows unanswered values as not reported, explicit none as none reported, e
       redFlags: { ...sampleEncounterDetailResponse.intake.redFlags, dehydration: null },
     },
   });
-  render(<ClinicianWorkspace profile={profile} />);
+  render(<ClinicianWorkspace profile={profile} preparedSpokenScript="Prepared script." />);
   await tick();
   await open("enc-demo-001");
 
@@ -130,7 +130,7 @@ test("an emergency encounter is visibly distinct and offers no brief", async () 
       redFlags: { ...sampleEncounterDetailResponse.intake.redFlags, breathing_chest_pain: true },
     },
   });
-  render(<ClinicianWorkspace profile={profile} />);
+  render(<ClinicianWorkspace profile={profile} preparedSpokenScript="Prepared script." />);
   await tick();
   await open("enc-demo-001");
 
@@ -148,7 +148,7 @@ test("a needs-review encounter names the unanswered items and never reads as an 
       redFlags: { ...sampleEncounterDetailResponse.intake.redFlags, stiff_neck_rash: null },
     },
   });
-  render(<ClinicianWorkspace profile={profile} />);
+  render(<ClinicianWorkspace profile={profile} preparedSpokenScript="Prepared script." />);
   await tick();
   await open("enc-demo-001");
 
@@ -160,7 +160,7 @@ test("a needs-review encounter names the unanswered items and never reads as an 
 test("updates the open encounter's status on the next poll", async () => {
   queue = sampleEncountersQueueResponse;
   encounters["enc-demo-001"] = encounter();
-  render(<ClinicianWorkspace profile={profile} />);
+  render(<ClinicianWorkspace profile={profile} preparedSpokenScript="Prepared script." />);
   await tick();
   await open("enc-demo-001");
   expect(screen.queryByText("Packet available in demo")).toBeNull();
@@ -174,7 +174,7 @@ test("updates the open encounter's status on the next poll", async () => {
 test("closes an open encounter that is no longer in this session's queue", async () => {
   queue = sampleEncountersQueueResponse;
   encounters["enc-demo-001"] = encounter();
-  render(<ClinicianWorkspace profile={profile} />);
+  render(<ClinicianWorkspace profile={profile} preparedSpokenScript="Prepared script." />);
   await tick();
   await open("enc-demo-001");
   expect(screen.getByRole("region", { name: "Source values" })).toBeDefined();

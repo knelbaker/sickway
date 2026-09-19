@@ -3,13 +3,14 @@ import { SessionGate } from "@/components/session/session-gate";
 import { fixtures } from "@/lib/fixtures";
 
 export default function ClinicianPage() {
-  const { profile, plans } = fixtures;
+  const { profile, plans, brief } = fixtures;
   const plan = plans.find((row) => row.id === profile.planId);
 
   // Catalogs and manufacturer resources stay on the server; they reach this screen only through the API.
   return (
     <SessionGate title="Clinician workspace">
       <ClinicianWorkspace
+        preparedSpokenScript={brief.sbar.spokenScript}
         profile={{
           name: profile.name,
           age: profile.age,

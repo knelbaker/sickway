@@ -73,6 +73,7 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/components/session/`: session start, join, and the `SessionGate` wrapper for paired screens.
 - `src/components/hcp/`: the `/hcp` queue, SBAR brief with its source badge, and the source-values panel.
 - `src/components/student/`: the `/s` intake flow; the draft lives in `use-intake-draft.ts` and stays in browser memory.
+- `src/lib/voice.ts`: brief audio rules — when the prepared recording may play, and the labelled fallbacks.
 - `src/lib/format.ts`: browser-safe display helpers (fixture wall-clock times, “not reported”, mock dollars).
 - `src/lib/env.ts`: validated server configuration.
 - `src/lib/db.ts`: session-scoped DynamoDB helpers for the single demo table.
@@ -117,6 +118,18 @@ Cache keys hash the whitespace-normalized system and user prompts, configured mo
 `POST /api/encounters/:id/resources` is the only route that ever returns manufacturer resources. `decideUnlock` unlocks on an explicit `therapyId`, or on text that names exactly one fixture therapy by its full name; category text, vague references, several names, and unknown IDs stay locked with a reason. An unlock appends the therapy to `unlockedTherapyIds` with an atomic, unique list append, returns only that therapy's resources (each labelled “Manufacturer resource — fictional demo”), and writes an `EVT#` audit event with therapy ID, resource IDs, action, and reason; a repeat is audited as a view and never duplicates the ID. If the unlock cannot be recorded, nothing is returned. This demonstrates a UI and server rule; it does not by itself establish the absence of commercial influence, and no data is sent to any manufacturer.
 
 `POST /api/encounters/:id/attach` stores the clinician's confirmed selection as the encounter's packet. It requires `confirmed: true` (`400 confirmation_required`), validates every ID against the fixtures, requires the price to equal the fixture price for that therapy, pharmacy, and plan, and re-applies the resource gate: a resource whose therapy is not in `unlockedTherapyIds` is `403 resource_locked`, and a resource must belong to the chosen therapy. `emergency` and `needs_review` encounters are refused with 409. There is one packet per encounter (`PKT#<encounterId>`, conditional write), so a double click, a retry, or two simultaneous confirms all return the same packet. The encounter then gets `chosenTherapyId`, `packetId`, and `status: "packet_available"`. Nothing is transmitted to a pharmacy, clinic, email, or SMS.
+
+### Brief audio
+
+`public/demo-brief.mp3` is a prepared recording of the exact `spokenScript` in `data/demo-brief.json` (52 words, 21.9 s). “Play brief” on `/hcp` uses it only when the brief on screen would say the same words (`matchesPreparedScript` compares normalised script text, never encounter IDs). Any other brief is read by the browser's Speech Synthesis API, and if that is missing the screen says “Audio unavailable — read the brief below”. The mode is always labelled — “Prepared recording” or “Browser speech” — so a prepared clip is never mistaken for live voice, playback is always manual, and the SBAR text stays visible.
+
+The current file was rendered with the macOS system voice because the project's ElevenLabs key was rejected as invalid. If `spokenScript` changes, or to use a better voice, regenerate the file from the same text and keep the filename:
+
+```bash
+node -e 'process.stdout.write(require("./data/demo-brief.json").sbar.spokenScript)' > /tmp/brief.txt
+say -v Samantha -r 175 -f /tmp/brief.txt -o /tmp/brief.aiff
+ffmpeg -y -i /tmp/brief.aiff -codec:a libmp3lame -b:a 96k -ac 1 public/demo-brief.mp3
+```
 
 ## Demo sessions and pairing
 
