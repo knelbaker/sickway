@@ -44,7 +44,10 @@ export function SourcePanel({ encounter, profile }: { encounter: Encounter; prof
           {profile.name}, {profile.age}
         </Row>
         <Row label={s.plan} source={fieldSources.plan}>
-          {profile.planName} <Badge variant="secondary">{profile.planMockLabel}</Badge>
+          <span lang="en">{profile.planName}</span>{" "}
+          <Badge variant="secondary" lang="en">
+            {profile.planMockLabel}
+          </Badge>
         </Row>
         <Row label={s.languages} source={fieldSources.instructionLanguages}>
           {(encounter.preferredInstructionLanguages ?? profile.instructionLanguages)

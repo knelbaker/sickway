@@ -48,7 +48,8 @@ export function ManufacturerDrawer({
           ) : (
             <ul className="mt-2 flex flex-col gap-3">
               {resources.map((resource) => (
-                <li key={resource.id} className="rounded-md bg-muted/50 p-3 text-sm">
+                // Resource titles, labels, and descriptions are fixture data, written in English.
+                <li key={resource.id} lang="en" className="rounded-md bg-muted/50 p-3 text-sm">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{resource.title}</span>
                     <Badge variant="secondary">{resource.mockLabel}</Badge>

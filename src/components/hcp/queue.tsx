@@ -37,7 +37,7 @@ export function Queue({
         </h2>
         {items && (
           <span className="text-xs text-muted-foreground">
-            <AnimatedCounter value={items.length} /> {c.queue.shared}
+            <AnimatedCounter value={items.length} /> {c.queue.shared(items.length)}
           </span>
         )}
       </div>

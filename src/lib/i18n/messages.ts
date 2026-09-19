@@ -109,7 +109,8 @@ const en = {
     },
     queue: {
       title: "Demo queue",
-      shared: "shared",
+      // Takes the count because Spanish needs a singular form; English reads the same either way.
+      shared: (count: number) => (count === 1 ? "shared" : "shared"),
       loading: "Loading queue…",
       empty: "No shared intakes yet. An intake appears here only after the student reviews it and gives consent.",
       noSymptoms: "symptoms not reported",
@@ -648,7 +649,7 @@ const es: Messages = {
     },
     queue: {
       title: "Cola de demostración",
-      shared: "compartidas",
+      shared: (count: number) => (count === 1 ? "compartida" : "compartidas"),
       loading: "Cargando la cola…",
       empty: "Todavía no hay admisiones compartidas. Una admisión aparece aquí solo después de que el estudiante la revisa y da su consentimiento.",
       noSymptoms: "síntomas no informados",
