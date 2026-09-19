@@ -77,6 +77,7 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/lib/http.ts`: `json` / `errorJson` responses with `Cache-Control: no-store`.
 - `src/lib/ai.ts`: server-only Gemini structured generation with schema validation, bounded retries, and session-scoped caching.
 - `src/lib/demo-routing.ts`: pure, synchronous demo routing and confirmed elapsed symptom time.
+- `src/lib/intake.ts`: candidate-field extraction from the student's text and the onset suggestion.
 - `src/lib/sbar.ts`: clinician brief generation with a deterministic fallback and the prepared fixture.
 
 `routeIntake(intake)` accepts a reviewed intake with an optional boolean `outsideScenario` marker and returns `{ branch, reasons }`. Any of the six checklist flags explicitly set to `true` yields `emergency`, even if other fields are invalid. Otherwise, unanswered (`null`) flags, missing or malformed fields, unexpected keys, and `outsideScenario: true` yield `needs_review` with explicit reasons. A valid intake with all six flags `false` yields `ready`. This is a demo routing result, not clinically validated triage or a diagnosis; temperature and other fields do not introduce additional routing rules.
@@ -95,6 +96,8 @@ The helper uses the Google provider with `GOOGLE_GENERATIVE_AI_API_KEY` and `GEM
 Cache keys hash the whitespace-normalized system and user prompts, configured model, and prompt version under `SESSION#<sessionId>` / `CACHE#<hash>`. Original prompts are passed to Gemini. Records inherit the database helper's 24-hour TTL; expired records are ignored even before DynamoDB removes them. Cached JSON is revalidated on every hit. Bump `promptVersion` whenever the prompt contract or schema changes. Concurrent first requests can each generate output; the cache does not coalesce in-flight requests.
 
 `buildSbar({ sessionId, intake, profile, routing, usePrepared })` returns the clinician brief with its `source` always set. It asks Gemini for a draft (`generated`) from pre-rendered facts in which every gap already reads “not reported”. If generation fails, or the draft mentions a therapy or manufacturer, claims coverage was verified, or turns an unanswered field into a negative (`sbarGuardrailViolation`), it falls back to `deterministicSbar`, which assembles the same sections from the current fields with no model call. The prepared Scene 1 brief (`prepared_fixture`) is returned only when `usePrepared` is `true`, which must come from an explicit user action; a changed or failing input never selects it.
+
+`POST /api/extract` (session-guarded) turns the student's free text into candidate fields for the review form and writes nothing: no encounter and no queue entry. Anything the student did not say stays `null`; a temperature is kept only if that number appears in the text; profile fields are never read from the sentence. The onset phrase is returned as written, and `suggestOnsetIso` derives a suggested timestamp from the phrase and the session's fixture clock in code (never the system clock, never the model), which the student must still confirm. Unrelated input returns `outsideScenario: true` with no fields. If generation fails the route returns `503 extraction_unavailable` so the student can enter fields manually; it never substitutes the seeded case.
 
 ## Demo sessions and pairing
 
