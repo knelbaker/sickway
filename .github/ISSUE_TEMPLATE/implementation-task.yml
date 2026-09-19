@@ -1,0 +1,138 @@
+name: Implementation task
+description: Define a scoped, implementation-ready task for a human or coding agent.
+title: "[Task]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for work that is already understood well enough to implement. Give the next contributor enough context to begin without reconstructing decisions from chat or asking routine questions.
+
+        Before starting, read `README.md` and the relevant parts of `sickway.md`. The design spec is the product source of truth unless this issue explicitly records an approved change.
+
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the user-visible or system behavior that should exist when this task is complete.
+      placeholder: A clinician can ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Explain why this work is needed, who it serves, and any decisions already made. Link related issues, designs, discussions, or spec sections.
+      placeholder: |
+        User/problem:
+        Relevant spec section:
+        Related work:
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current state
+      description: Describe what exists today, including relevant routes, components, APIs, data fixtures, or known limitations.
+      placeholder: Include file paths and concrete behavior when known.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: List the changes included in this task. Be specific about screens, endpoints, data, and states.
+      placeholder: |
+        - Add ...
+        - Update ...
+        - Handle ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: Record nearby work that must not be added, especially optional or future features from the design spec.
+      placeholder: |
+        - No ...
+        - Defer ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation-notes
+    attributes:
+      label: Implementation notes
+      description: Provide known file locations, interfaces, data shapes, dependencies, UI states, copy, or technical constraints. State whether these notes are requirements or suggestions.
+      placeholder: |
+        Likely files:
+        Required interfaces/data:
+        Constraints:
+        Suggested approach:
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Write independently verifiable behavior. Include success, empty, loading, error, and boundary states where they matter.
+      placeholder: |
+        - [ ] Given ..., when ..., then ...
+        - [ ] Missing values ...
+        - [ ] An error ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: List the commands and manual scenarios that should prove the task is complete, including device or browser coverage when relevant.
+      placeholder: |
+        Automated:
+        - `npm ...`
+
+        Manual:
+        1. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and blockers
+      description: List prerequisite issues, credentials, services, environment variables, fixture data, decisions, or external constraints. Write "None" if there are none.
+      placeholder: None
+    validations:
+      required: true
+
+  - type: textarea
+    id: product-guardrails
+    attributes:
+      label: Product and data guardrails
+      description: Identify any synthetic-data, consent, session isolation, mock-labeling, missing-data, manufacturer-resource, or no-external-action rules that apply. Write "None" only if this work cannot affect them.
+      placeholder: |
+        - Use synthetic data only.
+        - Keep mock cost labels visible at the point of use.
+        - Do not imply a booking, prescription, or external transmission occurred.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: ready
+    attributes:
+      label: Ready for implementation
+      description: Confirm the issue is actionable before assigning it.
+      options:
+        - label: The desired behavior and acceptance criteria are concrete.
+          required: true
+        - label: Scope and out-of-scope work are explicit.
+          required: true
+        - label: Dependencies, required access, and unresolved decisions are documented.
+          required: true
+        - label: Relevant product guardrails from `sickway.md` are represented above.
+          required: true
