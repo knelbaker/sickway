@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ResetDemoButton, SessionSupersededNotice } from "@/components/session/reset-controls";
 import { StudentFlow } from "@/components/student/student-flow";
 import { sampleDemoSessionResponse } from "@/lib/api-contracts";
+import { sampleIntakeRequest } from "@/lib/api-contracts";
 import { apiFetch, getSessionToken } from "@/lib/client/session-store";
 
 const OLD = `${"a".repeat(32)}.signature`;
@@ -89,7 +90,7 @@ test("the paired device is prompted once its session is superseded, and joins in
 test("a new session clears the student screen: no draft, no previous status, consent unticked", async () => {
   window.sessionStorage.setItem(`sickday.submitted.${"a".repeat(32)}`, JSON.stringify({ encounterId: "e1", status: "ready" }));
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ error: "unavailable" }, { status: 503 })));
-  render(<StudentFlow profile={profile} />);
+  render(<StudentFlow profile={profile} preparedIntake={sampleIntakeRequest.intake} />);
   expect(screen.getByText("Shared with the demo clinic")).toBeDefined();
 
   act(() => {

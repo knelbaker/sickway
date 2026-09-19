@@ -1,5 +1,4 @@
-import { BRIEF_SOURCE_LABEL } from "@/components/hcp/labels";
-import { Badge } from "@/components/ui/badge";
+import { BriefSourceBadge } from "@/components/brief-source-badge";
 import type { Sbar } from "@/lib/schemas";
 
 const SECTIONS = [
@@ -17,7 +16,7 @@ export function BriefView({ sbar, children }: { sbar: Sbar; children?: React.Rea
         <h3 id="brief-heading" className="text-sm font-semibold">
           Clinician brief (SBAR)
         </h3>
-        <Badge variant={sbar.source === "generated" ? "default" : "secondary"}>{BRIEF_SOURCE_LABEL[sbar.source]}</Badge>
+        <BriefSourceBadge source={sbar.source} />
       </div>
       {children}
       <dl className="flex flex-col gap-3 text-sm leading-6">

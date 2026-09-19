@@ -8,6 +8,7 @@ import { requireSession } from "@/lib/session";
 export const maxDuration = 60;
 
 const consentGiven = z.object({ consent: z.object({ shareWithClinic: z.literal(true) }) });
+const preparedDemo = z.object({ usePreparedDemo: z.literal(true) });
 
 /**
  * Shares a reviewed intake with the demo clinic. Nothing is stored unless
@@ -21,6 +22,17 @@ export async function POST(request: Request) {
 
   // Consent is checked on its own first so a decline is never mistaken for a malformed form.
   if (!consentGiven.safeParse(body).success) return errorJson(400, "consent_required");
+
+  // The prepared case is never inferred from what was typed; it needs this explicit flag,
+  // and it carries no intake of its own: the server uses the fixture.
+  if (preparedDemo.safeParse(body).success) {
+    try {
+      const encounter = await createEncounter(auth.session, "prepared_demo");
+      return json(intakeResponseSchema.parse({ encounterId: encounter.id, status: encounter.status }), 201);
+    } catch {
+      return errorJson(503, "intake_unavailable");
+    }
+  }
 
   const parsed = intakeRequestSchema.safeParse(body);
   if (!parsed.success) {

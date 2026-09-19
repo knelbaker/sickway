@@ -120,6 +120,7 @@ test("the student screen shows the packet link on its own once the clinician att
   respond = () => Response.json(encounter);
   render(
     <StudentFlow
+      preparedIntake={sampleEncounterDetailResponse.intake}
       profile={{ name: "Alex Demo", age: 20, planName: "Fictional Demo Out-of-State PPO", planMockLabel: "Mock coverage — not verified", instructionLanguages: ["en", "es"], costCeiling: 25, fixtureClock: "2026-09-19T10:00:00-04:00" }}
     />,
   );

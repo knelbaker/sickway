@@ -4,7 +4,7 @@ import { getItem, putItemIfAbsent, queryByPrefix, sk, SK_PREFIX } from "@/lib/db
 import { routeIntake } from "@/lib/demo-routing";
 import { fixtures } from "@/lib/fixtures";
 import type { EncounterQueueItem } from "@/lib/api-contracts";
-import { buildSbar } from "@/lib/sbar";
+import { buildSbar, preparedSbar } from "@/lib/sbar";
 import {
   encounterSchema,
   type DemoSession,
@@ -28,9 +28,9 @@ const STUDENT_FIELDS = [
 
 const PROFILE_FIELDS = ["name", "age", "plan", "instructionLanguages", "costCeiling"] as const;
 
-export function fieldSourcesFor(): Record<string, FieldSource> {
+export function fieldSourcesFor(source: "student_review" | "demo_fixture" = "student_review"): Record<string, FieldSource> {
   return Object.fromEntries([
-    ...STUDENT_FIELDS.map((field) => [field, "student_review"] as const),
+    ...STUDENT_FIELDS.map((field) => [field, source] as const),
     ...PROFILE_FIELDS.map((field) => [field, "synthetic_profile"] as const),
   ]);
 }
@@ -42,8 +42,12 @@ export function fieldSourcesFor(): Record<string, FieldSource> {
  */
 export async function createEncounter(
   session: DemoSession,
-  intake: ReviewedIntake,
+  reviewedIntake: ReviewedIntake | "prepared_demo",
 ): Promise<Encounter> {
+  // "Use prepared demo" is an explicit user choice (§4.1). The scripted case and its brief come
+  // from the fixtures on the server, and every student field is recorded as demo_fixture.
+  const prepared = reviewedIntake === "prepared_demo";
+  const intake: ReviewedIntake = prepared ? fixtures.profile.intake : reviewedIntake;
   const routing = routeIntake(intake);
   const now = new Date().toISOString();
 
@@ -51,7 +55,9 @@ export async function createEncounter(
   const sbar =
     routing.branch === "emergency"
       ? undefined
-      : await buildSbar({ sessionId: session.id, intake, profile: fixtures.profile, routing });
+      : prepared
+        ? preparedSbar()
+        : await buildSbar({ sessionId: session.id, intake, profile: fixtures.profile, routing });
 
   const encounter = encounterSchema.parse({
     id: randomUUID(),
@@ -61,7 +67,7 @@ export async function createEncounter(
     status: routing.branch,
     intake,
     consent: { shareWithClinic: true, capturedAt: now },
-    fieldSources: fieldSourcesFor(),
+    fieldSources: fieldSourcesFor(prepared ? "demo_fixture" : "student_review"),
     sbar,
     unlockedTherapyIds: [],
   } satisfies Encounter);
