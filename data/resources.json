@@ -1,0 +1,18 @@
+[
+  {
+    "id": "resource-demo-copay",
+    "therapyId": "therapy-brand-demo",
+    "type": "copay_card",
+    "title": "Fictional Demo Copay Card",
+    "description": "Static sample only. No monetary value, eligibility verification, enrollment, or external transmission.",
+    "mockLabel": "Manufacturer resource — fictional demo"
+  },
+  {
+    "id": "resource-demo-education",
+    "therapyId": "therapy-brand-demo",
+    "type": "educational",
+    "title": "Fictional Demo Educational Resource",
+    "description": "Static workflow example from Fictional Demo Manufacturer. Not clinical guidance; no efficacy or treatment claims.",
+    "mockLabel": "Manufacturer resource — fictional demo"
+  }
+]

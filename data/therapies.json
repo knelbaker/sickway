@@ -1,0 +1,21 @@
+[
+  {
+    "id": "therapy-generic-demo",
+    "name": "Fictional Generic Antiviral Demo",
+    "generic": true,
+    "category": "antiviral",
+    "manufacturer": "Fictional Demo Manufacturer",
+    "resourceIds": []
+  },
+  {
+    "id": "therapy-brand-demo",
+    "name": "Fictional Brand Antiviral Demo",
+    "generic": false,
+    "category": "antiviral",
+    "manufacturer": "Fictional Demo Manufacturer",
+    "resourceIds": [
+      "resource-demo-copay",
+      "resource-demo-education"
+    ]
+  }
+]
