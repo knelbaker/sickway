@@ -45,6 +45,22 @@ describe("suggestOnsetIso", () => {
     expect(suggestOnsetIso(phrase, CLOCK)).toBe(expected);
   });
 
+  it.each([
+    ["ayer por la mañana", "2026-09-18T08:00:00-04:00"],
+    ["empezó ayer", "2026-09-18T12:00:00-04:00"],
+    ["anoche", "2026-09-18T22:00:00-04:00"],
+    ["esta mañana", "2026-09-19T08:00:00-04:00"],
+    ["hace dos días por la tarde", "2026-09-17T14:00:00-04:00"],
+    ["hace 3 horas", "2026-09-19T07:00:00-04:00"],
+    ["anteayer en la noche", "2026-09-17T22:00:00-04:00"],
+  ])("maps the Spanish phrase %j the same way", (phrase, expected) => {
+    expect(suggestOnsetIso(phrase, CLOCK)).toBe(expected);
+  });
+
+  it("does not mistake “mañana” (tomorrow) for a morning in the past", () => {
+    expect(suggestOnsetIso("mañana tengo un examen", CLOCK)).toBeNull();
+  });
+
   it("crosses a month boundary using the fixture clock's own offset", () => {
     expect(suggestOnsetIso("yesterday evening", "2026-10-01T00:30:00-04:00")).toBe("2026-09-30T19:00:00-04:00");
   });
@@ -157,5 +173,6 @@ describe("extractIntake", () => {
     expect(call.prompt).toBe(`TEXT:\n${SEEDED}`);
     expect(call.system).toContain("Missing is not negative");
     expect(call.system).toContain("Do not extract a name, age, insurance");
+    expect(call.system).toContain("Never translate, in either direction");
   });
 });

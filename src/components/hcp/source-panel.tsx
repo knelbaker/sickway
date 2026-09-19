@@ -43,7 +43,9 @@ export function SourcePanel({ encounter, profile }: { encounter: Encounter; prof
           {profile.planName} <Badge variant="secondary">{profile.planMockLabel}</Badge>
         </Row>
         <Row label="Instruction languages" source={fieldSources.instructionLanguages}>
-          {profile.instructionLanguages.map((code) => LANGUAGE_NAMES[code] ?? code).join(" and ")}
+          {(encounter.preferredInstructionLanguages ?? profile.instructionLanguages)
+            .map((code) => LANGUAGE_NAMES[code] ?? code)
+            .join(" and ")}
         </Row>
         <Row label="Cost ceiling" source={fieldSources.costCeiling}>
           {profile.costCeiling === null ? "not set" : `${formatMockDollars(profile.costCeiling)} (fictional)`}

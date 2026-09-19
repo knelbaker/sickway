@@ -9,7 +9,7 @@ export default function StudentPage() {
 
   // Only the profile summary crosses to the browser; catalogs and resources stay on the server.
   return (
-    <SessionGate title="Student intake">
+    <SessionGate screen="student">
       <StudentFlow
         voiceEnabled={voiceAvailability().studentDictation}
         preparedIntake={profile.intake}

@@ -18,19 +18,22 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { encounterDetailResponseSchema, intakeResponseSchema, type IntakeResponse } from "@/lib/api-contracts";
+import { useLanguage } from "@/lib/client/language-store";
 import { apiFetch, sessionIdFromToken, useSessionToken } from "@/lib/client/session-store";
-import type { ReviewedIntake } from "@/lib/schemas";
+import type { InstructionLanguage, ReviewedIntake } from "@/lib/schemas";
 import { usePolling } from "@/lib/client/use-polling";
 
 type Step = "describe" | "followups" | "review" | "prepared";
 
 type FlowProps = { profile: StudentProfileSummary; preparedIntake: ReviewedIntake; voiceEnabled?: boolean };
 
-const SUBMIT_ERRORS: Record<string, string> = {
-  consent_required: "Consent is required before anything is shared. Nothing was sent.",
-  invalid_intake: "Some answers could not be read. Go back, check them, and try again. Nothing was shared.",
-  invalid_session: "This demo session has ended. Start or join a session again from the home page.",
-  expired_session: "This demo session has ended. Start or join a session again from the home page.",
+/** Server error codes → which reviewed message to show. The text itself comes from the language catalogue. */
+const SUBMIT_ERROR_KEYS: Record<string, "consent_required" | "invalid_intake" | "session"> = {
+  consent_required: "consent_required",
+  invalid_intake: "invalid_intake",
+  invalid_session: "session",
+  expired_session: "session",
+  session_superseded: "session",
 };
 
 /** Keyed by session so a new session never shows the previous run's submission. */
@@ -62,6 +65,7 @@ export function StudentFlow(props: FlowProps) {
 function SubmittedStatus({ submitted, profile }: { submitted: IntakeResponse; profile: StudentProfileSummary }) {
   const poll = usePolling(`/api/encounters/${submitted.encounterId}`, encounterDetailResponseSchema);
   const encounter = poll.data;
+  const { t } = useLanguage();
 
   return (
     <div className="flex flex-col gap-2">
@@ -70,25 +74,32 @@ function SubmittedStatus({ submitted, profile }: { submitted: IntakeResponse; pr
         packetId={encounter?.packetId}
         profile={profile}
       />
-      {encounter?.followUp && <OutcomeChip followUp={encounter.followUp} />}
+      {encounter?.followUp && <OutcomeChip followUp={encounter.followUp} localized />}
       {encounter?.status === "packet_available" && <SimulateFollowUp encounterId={encounter.id} />}
       {encounter?.sbar && (
         <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          Clinic brief: <BriefSourceBadge source={encounter.sbar.source} />
+          {t.flow.clinicBrief} <BriefSourceBadge source={encounter.sbar.source} localized />
         </p>
       )}
-      <PollStatus poll={poll} />
+      <PollStatus poll={poll} localized />
     </div>
   );
 }
 
 function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = false }: FlowProps & { sessionId: string | null }) {
+  const { language, t } = useLanguage();
   const [draft, dispatch] = useIntakeDraft();
+  // The student's own instruction-language preference. It starts from the displayed profile
+  // selection and is independent of the interface language: nothing is inferred from that choice.
+  const [preferredLanguages, setPreferredLanguages] = useState<InstructionLanguage[]>(
+    profile.instructionLanguages.filter((code): code is InstructionLanguage => code === "en" || code === "es"),
+  );
   const [step, setStep] = useState<Step>("describe");
   const [consent, setConsent] = useState(false);
   const [declined, setDeclined] = useState(false);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // A key, not text, so an error message follows a language switch like everything else.
+  const [error, setError] = useState<keyof typeof t.flow.errors | null>(null);
   // Restores this session's submission after a refresh. Rendered on the client only (SessionGate).
   const [submitted, setSubmitted] = useState<IntakeResponse | null>(() => readSubmitted(sessionId));
 
@@ -102,7 +113,7 @@ function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = fals
 
   async function submit() {
     // Never rely on the disabled button alone.
-    if (!consent || pending) return;
+    if (!consent || pending || preferredLanguages.length === 0) return;
     setPending(true);
     setError(null);
     try {
@@ -111,33 +122,37 @@ function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = fals
         body: JSON.stringify(
           step === "prepared"
             ? { usePreparedDemo: true, consent: { shareWithClinic: true } }
-            : { intake: toReviewedIntake(draft), consent: { shareWithClinic: true } },
+            : {
+                intake: toReviewedIntake(draft),
+                preferredInstructionLanguages: preferredLanguages,
+                consent: { shareWithClinic: true },
+              },
         ),
       });
       const body: unknown = await response.json().catch(() => null);
       if (!response.ok) {
         const code = (body as { error?: string } | null)?.error ?? "";
-        setError(SUBMIT_ERRORS[code] ?? "Could not reach the demo clinic. Nothing was shared. Try again.");
+        setError(SUBMIT_ERROR_KEYS[code] ?? "generic");
         return;
       }
       const result = intakeResponseSchema.parse(body);
       if (sessionId) window.sessionStorage.setItem(storageKey(sessionId), JSON.stringify(result));
       setSubmitted(result);
     } catch {
-      setError("Could not reach the demo clinic. Nothing was shared. Try again.");
+      setError("generic");
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <Card>
+    <Card lang={language}>
       <CardHeader>
         <CardTitle>
-          <h1>Student intake</h1>
+          <h1>{t.flow.title}</h1>
         </CardTitle>
         <CardDescription>
-          Nothing you enter is shared with the demo clinic until you review it and give consent.
+          {t.flow.description}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -166,26 +181,26 @@ function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = fals
             />
             <ListQuestion
               number={2}
-              legend="Have you taken any medications for this?"
-              inputLabel="Which medications?"
-              placeholder="For example: ibuprofen"
+              legend={t.flow.medsLegend}
+              inputLabel={t.flow.medsInput}
+              placeholder={t.flow.medsPlaceholder}
               value={draft.medsTaken}
               onChange={(value) => dispatch({ type: "set", field: "medsTaken", value })}
             />
             <ListQuestion
               number={3}
-              legend="Do you have any allergies?"
-              inputLabel="Which allergies?"
-              placeholder="For example: penicillin"
+              legend={t.flow.allergiesLegend}
+              inputLabel={t.flow.allergiesInput}
+              placeholder={t.flow.allergiesPlaceholder}
               value={draft.allergies}
               onChange={(value) => dispatch({ type: "set", field: "allergies", value })}
             />
             <div className="flex flex-wrap gap-2 border-t pt-4">
               <Button type="button" className="h-11" onClick={() => setStep("review")}>
-                Continue to review
+                {t.flow.continueToReview}
               </Button>
               <Button type="button" variant="outline" className="h-11" onClick={startOver}>
-                Start over
+                {t.flow.startOver}
               </Button>
             </div>
           </>
@@ -210,21 +225,21 @@ function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = fals
             />
             {declined && (
               <Alert aria-live="polite">
-                <AlertTitle>Not shared</AlertTitle>
+                <AlertTitle>{t.flow.notSharedTitle}</AlertTitle>
                 <AlertDescription>
-                  The prepared case stays on this screen. The demo clinic cannot see it and nothing was sent.
+                  {t.flow.declinedPrepared}
                 </AlertDescription>
               </Alert>
             )}
             {error && (
               <Alert variant="destructive" aria-live="assertive">
-                <AlertTitle>Not shared</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertTitle>{t.flow.notSharedTitle}</AlertTitle>
+                <AlertDescription>{t.flow.errors[error]}</AlertDescription>
               </Alert>
             )}
             <div>
               <Button type="button" variant="outline" className="h-11" disabled={pending} onClick={startOver}>
-                Back to typing my own
+                {t.flow.backToTyping}
               </Button>
             </div>
           </>
@@ -236,11 +251,14 @@ function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = fals
               draft={draft}
               dispatch={dispatch}
               profile={profile}
+              preferredLanguages={preferredLanguages}
+              onPreferredLanguagesChange={setPreferredLanguages}
               onEditAnswers={() => setStep("followups")}
             />
             <ConsentControl
               consent={consent}
               pending={pending}
+              canSubmit={preferredLanguages.length > 0}
               onConsentChange={(next) => {
                 setConsent(next);
                 setDeclined(false);
@@ -254,21 +272,21 @@ function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = fals
             />
             {declined && (
               <Alert aria-live="polite">
-                <AlertTitle>Not shared</AlertTitle>
+                <AlertTitle>{t.flow.notSharedTitle}</AlertTitle>
                 <AlertDescription>
-                  Your intake stays on this screen. The demo clinic cannot see it and nothing was sent.
+                  {t.flow.declined}
                 </AlertDescription>
               </Alert>
             )}
             {error && (
               <Alert variant="destructive" aria-live="assertive">
-                <AlertTitle>Not shared</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertTitle>{t.flow.notSharedTitle}</AlertTitle>
+                <AlertDescription>{t.flow.errors[error]}</AlertDescription>
               </Alert>
             )}
             <div>
               <Button type="button" variant="outline" className="h-11" disabled={pending} onClick={startOver}>
-                Start over
+                {t.flow.startOver}
               </Button>
             </div>
           </>

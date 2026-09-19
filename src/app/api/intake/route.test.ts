@@ -173,6 +173,29 @@ describe("POST /api/intake", () => {
     expect(fake.db.items.size).toBe(0);
   });
 
+  it("stores the student's instruction-language preference and records it as theirs", async () => {
+    await POST(post({ ...sampleIntakeRequest, preferredInstructionLanguages: ["es"] }));
+
+    const [{ encounter }] = storedEncounters();
+    expect(encounter.preferredInstructionLanguages).toEqual(["es"]);
+    expect(encounter.fieldSources.instructionLanguages).toBe("student_review");
+  });
+
+  it("leaves the preference absent, and the profile as its source, when the student did not choose", async () => {
+    await POST(post(sampleIntakeRequest));
+
+    const [{ encounter }] = storedEncounters();
+    expect(encounter.preferredInstructionLanguages).toBeUndefined();
+    expect(encounter.fieldSources.instructionLanguages).toBe("synthetic_profile");
+  });
+
+  it.each([[[]], [["fr"]], [["es", "es"]], ["es"]])("rejects the invalid language preference %j", async (preferredInstructionLanguages) => {
+    const response = await POST(post({ ...sampleIntakeRequest, preferredInstructionLanguages }));
+
+    expect(response.status).toBe(400);
+    expect(fake.db.items.size).toBe(0);
+  });
+
   it("creates a separate encounter for each submission", async () => {
     const first = await (await POST(post(sampleIntakeRequest))).json();
     const second = await (await POST(post(sampleIntakeRequest))).json();

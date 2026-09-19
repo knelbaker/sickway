@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLanguage } from "@/lib/client/language-store";
 import type { PollState } from "@/lib/client/use-polling";
 
 const STALE_AFTER_MS = 6000;
@@ -14,7 +15,12 @@ function clock(ms: number) {
  * show stale state"): live, reconnecting, or stale, always with the time of the
  * last successful update, so nobody mistakes an old screen for the current one.
  */
-export function PollStatus({ poll }: { poll: Pick<PollState<unknown>, "error" | "updatedAt"> }) {
+export function PollStatus({ poll, localized = false }: { poll: Pick<PollState<unknown>, "error" | "updatedAt">; localized?: boolean }) {
+  const translated = useLanguage().t.poll;
+  // The clinician workspace stays in English; student-facing views pass `localized`.
+  const text = localized
+    ? translated
+    : { reconnecting: "Reconnecting…", live: (time: string) => `Live · updated ${time}`, stale: (time: string) => `Reconnecting… showing data from ${time}` };
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -25,7 +31,7 @@ export function PollStatus({ poll }: { poll: Pick<PollState<unknown>, "error" | 
   if (poll.updatedAt === null) {
     return poll.error ? (
       <p role="status" className="text-xs text-muted-foreground">
-        Reconnecting…
+        {text.reconnecting}
       </p>
     ) : null;
   }
@@ -33,7 +39,7 @@ export function PollStatus({ poll }: { poll: Pick<PollState<unknown>, "error" | 
   const stale = poll.error === "unavailable" || now - poll.updatedAt > STALE_AFTER_MS;
   return (
     <p role="status" className={stale ? "text-xs font-medium text-amber-700" : "text-xs text-muted-foreground"}>
-      {stale ? `Reconnecting… showing data from ${clock(poll.updatedAt)}` : `Live · updated ${clock(poll.updatedAt)}`}
+      {stale ? text.stale(clock(poll.updatedAt)) : text.live(clock(poll.updatedAt))}
     </p>
   );
 }

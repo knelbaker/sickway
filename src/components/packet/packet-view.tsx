@@ -6,6 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/lib/client/language-store";
 import { usePolling } from "@/lib/client/use-polling";
 import { formatMockDollars } from "@/lib/format";
 import { packetViewSchema } from "@/lib/packet-view";
@@ -26,26 +27,28 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 /** The returned packet. Everything here is synthetic; the status is "available in demo" and nothing more. */
 export function PacketView({ packetId }: { packetId: string }) {
+  const { language, t } = useLanguage();
+  const p = t.packet;
   const poll = usePolling(`/api/packet/${encodeURIComponent(packetId)}`, packetViewSchema, REFRESH_MS);
   const { data: packet, error } = poll;
 
   if (!packet) {
-    if (!error) return <p className="text-sm text-muted-foreground">Loading packet…</p>;
+    if (!error) return <p className="text-sm text-muted-foreground">{p.loading}</p>;
     return (
-      <Card>
+      <Card lang={language}>
         <CardHeader>
           <CardTitle>
-            <h1>Packet unavailable</h1>
+            <h1>{p.unavailableTitle}</h1>
           </CardTitle>
           <CardDescription>
             {error === "unavailable"
-              ? "The packet could not be loaded. Check the connection; this page will retry."
-              : "This packet is not available in this demo session. Packets can be opened only from the paired devices of the session they belong to."}
+              ? p.unavailableRetry
+              : p.unavailableBody}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button variant="outline" asChild>
-            <Link href="/s">Back to the student screen</Link>
+            <Link href="/s">{p.back}</Link>
           </Button>
         </CardContent>
       </Card>
@@ -55,39 +58,50 @@ export function PacketView({ packetId }: { packetId: string }) {
   const { display } = packet;
 
   return (
-    <Card>
+    <Card lang={language}>
       <CardHeader>
         <CardTitle>
-          <h1>Demo packet for {display.patientName}</h1>
+          <h1>{p.title(display.patientName)}</h1>
         </CardTitle>
         <CardDescription className="flex flex-wrap items-center gap-2">
-          <Badge>Available in demo</Badge>
-          <span>Synthetic packet. It exists only inside this demo session.</span>
+          <Badge>{p.available}</Badge>
+          <span>{p.synthetic}</span>
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <dl className="text-sm">
-          <Row label="Demo therapy">
+          <Row label={p.therapy}>
             <span className="font-medium">{display.therapyName}</span>
-            <Badge variant="outline">{display.generic ? "Generic" : "Brand"}</Badge>
-            <Badge variant="secondary">Synthetic — fictional therapy</Badge>
+            <Badge variant="outline">{display.generic ? p.generic : p.brand}</Badge>
+            <Badge variant="secondary">{p.fictionalTherapy}</Badge>
           </Row>
-          <Row label="Pharmacy">
+          <Row label={p.pharmacy}>
             <span className="font-medium">{display.pharmacyName}</span>
-            <Badge variant="secondary">Fictional pharmacy</Badge>
+            <Badge variant="secondary">{p.fictionalPharmacy}</Badge>
             <span className="text-muted-foreground">{display.stockStatus}</span>
           </Row>
-          <Row label="Estimated cost">
+          <Row label={p.cost}>
             <span className="font-medium">{formatMockDollars(packet.mockPrice)}</span>
-            <Badge variant="secondary">Mock cost</Badge>
+            <Badge variant="secondary">{p.mockCost}</Badge>
           </Row>
-          <Row label="Coverage">
+          <Row label={p.coverage}>
             <span>
               {display.planName} · {display.coverageStatus}
             </span>
             <Badge variant="secondary">{display.coverageMockLabel}</Badge>
           </Row>
         </dl>
+
+        <p className="text-xs leading-5 text-muted-foreground">
+          {p.genericExplain} {p.coverageExplain}
+        </p>
+
+        {/* The clinician chooses the packet's languages; say so rather than translating on the fly. */}
+        {p.missingLanguage && !display.instructions.some((item) => item.language === language) && (
+          <Alert>
+            <AlertDescription>{p.missingLanguage}</AlertDescription>
+          </Alert>
+        )}
 
         {display.instructions.map((instructions) => (
           <section key={instructions.language} lang={instructions.language} className="rounded-lg border p-4">
@@ -109,7 +123,7 @@ export function PacketView({ packetId }: { packetId: string }) {
         {display.resources.length > 0 && (
           <section aria-labelledby="packet-resources" className="rounded-lg border p-4">
             <h2 id="packet-resources" className="mb-2 text-sm font-semibold">
-              Included by the demo clinician
+              {p.included}
             </h2>
             <ul className="flex flex-col gap-3">
               {display.resources.map((resource) => (
@@ -126,18 +140,17 @@ export function PacketView({ packetId }: { packetId: string }) {
         )}
 
         <Alert>
-          <AlertTitle>What this packet is not</AlertTitle>
+          <AlertTitle>{p.notTitle}</AlertTitle>
           <AlertDescription>
-            Educational demo text, not clinically validated. No prescription was written, no pharmacy
-            or clinic was contacted, and no coverage was checked.
+            {p.notBody}
           </AlertDescription>
         </Alert>
 
-        {poll.error === "unavailable" && <PollStatus poll={poll} />}
+        {poll.error === "unavailable" && <PollStatus poll={poll} localized />}
 
         <div>
           <Button variant="outline" asChild>
-            <Link href="/s">Back to the student screen</Link>
+            <Link href="/s">{p.back}</Link>
           </Button>
         </div>
       </CardContent>

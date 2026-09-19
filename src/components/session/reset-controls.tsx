@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { demoSessionResponseSchema } from "@/lib/api-contracts";
+import { useLanguage } from "@/lib/client/language-store";
 import { apiFetch, setSessionToken, useSessionToken, useSupersededByToken } from "@/lib/client/session-store";
 
 /**
@@ -22,6 +23,7 @@ import { apiFetch, setSessionToken, useSessionToken, useSupersededByToken } from
  */
 export function ResetDemoButton() {
   const token = useSessionToken();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -46,29 +48,27 @@ export function ResetDemoButton() {
   return (
     <>
       <Button variant="ghost" onClick={() => setOpen(true)}>
-        Reset demo
+        {t.reset.button}
       </Button>
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset the demo?</DialogTitle>
+            <DialogTitle>{t.reset.title}</DialogTitle>
             <DialogDescription>
-              This starts a fresh synthetic session. Both screens clear, consent starts unticked, and
-              nothing from this run is shown again. The other device will be asked to join the new
-              session.
+              {t.reset.body}
             </DialogDescription>
           </DialogHeader>
           {failed && (
             <p role="alert" className="text-sm text-destructive">
-              Could not reset. Nothing was changed. Check the connection and try again.
+              {t.reset.failed}
             </p>
           )}
           <DialogFooter>
             <Button variant="outline" className="h-11" disabled={pending} onClick={() => setOpen(false)}>
-              Keep this session
+              {t.reset.keep}
             </Button>
             <Button className="h-11" disabled={pending} onClick={() => void reset()}>
-              {pending ? "Resetting…" : "Reset demo"}
+              {pending ? t.reset.pending : t.reset.button}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -80,16 +80,17 @@ export function ResetDemoButton() {
 /** Shown on the paired device after the other one reset: one tap follows to the new session. */
 export function SessionSupersededNotice() {
   const joinToken = useSupersededByToken();
+  const { t } = useLanguage();
   if (!joinToken) return null;
 
   return (
     <Alert className="mb-6" aria-live="assertive">
-      <AlertTitle>The demo was reset on the other device</AlertTitle>
+      <AlertTitle>{t.reset.supersededTitle}</AlertTitle>
       <AlertDescription>
-        <p>This screen belongs to the previous run and shows nothing from it any more.</p>
+        <p>{t.reset.supersededBody}</p>
         <div className="mt-3">
           <Button className="h-11" onClick={() => setSessionToken(joinToken)}>
-            Join the new session
+            {t.reset.join}
           </Button>
         </div>
       </AlertDescription>

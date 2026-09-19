@@ -24,7 +24,7 @@ function SessionWorkspace({ profile, preparedSpokenScript, voiceEnabled = false 
   const openId = queue.data?.some((item) => item.id === selectedId) ? selectedId : null;
 
   return (
-    <Card>
+    <Card lang="en">
       <CardHeader>
         <CardTitle>
           <h1>Clinician workspace</h1>

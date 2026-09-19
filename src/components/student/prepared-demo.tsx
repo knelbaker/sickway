@@ -2,8 +2,9 @@
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { formatIsoWallTime, formatReportedList, NOT_REPORTED } from "@/lib/format";
-import { RED_FLAG_DEFINITIONS } from "@/lib/red-flags";
+import { useLanguage } from "@/lib/client/language-store";
+import { formatIsoWallTime, formatReportedList } from "@/lib/format";
+import { RED_FLAG_KEYS } from "@/lib/red-flags";
 import type { ReviewedIntake } from "@/lib/schemas";
 
 /**
@@ -12,35 +13,37 @@ import type { ReviewedIntake } from "@/lib/schemas";
  * Consent is still separate and unticked.
  */
 export function PreparedDemoSummary({ intake }: { intake: ReviewedIntake }) {
+  const { language, t } = useLanguage();
+  const NOT_REPORTED = t.common.notReported;
+  const reported = { notReported: t.common.notReported, noneReported: t.common.noneReported };
   return (
     <section aria-labelledby="prepared-heading" className="flex flex-col gap-3">
       <Alert>
         <AlertTitle id="prepared-heading" className="flex flex-wrap items-center gap-2">
-          Prepared demo case <Badge variant="secondary">Prepared fixture output</Badge>
+          {t.prepared.title} <Badge variant="secondary">{t.prepared.badge}</Badge>
         </AlertTitle>
         <AlertDescription>
-          These are scripted answers from the demo fixture, not yours. The clinic&apos;s brief and
-          audio for this case are also prepared in advance and will be labelled that way.
+          {t.prepared.body} {t.prepared.scriptLanguageNote}
         </AlertDescription>
       </Alert>
       <dl className="flex flex-col gap-1.5 rounded-lg border p-3 text-sm">
         {[
-          ["Words", `“${intake.transcript}”`],
-          ["Symptoms", intake.symptoms.join(", ") || NOT_REPORTED],
-          ["Highest temperature", intake.maxTempF === null ? NOT_REPORTED : `${intake.maxTempF}°F`],
-          ["Onset", `${formatIsoWallTime(intake.onsetIso) ?? NOT_REPORTED}${intake.onsetConfirmed ? " — confirmed in the script" : ""}`],
-          ["Deadline today", intake.deadlineToday ?? NOT_REPORTED],
-          ["Medications taken", formatReportedList(intake.medsTaken)],
-          ["Allergies", formatReportedList(intake.allergies)],
-          ...RED_FLAG_DEFINITIONS.map((flag) => {
-            const answer = intake.redFlags[flag.key];
-            return [flag.label, answer === true ? "Yes" : answer === false ? "No (scripted)" : NOT_REPORTED];
+          [t.prepared.words, `“${intake.transcript}”`],
+          [t.prepared.symptoms, intake.symptoms.join(", ") || NOT_REPORTED],
+          [t.prepared.temperature, intake.maxTempF === null ? NOT_REPORTED : `${intake.maxTempF}°F`],
+          [t.prepared.onset, `${formatIsoWallTime(intake.onsetIso, language) ?? NOT_REPORTED}${intake.onsetConfirmed ? ` — ${t.prepared.confirmedInScript}` : ""}`],
+          [t.prepared.deadline, intake.deadlineToday ?? NOT_REPORTED],
+          [t.prepared.meds, formatReportedList(intake.medsTaken, reported)],
+          [t.prepared.allergies, formatReportedList(intake.allergies, reported)],
+          ...RED_FLAG_KEYS.map((key) => {
+            const answer = intake.redFlags[key];
+            return [t.followUps.redFlags[key].label, answer === true ? t.common.yes : answer === false ? t.prepared.noScripted : NOT_REPORTED];
           }),
         ].map(([label, value]) => (
           <div key={label} className="flex flex-wrap justify-between gap-x-3">
             <dt className="text-muted-foreground">{label}</dt>
             <dd className="flex flex-wrap items-center justify-end gap-x-2 gap-y-1 text-right font-medium">
-              {value} <Badge variant="outline" className="shrink-0 font-normal">demo fixture</Badge>
+              {value} <Badge variant="outline" className="shrink-0 font-normal">{t.prepared.fixture}</Badge>
             </dd>
           </div>
         ))}

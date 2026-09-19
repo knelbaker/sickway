@@ -4,9 +4,8 @@ import { CommitStrategy, useScribe } from "@elevenlabs/react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/client/language-store";
 import { apiFetch } from "@/lib/client/session-store";
-
-const FALLBACK = "Typing works exactly the same.";
 
 /**
  * Optional dictation for the opening description (rendered only when
@@ -16,6 +15,8 @@ const FALLBACK = "Typing works exactly the same.";
  * (sickway.md §6.1: no voice agent can supply consent).
  */
 export function VoiceInput({ onTranscript, disabled }: { onTranscript: (text: string) => void; disabled?: boolean }) {
+  const { language, t } = useLanguage();
+  const d = t.dictation;
   const [notice, setNotice] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
 
@@ -23,10 +24,12 @@ export function VoiceInput({ onTranscript, disabled }: { onTranscript: (text: st
     modelId: "scribe_v2_realtime",
     // The server commits a segment at each natural pause.
     commitStrategy: CommitStrategy.VAD,
+    // Listen in the language the student chose for the screen; nothing is translated.
+    languageCode: language,
     onCommittedTranscript: ({ text }) => {
       if (text.trim()) onTranscript(text.trim());
     },
-    onError: () => setNotice(`Dictation stopped. ${FALLBACK}`),
+    onError: () => setNotice(`${d.stopped} ${d.fallback}`),
   });
 
   // Never leave the microphone open after this step is gone.
@@ -41,7 +44,7 @@ export function VoiceInput({ onTranscript, disabled }: { onTranscript: (text: st
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       } catch {
-        setNotice(`Microphone access was not granted. ${FALLBACK}`);
+        setNotice(`${d.micDenied} ${d.fallback}`);
         return;
       }
       // Only the permission was needed; the SDK opens its own stream.
@@ -49,13 +52,13 @@ export function VoiceInput({ onTranscript, disabled }: { onTranscript: (text: st
 
       const response = await apiFetch("/api/voice/scribe-token", { method: "POST" });
       if (!response.ok) {
-        setNotice(`Dictation is unavailable right now. ${FALLBACK}`);
+        setNotice(`${d.unavailable} ${d.fallback}`);
         return;
       }
       const { token } = (await response.json()) as { token: string };
       await scribe.connect({ token, microphone: { echoCancellation: true, noiseSuppression: true } });
     } catch {
-      setNotice(`Dictation could not start. ${FALLBACK}`);
+      setNotice(`${d.failed} ${d.fallback}`);
     } finally {
       setStarting(false);
     }
@@ -66,20 +69,20 @@ export function VoiceInput({ onTranscript, disabled }: { onTranscript: (text: st
       <div className="flex flex-wrap items-center gap-2">
         {scribe.isConnected ? (
           <Button type="button" variant="outline" className="h-11" onClick={() => scribe.disconnect()}>
-            Stop dictation
+            {d.stop}
           </Button>
         ) : (
           <Button type="button" variant="outline" className="h-11" disabled={disabled || starting} onClick={() => void start()}>
-            {starting ? "Starting…" : "Dictate instead"}
+            {starting ? d.starting : d.start}
           </Button>
         )}
         <Badge variant="outline" role="status">
-          {scribe.isConnected ? "Listening — live speech to text" : "Dictation off"}
+          {scribe.isConnected ? d.listening : d.off}
         </Badge>
       </div>
       {scribe.isConnected && (
         <p aria-live="polite" className="min-h-5 text-sm text-muted-foreground">
-          {scribe.partialTranscript ? `Hearing: ${scribe.partialTranscript}` : "Speak now. Your words appear in the box above, where you can edit them."}
+          {scribe.partialTranscript ? d.hearing(scribe.partialTranscript) : d.speakNow}
         </p>
       )}
       {notice && (
@@ -88,7 +91,7 @@ export function VoiceInput({ onTranscript, disabled }: { onTranscript: (text: st
         </p>
       )}
       <p className="text-xs leading-5 text-muted-foreground">
-        Dictation only fills the text box. Fictional details only. Everything after this step, including consent, is done on screen.
+        {d.note}
       </p>
     </div>
   );

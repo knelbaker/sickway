@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import type { StudentProfileSummary } from "@/components/student/profile-summary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/client/language-store";
 import type { EncounterStatus } from "@/lib/schemas";
 
 /**
@@ -18,16 +21,17 @@ export function StatusView({
   profile: StudentProfileSummary;
   packetId?: string;
 }) {
+  const { t } = useLanguage();
   if (status === "packet_available" && packetId) {
     return (
       <Alert aria-live="polite">
-        <AlertTitle>Your demo packet is ready</AlertTitle>
+        <AlertTitle>{t.status.packetTitle}</AlertTitle>
         <AlertDescription>
-          <p>The demo clinic attached a packet for you. It is available in this demo only.</p>
-          <p className="mt-1 font-medium">Booking not connected.</p>
+          <p>{t.status.packetBody}</p>
+          <p className="mt-1 font-medium">{t.status.bookingNotConnected}</p>
           <div className="mt-3">
             <Button className="h-11" asChild>
-              <Link href={`/packet/${encodeURIComponent(packetId)}`}>Open demo packet</Link>
+              <Link href={`/packet/${encodeURIComponent(packetId)}`}>{t.status.openPacket}</Link>
             </Button>
           </div>
         </AlertDescription>
@@ -38,16 +42,10 @@ export function StatusView({
   if (status === "emergency") {
     return (
       <Alert variant="destructive" aria-live="assertive">
-        <AlertTitle>This demo stops here</AlertTitle>
+        <AlertTitle>{t.status.emergencyTitle}</AlertTitle>
         <AlertDescription>
-          <p>
-            You answered yes to an item on this prototype&apos;s emergency checklist, so the routine
-            demo flow is bypassed and no clinic next step is shown.
-          </p>
-          <p className="mt-2">
-            In a real situation, call 911 or your campus emergency number. This message is prototype
-            copy, not a validated medical screening result.
-          </p>
+          <p>{t.status.emergencyBody}</p>
+          <p className="mt-2">{t.status.emergencyAction}</p>
         </AlertDescription>
       </Alert>
     );
@@ -56,13 +54,10 @@ export function StatusView({
   if (status === "needs_review") {
     return (
       <Alert aria-live="polite">
-        <AlertTitle>Shared — needs review</AlertTitle>
+        <AlertTitle>{t.status.reviewTitle}</AlertTitle>
         <AlertDescription>
-          <p>
-            Some checklist items were not answered or need a second look, so the demo clinic will
-            review your intake before any next step. This is not an all-clear.
-          </p>
-          <p className="mt-2 font-medium">Booking not connected.</p>
+          <p>{t.status.reviewBody}</p>
+          <p className="mt-2 font-medium">{t.status.bookingNotConnected}</p>
         </AlertDescription>
       </Alert>
     );
@@ -70,15 +65,15 @@ export function StatusView({
 
   return (
     <Alert aria-live="polite">
-      <AlertTitle>Shared with the demo clinic</AlertTitle>
+      <AlertTitle>{t.status.readyTitle}</AlertTitle>
       <AlertDescription>
-        <p className="font-medium">Demo next step: campus clinic</p>
-        <p className="mt-1 font-medium">Booking not connected.</p>
+        <p className="font-medium">{t.status.nextStep}</p>
+        <p className="mt-1 font-medium">{t.status.bookingNotConnected}</p>
         <p className="mt-2 flex flex-wrap items-center gap-2">
           <span>{profile.planName}</span>
           <Badge variant="secondary">{profile.planMockLabel}</Badge>
         </p>
-        <p className="mt-2">Keep this screen open. A packet from the demo clinic will appear here.</p>
+        <p className="mt-2">{t.status.keepOpen}</p>
       </AlertDescription>
     </Alert>
   );

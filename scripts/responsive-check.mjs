@@ -9,7 +9,7 @@
  *   - whether the synthetic-data banner and the disclaimer are present.
  *
  *   pnpm dev                                   # in another terminal
- *   pnpm check:responsive [base-url] [--shots <dir>]
+ *   pnpm check:responsive [base-url] [--shots <dir>] [--lang es]
  *
  * Synthetic data only; it creates its own demo session. Exits non-zero on any
  * finding. It complements, and does not replace, a look on a real phone.
@@ -22,6 +22,14 @@ const shotsIndex = args.indexOf("--shots");
 const shotsDir = shotsIndex >= 0 ? args[shotsIndex + 1] : null;
 const base = (args.find((arg, index) => !arg.startsWith("--") && index !== shotsIndex + 1) ?? "http://localhost:3000").replace(/\/$/, "");
 if (shotsDir) mkdirSync(shotsDir, { recursive: true });
+
+// Spanish copy is longer than English, so the student-facing states are audited in it too (issue #61).
+const langIndex = args.indexOf("--lang");
+const lang = langIndex >= 0 && args[langIndex + 1] === "es" ? "es" : "en";
+const TEXT = {
+  en: { start: "Start demo session", joinLabel: "Join link for the second device", joined: "Joined demo session", describe: "What is going on today?", go: "Continue", manual: "Enter details myself", checklist: "1. Are any of these happening?", prepared: "Use prepared demo instead", consent: "Share with the demo clinic?", openPacket: "Open demo packet", available: "Available in demo", unavailable: "Packet unavailable", reset: "Reset demo" },
+  es: { start: "Iniciar sesión de demostración", joinLabel: "Enlace para unir el segundo dispositivo", joined: "Se unió a la sesión de demostración", describe: "¿Qué le pasa hoy?", go: "Continuar", manual: "Escribir los datos yo mismo/a", checklist: "1. ¿Le está pasando algo de esto?", prepared: "Usar la demostración preparada", consent: "¿Compartir con la clínica de demostración?", openPacket: "Abrir el paquete de demostración", available: "Disponible en la demostración", unavailable: "Paquete no disponible", reset: "Reiniciar demostración" },
+}[lang];
 
 // 640 stands in for a 1280px desktop window at 200% zoom.
 const WIDTHS = [320, 375, 390, 640, 768, 1280];
@@ -56,21 +64,21 @@ const sessionId = token.split(".")[0];
 
 /** Each state: where to go, how to get the screen into that state, and what must be visible. */
 const STATES = [
-  { name: "home-unpaired", path: "/", paired: false, ready: "text=Start demo session" },
-  { name: "home-paired", path: "/", ready: "text=Join link for the second device" },
-  { name: "join", path: `/join?t=${encodeURIComponent(token)}`, paired: false, ready: "text=Joined demo session" },
-  { name: "student-describe", path: "/s", ready: "text=What is going on today?" },
+  { name: "home-unpaired", path: "/", paired: false, ready: `text=${TEXT.start}` },
+  { name: "home-paired", path: "/", ready: `text=${TEXT.joinLabel}` },
+  { name: "join", path: `/join?t=${encodeURIComponent(token)}`, paired: false, ready: `text=${TEXT.joined}` },
+  { name: "student-describe", path: "/s", ready: `text=${TEXT.describe}` },
   {
     name: "student-followups",
     path: "/s",
-    ready: "text=1. Are any of these happening?",
+    ready: `text=${TEXT.checklist}`,
     act: async (page) => {
-      await page.getByLabel("What is going on today?").fill(SEEDED);
-      await page.getByRole("button", { name: "Continue", exact: true }).click();
+      await page.getByLabel(TEXT.describe).fill(SEEDED);
+      await page.getByRole("button", { name: TEXT.go, exact: true }).click();
       // Extraction may be unavailable (model quota); the manual path shows the same follow-ups.
-      const manual = page.getByRole("button", { name: "Enter details myself" });
+      const manual = page.getByRole("button", { name: TEXT.manual });
       await Promise.race([
-        page.getByText("1. Are any of these happening?").waitFor({ timeout: 40000 }),
+        page.getByText(TEXT.checklist).waitFor({ timeout: 40000 }),
         manual.waitFor({ timeout: 40000 }).then(() => manual.click()),
       ]);
     },
@@ -78,19 +86,19 @@ const STATES = [
   {
     name: "student-review",
     path: "/s",
-    ready: "text=Share with the demo clinic?",
+    ready: `text=${TEXT.consent}`,
     act: async (page) => {
-      await page.getByRole("button", { name: /Use prepared demo instead|Usar la demostración preparada/ }).click();
+      await page.getByRole("button", { name: TEXT.prepared }).click();
     },
   },
   {
     name: "student-packet-ready",
     path: "/s",
-    ready: "text=Open demo packet",
+    ready: `text=${TEXT.openPacket}`,
     storage: { [`sickday.submitted.${sessionId}`]: JSON.stringify({ encounterId: delivered.encounterId, status: "ready" }) },
   },
-  { name: "packet", path: `/packet/${attached.packetId}`, ready: "text=Available in demo" },
-  { name: "packet-unavailable", path: "/packet/not-a-real-packet", ready: "text=Packet unavailable" },
+  { name: "packet", path: `/packet/${attached.packetId}`, ready: `text=${TEXT.available}` },
+  { name: "packet-unavailable", path: "/packet/not-a-real-packet", ready: `text=${TEXT.unavailable}` },
   { name: "clinician-queue", path: "/hcp", ready: "text=Demo queue" },
   {
     name: "clinician-encounter-options",
@@ -120,7 +128,7 @@ const STATES = [
     path: "/s",
     ready: "role=dialog",
     act: async (page) => {
-      await page.getByRole("button", { name: "Reset demo" }).click();
+      await page.getByRole("button", { name: TEXT.reset }).click();
     },
   },
 ];
@@ -205,11 +213,12 @@ async function auditWidth(width) {
       isMobile: width < 768,
     });
     await context.addInitScript(
-      ({ token, paired, storage }) => {
+      ({ token, paired, storage, lang }) => {
         if (paired) window.localStorage.setItem("sickday.demoSessionToken", token);
+        window.localStorage.setItem(`sickday.language.${paired ? token.split(".")[0] : "unpaired"}`, lang);
         for (const [key, value] of Object.entries(storage)) window.sessionStorage.setItem(key, value);
       },
-      { token, paired: state.paired !== false, storage: state.storage ?? {} },
+      { token, paired: state.paired !== false, storage: state.storage ?? {}, lang },
     );
     const page = await context.newPage();
     page.setDefaultTimeout(15000);
@@ -248,7 +257,7 @@ for (const widthRows of await Promise.all(WIDTHS.map(auditWidth))) {
 }
 await browser.close();
 
-console.log(`\nResponsive audit of ${base} — ${WIDTHS.join(", ")} px × ${STATES.length} states\n`);
+console.log(`\nResponsive audit of ${base} (${lang}) — ${WIDTHS.join(", ")} px × ${STATES.length} states\n`);
 for (const row of rows) {
   if (row.problems.length === 0) continue;
   console.log(`✗ ${String(row.width).padStart(4)}px  ${row.state}`);

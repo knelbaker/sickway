@@ -8,7 +8,10 @@ import { requireSession } from "@/lib/session";
 export const maxDuration = 60;
 
 const consentGiven = z.object({ consent: z.object({ shareWithClinic: z.literal(true) }) });
-const preparedDemo = z.object({ usePreparedDemo: z.literal(true) });
+const preparedDemo = z.object({
+  usePreparedDemo: z.literal(true),
+  preferredInstructionLanguages: intakeRequestSchema.shape.preferredInstructionLanguages,
+});
 
 /**
  * Shares a reviewed intake with the demo clinic. Nothing is stored unless
@@ -25,9 +28,10 @@ export async function POST(request: Request) {
 
   // The prepared case is never inferred from what was typed; it needs this explicit flag,
   // and it carries no intake of its own: the server uses the fixture.
-  if (preparedDemo.safeParse(body).success) {
+  const prepared = preparedDemo.safeParse(body);
+  if (prepared.success) {
     try {
-      const encounter = await createEncounter(auth.session, "prepared_demo");
+      const encounter = await createEncounter(auth.session, "prepared_demo", prepared.data.preferredInstructionLanguages);
       return json(intakeResponseSchema.parse({ encounterId: encounter.id, status: encounter.status }), 201);
     } catch {
       return errorJson(503, "intake_unavailable");
@@ -42,7 +46,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const encounter = await createEncounter(auth.session, parsed.data.intake);
+    const encounter = await createEncounter(auth.session, parsed.data.intake, parsed.data.preferredInstructionLanguages);
     return json(intakeResponseSchema.parse({ encounterId: encounter.id, status: encounter.status }), 201);
   } catch {
     return errorJson(503, "intake_unavailable");

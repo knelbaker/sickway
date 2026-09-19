@@ -10,6 +10,7 @@ import {
   type DemoSession,
   type Encounter,
   type FieldSource,
+  type InstructionLanguage,
   type ReviewedIntake,
 } from "@/lib/schemas";
 
@@ -43,6 +44,7 @@ export function fieldSourcesFor(source: "student_review" | "demo_fixture" = "stu
 export async function createEncounter(
   session: DemoSession,
   reviewedIntake: ReviewedIntake | "prepared_demo",
+  preferredInstructionLanguages?: InstructionLanguage[],
 ): Promise<Encounter> {
   // "Use prepared demo" is an explicit user choice (§4.1). The scripted case and its brief come
   // from the fixtures on the server, and every student field is recorded as demo_fixture.
@@ -67,9 +69,14 @@ export async function createEncounter(
     status: routing.branch,
     intake,
     consent: { shareWithClinic: true, capturedAt: now },
-    fieldSources: fieldSourcesFor(prepared ? "demo_fixture" : "student_review"),
+    fieldSources: {
+      ...fieldSourcesFor(prepared ? "demo_fixture" : "student_review"),
+      // Once the student chooses, the preference is theirs rather than the profile's.
+      ...(preferredInstructionLanguages ? { instructionLanguages: "student_review" as const } : {}),
+    },
     sbar,
     unlockedTherapyIds: [],
+    preferredInstructionLanguages,
   } satisfies Encounter);
 
   const created = await putItemIfAbsent(session.id, sk.encounter(encounter.id), encounter);
