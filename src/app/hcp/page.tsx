@@ -1,17 +1,25 @@
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClinicianWorkspace } from "@/components/hcp/clinician-workspace";
+import { SessionGate } from "@/components/session/session-gate";
+import { fixtures } from "@/lib/fixtures";
 
 export default function ClinicianPage() {
+  const { profile, plans } = fixtures;
+  const plan = plans.find((row) => row.id === profile.planId);
+
+  // Catalogs and manufacturer resources stay on the server; they reach this screen only through the API.
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h1>Clinician workspace</h1>
-        </CardTitle>
-        <CardDescription>
-          The demo queue, clinician brief, and mock access options will be
-          available here.
-        </CardDescription>
-      </CardHeader>
-    </Card>
+    <SessionGate title="Clinician workspace">
+      <ClinicianWorkspace
+        profile={{
+          name: profile.name,
+          age: profile.age,
+          planName: plan?.name ?? "Fictional demo plan",
+          planMockLabel: plan?.mockLabel ?? "Mock coverage — not verified",
+          instructionLanguages: profile.instructionLanguages,
+          costCeiling: profile.costCeiling ?? null,
+          fixtureClock: profile.fixtureClock,
+        }}
+      />
+    </SessionGate>
   );
 }
