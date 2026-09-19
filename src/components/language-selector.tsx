@@ -19,7 +19,7 @@ export function LanguageSelector() {
   }, [language]);
 
   return (
-    <div role="radiogroup" aria-label={`${t.languageSelector} / Language`} className="flex items-center gap-1">
+    <div role="radiogroup" aria-label={`${t.languageSelector} / Language`} className="inline-flex items-center rounded-full bg-ink/8 p-0.5">
       {LANGUAGES.map((option) => {
         const checked = option.code === language;
         return (
@@ -31,8 +31,8 @@ export function LanguageSelector() {
             lang={option.code}
             onClick={() => setLanguage(option.code)}
             className={cn(
-              "min-h-11 rounded-md border px-3 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
-              checked ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted",
+              "min-h-11 cursor-pointer rounded-full px-3.5 text-sm font-semibold transition-colors duration-200 sm:px-4",
+              checked ? "bg-ink text-paper" : "text-ink-soft hover:text-ink",
             )}
           >
             {option.name}

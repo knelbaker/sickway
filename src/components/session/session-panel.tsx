@@ -66,7 +66,7 @@ export function SessionPanel() {
           {t.home.startHelp}
         </p>
         <div>
-          <Button onClick={start} disabled={pending}>
+          <Button variant="brand" className="min-h-12 px-7 text-base" onClick={start} disabled={pending}>
             {pending ? t.home.starting : t.home.start}
           </Button>
         </div>

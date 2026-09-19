@@ -99,7 +99,7 @@ export function DescribeStep({
         />
       )}
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" className="h-11" disabled={pending || text.trim() === ""}>
+        <Button type="submit" variant="brand" className="h-11" disabled={pending || text.trim() === ""}>
           {pending ? t.describe.reading : t.describe.continue}
         </Button>
         {manualOffer && (

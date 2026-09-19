@@ -1,5 +1,5 @@
-import { HomeCard } from "@/components/session/entry-cards";
+import { Landing } from "@/components/landing/landing";
 
 export default function Home() {
-  return <HomeCard />;
+  return <Landing />;
 }

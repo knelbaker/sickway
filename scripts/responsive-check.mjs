@@ -20,7 +20,8 @@ import { chromium } from "playwright-core";
 const args = process.argv.slice(2);
 const shotsIndex = args.indexOf("--shots");
 const shotsDir = shotsIndex >= 0 ? args[shotsIndex + 1] : null;
-const base = (args.find((arg, index) => !arg.startsWith("--") && index !== shotsIndex + 1) ?? "http://localhost:3000").replace(/\/$/, "");
+const flagValues = new Set(["--shots", "--lang"].map((flag) => args.indexOf(flag)).filter((index) => index >= 0).map((index) => index + 1));
+const base = (args.find((arg, index) => !arg.startsWith("--") && !flagValues.has(index)) ?? "http://localhost:3000").replace(/\/$/, "");
 if (shotsDir) mkdirSync(shotsDir, { recursive: true });
 
 // Spanish copy is longer than English, so the student-facing states are audited in it too (issue #61).

@@ -26,6 +26,47 @@ const en = {
   bannerEquivalent: "",
   disclaimerEquivalent: "",
 
+  landing: {
+    headline: "Sick today? Say it once.",
+    sub: "sickway turns what a student types from bed into a brief a clinician can read in twenty seconds, then sends a packet back to the phone.",
+    honest: "This is a synthetic demo. Nothing here is booked, prescribed, or verified.",
+    startTitle: "Try it on two devices",
+    phoneCaption: "The student's phone",
+    laptopCaption: "The clinician's laptop",
+    journeyTitle: "Follow one sick day",
+    packetCaption: "The packet, back on the phone",
+    steps: [
+      { where: "From bed, on a phone", what: "The student describes how they feel, corrects every field, and chooses whether to share it. “Not sure” stays “not sure”." },
+      { where: "At the clinic, on a laptop", what: "The clinician reads a brief with its sources beside it, looks at mock options, and confirms a packet. The clinician decides. sickway never recommends." },
+      { where: "Back in bed", what: "The packet arrives on the phone in English, Español, or both." },
+    ],
+    realTitle: "What is real, and what is pretend",
+    realIntro: "A solid outline means the demo really does it. A dashed outline means mock data. The same rule holds on every screen.",
+    realHeading: "Really happens",
+    real: [
+      "Intake the student reviews, with consent as its own separate tick",
+      "Rules on the server that route the visit, not the model",
+      "A brief that shows where every line came from",
+      "A lock on manufacturer resources, enforced on the server, with an audit log",
+      "A packet stored once and returned to the paired phone",
+    ],
+    mockHeading: "Mock data",
+    mock: [
+      "The patient, the plan, and the coverage",
+      "Prices, stock, and pharmacies",
+      "Therapies and manufacturer resources",
+      "The prepared demo case and its recording",
+    ],
+    notBuilt: "Not built at all: booking, prescribing, insurance checks, or anything involving a real patient.",
+    promisesTitle: "Four promises the interface keeps",
+    promises: [
+      { title: "Unknown is never “no”", body: "A skipped or unsure answer stays unknown on every screen and in the brief." },
+      { title: "Consent is its own tick", body: "It starts empty, nothing can tick it for you, and the server checks it again." },
+      { title: "Dashed means mock", body: "Every price, coverage, and stock value wears its label right beside it." },
+      { title: "Reset leaves nothing behind", body: "A new session cannot see the last one, and the old link stops working." },
+    ],
+  },
+
   nav: { student: "Student", clinician: "Clinician" },
 
   common: {
@@ -114,6 +155,8 @@ const en = {
 
   flow: {
     title: "Student intake",
+    stepsLabel: "Your progress",
+    steps: ["Describe", "Answer", "Review and share", "Packet"],
     description: "Nothing you enter is shared with the demo clinic until you review it and give consent.",
     continueToReview: "Continue to review",
     startOver: "Start over",
@@ -319,6 +362,47 @@ const es: Messages = {
   bannerEquivalent: "Paciente de demostración sintético: perfil y datos de acceso ficticios.",
   disclaimerEquivalent: "Flujo de trabajo de un prototipo. No es asesoramiento médico. No introduzca información de salud real.",
 
+  landing: {
+    headline: "¿Enfermo hoy? Dígalo una sola vez.",
+    sub: "sickway convierte lo que un estudiante escribe desde la cama en un resumen que un profesional clínico puede leer en veinte segundos, y después devuelve un paquete al teléfono.",
+    honest: "Esta es una demostración sintética. Aquí no se reserva, no se receta ni se verifica nada.",
+    startTitle: "Pruébelo en dos dispositivos",
+    phoneCaption: "El teléfono del estudiante",
+    laptopCaption: "La computadora del profesional clínico",
+    journeyTitle: "Siga un día de enfermedad",
+    packetCaption: "El paquete, de vuelta en el teléfono",
+    steps: [
+      { where: "Desde la cama, en un teléfono", what: "El estudiante describe cómo se siente, corrige cada dato y decide si lo comparte. “No estoy seguro/a” se queda como “no estoy seguro/a”." },
+      { where: "En la clínica, en una computadora", what: "El profesional clínico lee un resumen con sus fuentes al lado, mira opciones simuladas y confirma un paquete. El profesional decide. sickway nunca recomienda." },
+      { where: "De vuelta en la cama", what: "El paquete llega al teléfono en inglés, en español o en los dos." },
+    ],
+    realTitle: "Qué es real y qué es de mentira",
+    realIntro: "Un contorno continuo significa que la demostración de verdad lo hace. Un contorno punteado significa datos simulados. La misma regla vale en todas las pantallas.",
+    realHeading: "Ocurre de verdad",
+    real: [
+      "Una admisión que el estudiante revisa, con el consentimiento como una casilla aparte",
+      "Reglas en el servidor que encaminan la visita, no el modelo",
+      "Un resumen que muestra de dónde salió cada línea",
+      "Un candado en los recursos del fabricante, aplicado en el servidor, con registro de auditoría",
+      "Un paquete que se guarda una sola vez y vuelve al teléfono emparejado",
+    ],
+    mockHeading: "Datos simulados",
+    mock: [
+      "El paciente, el plan y la cobertura",
+      "Precios, existencias y farmacias",
+      "Tratamientos y recursos del fabricante",
+      "El caso de demostración preparado y su grabación",
+    ],
+    notBuilt: "No se construyó en absoluto: reservar citas, recetar, verificar seguros ni nada que involucre a un paciente real.",
+    promisesTitle: "Cuatro promesas que la interfaz cumple",
+    promises: [
+      { title: "Desconocido nunca es “no”", body: "Una respuesta omitida o insegura se queda como desconocida en todas las pantallas y en el resumen." },
+      { title: "El consentimiento es una casilla aparte", body: "Empieza vacía, nada puede marcarla por usted y el servidor la vuelve a comprobar." },
+      { title: "Punteado significa simulado", body: "Cada precio, cobertura y existencia lleva su etiqueta justo al lado." },
+      { title: "Reiniciar no deja nada", body: "Una sesión nueva no puede ver la anterior, y el enlace viejo deja de funcionar." },
+    ],
+  },
+
   nav: { student: "Estudiante", clinician: "Profesional clínico" },
 
   common: {
@@ -406,6 +490,8 @@ const es: Messages = {
 
   flow: {
     title: "Admisión del estudiante",
+    stepsLabel: "Su progreso",
+    steps: ["Describir", "Responder", "Revisar y compartir", "Paquete"],
     description: "Nada de lo que escriba se comparte con la clínica de demostración hasta que usted lo revise y dé su consentimiento.",
     continueToReview: "Continuar a la revisión",
     startOver: "Empezar de nuevo",

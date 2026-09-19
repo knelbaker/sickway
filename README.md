@@ -18,6 +18,19 @@ One synthetic scenario, end to end, on two paired devices: **intake → clinicia
 
 **Reset demo** in the header starts a clean run. Nothing is booked, prescribed, verified, or sent anywhere.
 
+## Design
+
+The look comes from the logo (`public/brand/sickway-logo.png`, redrawn as SVG in `src/components/brand/sickway-logo.tsx`): cream paper, black ink, and one red line.
+
+- **Colour** (`src/app/globals.css`, sampled from the logo): paper `#fdf9e8`, ink `#000`, brand red `#ee121d`. The logo red is 4.1:1 on paper, so it is used for line art and large type only; `--brand-red-ink` `#c8121b` (5.6:1) carries red text and white-on-red buttons.
+- **Type:** Archivo 900 italic for display (`.display`, every `h1`), echoing the wordmark; Figtree for body, chosen for open letterforms that stay legible for tired and second-language readers.
+- **Glass:** cards, the navbar, and the phone tab bar are translucent panels (`.glass`, `.glass-strong`) over a fixed, gradient-tinted backdrop (`.page-backdrop`). The fill is opaque enough to keep contrast where `backdrop-filter` is unavailable; gradients rather than blur filters keep it cheap on phones.
+- **Navigation:** a floating glass pill inside one sticky frame with the required synthetic-data banner, so both stay in view while scrolling. Below 768 px the pill keeps the logo and the language choice, and the destinations move to a glass tab bar at the bottom, clear of the iOS home indicator (`viewport-fit=cover` + safe-area insets). Only one nav is mounted at a time.
+- **Dashed means mock.** Every `secondary` badge — mock cost, mock coverage, fictional pharmacy, prepared output, simulated self-report — has a dashed outline; solid chips are real system state. The landing page states this rule and every screen keeps it.
+- **One red line.** The logo's stroke is the progress thread in the student stepper and slides between steps in the landing page's scroll story. The clinician brief uses large S / B / A / R letters; the packet is a perforated paper ticket.
+- **Motion** is decoration, never information: reveals on the landing page only, `MotionConfig reducedMotion="user"`, and a global `prefers-reduced-motion` rule.
+- **MagicUI** components (vendored in `src/components/ui/`): `blur-fade`, `border-beam`, `dot-pattern`, `iphone`, `safari`. The device frames show **real screenshots of this app**: run `pnpm shots:brand` (with `pnpm dev` running) to regenerate `public/brand/shot-*.png` after a UI change. No testimonials, ratings, or usage numbers are shown, because there are none.
+
 ## Architecture
 
 | Piece | Where | Notes |
