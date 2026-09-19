@@ -13,7 +13,7 @@ pnpm install
 pnpm dev
 ```
 
-Open [localhost:3000](http://localhost:3000). The foundation includes four stub pages: `/`, `/s` (student), `/hcp` (clinician), and `/packet/test` (an example packet reference). Every page uses the shared layout and persistent synthetic-data banner. The stubs run without credentials; intake, API routes, database access, and AI calls come in later issues.
+Open [localhost:3000](http://localhost:3000). The home page starts or resumes a demo session; `/join` pairs a second device; `/s` (student), `/hcp` (clinician), and `/packet/<id>` are still stubs. Every page uses the shared layout and persistent synthetic-data banner. The stubs run without credentials; intake, API routes, database access, and AI calls come in later issues.
 
 ## Server configuration
 
@@ -55,6 +55,9 @@ It writes, reads, updates, lists, and deletes one synthetic item in a throwaway 
 - `src/components/synthetic-banner.tsx`: the non-dismissible synthetic-data notice.
 - `src/lib/env.ts`: validated server configuration.
 - `src/lib/db.ts`: session-scoped DynamoDB helpers for the single demo table.
+- `src/lib/session.ts`: demo session tokens, session creation, and the `requireSession` route guard.
+- `src/lib/client/session-store.ts`: browser token store and `apiFetch`, which attaches the token to API calls.
+- `src/lib/http.ts`: `json` / `errorJson` responses with `Cache-Control: no-store`.
 - `src/lib/ai.ts`: server-only Gemini structured generation with schema validation, bounded retries, and session-scoped caching.
 - `src/lib/demo-routing.ts`: pure, synchronous demo routing and confirmed elapsed symptom time.
 
@@ -72,6 +75,19 @@ The helper uses the Google provider with `GOOGLE_GENERATIVE_AI_API_KEY` and `GEM
 - Failure: `{ ok: false, reason }`, where `reason` is `timeout`, `invalid_output`, `provider_error`, or `cache_error`. Provider errors and output are not exposed, and fixtures are never substituted. Cache read/write failures are explicit failures; a failed write does not retry generation.
 
 Cache keys hash the whitespace-normalized system and user prompts, configured model, and prompt version under `SESSION#<sessionId>` / `CACHE#<hash>`. Original prompts are passed to Gemini. Records inherit the database helper's 24-hour TTL; expired records are ignored even before DynamoDB removes them. Cached JSON is revalidated on every hit. Bump `promptVersion` whenever the prompt contract or schema changes. Concurrent first requests can each generate output; the cache does not coalesce in-flight requests.
+
+## Demo sessions and pairing
+
+The home page starts an isolated synthetic session (`POST /api/demo-session`) and shows a join link. Opening `/join?t=<token>` on the second device confirms the token with `GET /api/demo-session`, stores it, and offers the student and clinician screens. Both devices then read the same `SESSION#<id>` partition. The browser keeps the token in `localStorage` and `apiFetch` sends it as the `x-demo-session` header.
+
+The token is `<sessionId>.<HMAC-SHA256(sessionId)>` signed with `DEMO_SESSION_SECRET`. Every session-scoped route must start with the guard and use only `auth.session.id` for database calls, never an ID supplied by the client:
+
+```ts
+const auth = await requireSession(request);
+if (!auth.ok) return auth.response; // 401 invalid_session or expired_session
+```
+
+Missing, malformed, tampered, swapped, unknown, and expired tokens all return 401 before any session data is read. Sessions expire after 24 hours. This limits casual cross-session access between demo runs; it is not production authentication or a claim of medical-data security (sickway.md §8, §11).
 
 ## Data layer
 

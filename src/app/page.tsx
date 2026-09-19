@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { SessionPanel } from "@/components/session/session-panel";
 import {
   Card,
   CardContent,
@@ -16,20 +15,13 @@ export default function Home() {
           <h1>Sick Day + Doorway</h1>
         </CardTitle>
         <CardDescription>
-          A synthetic workflow from student intake to a clinician brief and a
-          returned patient packet. These screens are placeholders for the demo.
+          A synthetic workflow from student intake to a clinician brief and a returned patient
+          packet. Open the student screen on a phone and the clinician screen on a laptop in the
+          same demo session.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <Button asChild>
-          <Link href="/s">Student intake</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/hcp">Clinician workspace</Link>
-        </Button>
-        <Button variant="outline" asChild>
-          <Link href="/packet/test">Example packet</Link>
-        </Button>
+      <CardContent>
+        <SessionPanel />
       </CardContent>
     </Card>
   );
