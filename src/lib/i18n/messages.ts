@@ -28,7 +28,7 @@ const en = {
 
   landing: {
     headline: "Sick today? Say it once.",
-    sub: "sickway turns what a student types from bed into a brief a clinician can read in twenty seconds, then sends a packet back to the phone.",
+    sub: "Sickway turns what a student types from bed into a brief a clinician can read in twenty seconds, then sends a packet back to the phone.",
     honest: "This is a synthetic demo. Nothing here is booked, prescribed, or verified.",
     startTitle: "Try it on two devices",
     phoneCaption: "The student's phone",
@@ -37,7 +37,7 @@ const en = {
     packetCaption: "The packet, back on the phone",
     steps: [
       { where: "From bed, on a phone", what: "The student describes how they feel, corrects every field, and chooses whether to share it. “Not sure” stays “not sure”." },
-      { where: "At the clinic, on a laptop", what: "The clinician reads a brief with its sources beside it, looks at mock options, and confirms a packet. The clinician decides. sickway never recommends." },
+      { where: "At the clinic, on a laptop", what: "The clinician reads a brief with its sources beside it, looks at mock options, and confirms a packet. The clinician decides. Sickway never recommends." },
       { where: "Back in bed", what: "The packet arrives on the phone in English, Español, or both." },
     ],
     realTitle: "What is real, and what is pretend",
@@ -58,11 +58,6 @@ const en = {
       "The prepared demo case and its recording",
     ],
     notBuilt: "Not built at all: booking, prescribing, insurance checks, or anything involving a real patient.",
-    facts: [
-      { value: 1, label: "description, typed or spoken" },
-      { value: 4, label: "parts in the clinician's brief" },
-      { value: 2, label: "languages for the packet" },
-    ],
     player: { play: "Play the story", pause: "Pause the story", replay: "Replay the story" },
     onThisPage: "On this page",
     sections: ["Start", "One sick day", "Real or mock", "Promises", "Try it"],
@@ -386,7 +381,7 @@ const es: Messages = {
 
   landing: {
     headline: "¿Enfermo hoy? Dígalo una sola vez.",
-    sub: "sickway convierte lo que un estudiante escribe desde la cama en un resumen que un profesional clínico puede leer en veinte segundos, y después devuelve un paquete al teléfono.",
+    sub: "Sickway convierte lo que un estudiante escribe desde la cama en un resumen que un profesional clínico puede leer en veinte segundos, y después devuelve un paquete al teléfono.",
     honest: "Esta es una demostración sintética. Aquí no se reserva, no se receta ni se verifica nada.",
     startTitle: "Pruébelo en dos dispositivos",
     phoneCaption: "El teléfono del estudiante",
@@ -395,7 +390,7 @@ const es: Messages = {
     packetCaption: "El paquete, de vuelta en el teléfono",
     steps: [
       { where: "Desde la cama, en un teléfono", what: "El estudiante describe cómo se siente, corrige cada dato y decide si lo comparte. “No estoy seguro/a” se queda como “no estoy seguro/a”." },
-      { where: "En la clínica, en una computadora", what: "El profesional clínico lee un resumen con sus fuentes al lado, mira opciones simuladas y confirma un paquete. El profesional decide. sickway nunca recomienda." },
+      { where: "En la clínica, en una computadora", what: "El profesional clínico lee un resumen con sus fuentes al lado, mira opciones simuladas y confirma un paquete. El profesional decide. Sickway nunca recomienda." },
       { where: "De vuelta en la cama", what: "El paquete llega al teléfono en inglés, en español o en los dos." },
     ],
     realTitle: "Qué es real y qué es de mentira",
@@ -416,11 +411,6 @@ const es: Messages = {
       "El caso de demostración preparado y su grabación",
     ],
     notBuilt: "No se construyó en absoluto: reservar citas, recetar, verificar seguros ni nada que involucre a un paciente real.",
-    facts: [
-      { value: 1, label: "descripción, escrita o hablada" },
-      { value: 4, label: "partes en el resumen clínico" },
-      { value: 2, label: "idiomas para el paquete" },
-    ],
     player: { play: "Reproducir la historia", pause: "Pausar la historia", replay: "Repetir la historia" },
     onThisPage: "En esta página",
     sections: ["Empezar", "Un día enfermo", "Qué es real", "Promesas", "Pruébelo"],

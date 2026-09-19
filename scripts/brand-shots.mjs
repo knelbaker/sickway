@@ -39,6 +39,9 @@ async function shoot({ out, width, height, scale, mobile, path, prepare }) {
   await context.addInitScript((t) => window.localStorage.setItem("sickday.demoSessionToken", t), token);
   const page = await context.newPage();
   await page.goto(base + path, { waitUntil: "domcontentloaded" });
+  // Desktop Chrome has no safe-area inset. A real iPhone does, and the banner pads itself by it,
+  // so the phone shots reserve the same space: the frame's black notch then sits on the black banner.
+  if (mobile) await page.addStyleTag({ content: ".sticky > div:first-child > div { padding-top: 54px !important; }" });
   await prepare(page);
   await page.waitForTimeout(600);
   // The Next.js dev indicator is not part of the product.

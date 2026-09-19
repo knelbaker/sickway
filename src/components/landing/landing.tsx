@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SickwayMark } from "@/components/brand/sickway-logo";
 import { Disclaimer } from "@/components/disclaimer";
 import { SessionPanel } from "@/components/session/session-panel";
-import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { Button } from "@/components/ui/button";
@@ -120,7 +119,7 @@ export function Landing() {
       <footer className="flex flex-col gap-4 border-t border-ink/10 pt-8 text-sm text-ink-soft sm:flex-row sm:items-center sm:justify-between">
         <span lang="en" className="inline-flex items-center gap-3">
           <SickwayMark className="h-8" />
-          <span>sickway, built at VTHacks 14</span>
+          <span>Sickway, built at VTHacks 14</span>
         </span>
         <span>{copy.honest}</span>
       </footer>
@@ -134,7 +133,7 @@ function Hero() {
   const copy = t.landing;
 
   return (
-    <section id="start" className="grid items-center gap-14 pt-4 lg:grid-cols-[1fr_1fr] lg:gap-10 lg:pt-10">
+    <section id="start" className="grid items-center gap-14 pt-4 lg:grid-cols-[1fr_1fr] lg:gap-8 lg:pt-10">
       <div className="flex flex-col gap-7">
         <BlurFade delay={0.05}>
           <h1 className="display text-[clamp(3rem,8.2vw,6rem)]">{copy.headline}</h1>
@@ -151,9 +150,9 @@ function Hero() {
         </BlurFade>
       </div>
 
-      <BlurFade delay={0.3} className="mx-auto w-full max-w-xl lg:max-w-none">
+      <BlurFade delay={0.3} className="hero-bleed mx-auto w-full max-w-xl lg:mr-[calc(-1*var(--bleed))] lg:ml-0 lg:w-[calc(100%+var(--bleed))] lg:max-w-none">
         {/* Two rows shared by both figures, so the devices stand on one line and the captions on another. */}
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.27fr)] grid-rows-[auto_auto] items-end gap-x-4 gap-y-3 sm:gap-x-7">
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.26fr)] grid-rows-[auto_auto] items-end gap-x-4 gap-y-3 sm:gap-x-6">
           <figure className="row-span-2 grid grid-rows-subgrid">
             <Safari url="sickway.app/hcp" imageSrc={SHOTS.clinician} className="h-auto w-full self-end drop-shadow-[0_30px_40px_rgba(60,40,0,0.22)]" />
             <figcaption className="self-start text-sm text-ink-soft">{copy.laptopCaption}</figcaption>
@@ -164,29 +163,7 @@ function Hero() {
           </figure>
         </div>
       </BlurFade>
-
-      <Facts />
     </section>
-  );
-}
-
-/** True facts about the product, never usage numbers. Each rolls up once, when first seen. */
-function Facts() {
-  const { t } = useLanguage();
-  const ref = useRef<HTMLDListElement>(null);
-  const seen = useInView(ref, { once: true, amount: 0.6 });
-
-  return (
-    <dl ref={ref} className="grid grid-cols-3 gap-4 border-t border-ink/10 pt-8 lg:col-span-2">
-      {t.landing.facts.map((fact) => (
-        <div key={fact.label} className="flex flex-col-reverse gap-1">
-          <dt className="max-w-[22ch] text-sm leading-5 text-ink-soft sm:text-base sm:leading-6">{fact.label}</dt>
-          <dd className="display text-5xl leading-none text-ink sm:text-7xl">
-            <AnimatedCounter value={seen ? fact.value : 0} duration={0.9} />
-          </dd>
-        </div>
-      ))}
-    </dl>
   );
 }
 
@@ -350,7 +327,7 @@ function Showcase() {
 
         {wide && (
           <div className="relative">
-            <div className="glass sticky top-40 flex h-[min(70vh,44rem)] items-center justify-center overflow-hidden rounded-[2.5rem] p-8">
+            <div className="glass sticky top-40 flex h-[min(74vh,46rem)] flex-col items-center gap-5 overflow-hidden rounded-[2.5rem] p-8">
               <DotPattern width={20} height={20} cr={1} className="text-ink/15 [mask-image:radial-gradient(closest-side,black,transparent)]" />
               <AnimatePresence mode="wait">
                 <motion.figure
@@ -359,9 +336,9 @@ function Showcase() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -12, scale: 0.98 }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="relative flex h-full w-full flex-col items-center justify-center gap-4"
+                  className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-4"
                 >
-                  <Device index={active} reveal className="max-h-[calc(100%-6.5rem)]" />
+                  <Device index={active} className="max-h-[calc(100%-2.5rem)]" />
                   <figcaption className="text-sm text-ink-soft">{captions[active]}</figcaption>
                 </motion.figure>
               </AnimatePresence>
@@ -376,7 +353,7 @@ function Showcase() {
                 onComplete={() => setPlaying(false)}
                 controlPosition="left"
                 controlLabels={copy.player}
-                className="absolute inset-x-8 bottom-6 z-10"
+                className="relative z-10 w-full shrink-0"
               />
               <BorderBeam size={160} duration={10} colorFrom="#ee121d" colorTo="#ee121d" borderWidth={2} />
             </div>
@@ -387,14 +364,13 @@ function Showcase() {
   );
 }
 
-function Device({ index, reveal, className }: { index: number; reveal?: boolean; className?: string }) {
+function Device({ index, className }: { index: number; className?: string }) {
   if (index === 1) {
-    return <Safari url="sickway.app/hcp" imageSrc={SHOTS.clinician} reveal={reveal} className={cn("h-auto w-full max-w-2xl drop-shadow-[0_24px_32px_rgba(60,40,0,0.2)]", className)} />;
+    return <Safari url="sickway.app/hcp" imageSrc={SHOTS.clinician} className={cn("h-auto w-full max-w-2xl drop-shadow-[0_24px_32px_rgba(60,40,0,0.2)]", className)} />;
   }
   return (
     <Iphone
       src={index === 0 ? SHOTS.student : SHOTS.packet}
-      reveal={reveal}
       className={cn("h-auto w-56 max-w-full drop-shadow-[0_24px_32px_rgba(60,40,0,0.28)] lg:h-full lg:w-auto", className)}
     />
   );
