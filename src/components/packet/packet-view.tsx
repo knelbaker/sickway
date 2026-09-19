@@ -35,7 +35,7 @@ export function PacketView({ packetId }: { packetId: string }) {
   if (!packet) {
     if (!error) return <p className="text-sm text-muted-foreground">{p.loading}</p>;
     return (
-      <Card lang={language}>
+      <Card lang={language} className="mx-auto w-full max-w-2xl">
         <CardHeader>
           <CardTitle>
             <h1>{p.unavailableTitle}</h1>
@@ -58,7 +58,7 @@ export function PacketView({ packetId }: { packetId: string }) {
   const { display } = packet;
 
   return (
-    <Card lang={language}>
+    <Card lang={language} className="ticket-edge mx-auto w-full max-w-2xl rounded-t-none">
       <CardHeader>
         <CardTitle>
           <h1>{p.title(display.patientName)}</h1>
@@ -104,7 +104,7 @@ export function PacketView({ packetId }: { packetId: string }) {
         )}
 
         {display.instructions.map((instructions) => (
-          <section key={instructions.language} lang={instructions.language} className="rounded-lg border p-4">
+          <section key={instructions.language} lang={instructions.language} className="rounded-2xl border border-dashed border-ink-soft p-5">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <h2 className="text-sm font-semibold">
                 {instructions.title} · {LANGUAGE_NAMES[instructions.language] ?? instructions.language}

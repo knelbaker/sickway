@@ -7,9 +7,18 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display-face);
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-rule: var(--rule);
+  --color-brand-red: var(--brand-red);
+  --color-brand-red-ink: var(--brand-red-ink);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display-face);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,38 +58,52 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /*
+   * sickway brand, sampled from the logo: cream paper, black ink, one signal red.
+   * --brand-red is the logo red: line art and large type only (4.1:1 on paper).
+   * --brand-red-ink is the same hue deepened so red can carry text and white labels (5.6:1 / 5.9:1).
+   */
+  --paper: #fdf9e8;
+  --paper-raised: #fffdf6;
+  --paper-sunk: #f5efd9;
+  --ink: #000000;
+  --ink-soft: #5e5848;
+  --rule: #e6dec6;
+  --brand-red: #ee121d;
+  --brand-red-ink: #c8121b;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper-raised);
+  --card-foreground: var(--ink);
+  --popover: var(--paper-raised);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--paper-sunk);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-sunk);
+  --muted-foreground: var(--ink-soft);
+  --accent: var(--paper-sunk);
+  --accent-foreground: var(--ink);
+  --destructive: var(--brand-red-ink);
+  --border: var(--rule);
+  --input: #cfc6a9;
+  --ring: var(--ink);
+  --chart-1: var(--brand-red);
+  --chart-2: var(--ink);
+  --chart-3: var(--ink-soft);
+  --chart-4: #cfc6a9;
+  --chart-5: var(--paper-sunk);
+  --radius: 0.875rem;
+  --sidebar: var(--paper-raised);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: var(--paper);
+  --sidebar-accent: var(--paper-sunk);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--rule);
+  --sidebar-ring: var(--ink);
 }
 
 .dark {
@@ -123,8 +146,101 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Room for the floating tab bar and the iOS home indicator on phones. */
+    padding-bottom: env(safe-area-inset-bottom);
   }
   html {
     @apply font-sans;
+    /* The sticky synthetic-data banner must never cover an in-page target. */
+    scroll-padding-top: 9rem;
+  }
+  /* Page and card titles speak in the wordmark's voice. */
+  h1 {
+    font-family: var(--font-display-face), var(--font-body), sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+  }
+  [data-slot="card-title"] h1 {
+    font-size: clamp(1.875rem, 5vw, 2.5rem);
+  }
+  [data-slot="card-description"] {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  ::selection {
+    background: var(--brand-red);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* The wordmark's voice: heavy, forward-leaning, tight. Used for headings, never for body text. */
+  .display {
+    font-family: var(--font-display-face), var(--font-body), sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+  }
+
+  /*
+   * Glass. Translucent white over the tinted page backdrop. The fill is opaque enough
+   * that text keeps its contrast where backdrop-filter is unsupported or switched off.
+   */
+  .glass {
+    background: rgb(255 253 246 / 0.62);
+    -webkit-backdrop-filter: blur(22px) saturate(170%);
+    backdrop-filter: blur(22px) saturate(170%);
+    border: 1px solid rgb(255 255 255 / 0.75);
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.9) inset,
+      0 12px 40px -14px rgb(60 40 0 / 0.22);
+  }
+  .glass-strong {
+    background: rgb(255 253 246 / 0.78);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgb(255 255 255 / 0.8);
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.95) inset,
+      0 10px 34px -10px rgb(60 40 0 / 0.28);
+  }
+
+  /* What the glass sits on: cream paper with two soft washes of the brand's warmth. Gradients, not blur filters, so it stays cheap on phones. */
+  .page-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(56rem 38rem at 88% -8%, rgb(238 18 29 / 0.17), transparent 62%),
+      radial-gradient(46rem 40rem at -12% 38%, rgb(255 176 92 / 0.26), transparent 60%),
+      radial-gradient(52rem 36rem at 70% 108%, rgb(238 18 29 / 0.1), transparent 60%),
+      var(--paper);
+  }
+
+  /* A packet is a piece of paper that travels: a torn, perforated top edge. */
+  .ticket-edge {
+    --notch: 9px;
+    mask: radial-gradient(var(--notch) at 50% 0, #0000 98%, #000) 50% 0 / calc(var(--notch) * 3.2) 100% repeat-x;
+    padding-top: calc(var(--notch) * 1.6);
+  }
+}
+
+/* Motion is decoration here, never information, so it all switches off on request. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,8 @@ import { apiFetch, setSessionToken, useSessionToken, useSupersededByToken } from
  * keyed by session ID, so switching tokens clears drafts, consent, selections,
  * the open encounter, audio, and polled data in one step.
  */
-export function ResetDemoButton() {
+/** `tab` renders the icon-over-label form used in the phone tab bar. */
+export function ResetDemoButton({ tab = false }: { tab?: boolean }) {
   const token = useSessionToken();
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -47,9 +49,20 @@ export function ResetDemoButton() {
 
   return (
     <>
-      <Button variant="ghost" onClick={() => setOpen(true)}>
-        {t.reset.button}
-      </Button>
+      {tab ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex min-h-12 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-full px-2 text-[0.6875rem] leading-4 font-semibold text-ink"
+        >
+          <RotateCcw aria-hidden className="size-5" />
+          {t.reset.button}
+        </button>
+      ) : (
+        <Button variant="ghost" onClick={() => setOpen(true)}>
+          {t.reset.button}
+        </Button>
+      )}
       <Dialog open={open} onOpenChange={(next) => !pending && setOpen(next)}>
         <DialogContent>
           <DialogHeader>

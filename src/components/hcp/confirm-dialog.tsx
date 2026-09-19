@@ -98,7 +98,7 @@ export function ConfirmDialog({
           <Button type="button" variant="outline" className="h-11" disabled={pending} onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="button" className="h-11" disabled={pending} onClick={onConfirm}>
+          <Button type="button" variant="brand" className="h-11" disabled={pending} onClick={onConfirm}>
             {pending ? "Attaching…" : "Confirm and attach"}
           </Button>
         </DialogFooter>

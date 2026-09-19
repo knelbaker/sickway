@@ -30,7 +30,7 @@ export function StatusView({
           <p>{t.status.packetBody}</p>
           <p className="mt-1 font-medium">{t.status.bookingNotConnected}</p>
           <div className="mt-3">
-            <Button className="h-11" asChild>
+            <Button variant="brand" className="h-11" asChild>
               <Link href={`/packet/${encodeURIComponent(packetId)}`}>{t.status.openPacket}</Link>
             </Button>
           </div>

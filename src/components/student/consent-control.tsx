@@ -28,7 +28,7 @@ export function ConsentControl({
 }) {
   const { t } = useLanguage();
   return (
-    <section aria-labelledby="consent-heading" className="flex flex-col gap-3 rounded-lg border-2 p-4">
+    <section aria-labelledby="consent-heading" className="flex flex-col gap-3 rounded-2xl border border-ink/70 bg-paper/70 p-5">
       <h2 id="consent-heading" className="text-base font-semibold">
         {t.consent.title}
       </h2>
@@ -48,7 +48,7 @@ export function ConsentControl({
         {t.consent.explain} {t.consent.note}
       </p>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" className="h-11" disabled={!consent || pending || !canSubmit} onClick={onSubmit}>
+        <Button type="button" variant="brand" className="h-11" disabled={!consent || pending || !canSubmit} onClick={onSubmit}>
           {pending ? t.consent.sharing : t.consent.submit}
         </Button>
         <Button type="button" variant="outline" className="h-11" disabled={pending} onClick={onDecline}>

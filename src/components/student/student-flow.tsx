@@ -13,6 +13,7 @@ import { PreparedDemoSummary } from "@/components/student/prepared-demo";
 import { ProfileSummary, type StudentProfileSummary } from "@/components/student/profile-summary";
 import { ReviewForm } from "@/components/student/review-form";
 import { StatusView } from "@/components/student/status-view";
+import { StepThread } from "@/components/student/step-thread";
 import { toReviewedIntake, useIntakeDraft } from "@/components/student/use-intake-draft";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -145,8 +146,10 @@ function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = fals
     }
   }
 
+  const currentStep = submitted ? 3 : step === "describe" ? 0 : step === "followups" ? 1 : 2;
+
   return (
-    <Card lang={language}>
+    <Card lang={language} className="mx-auto w-full max-w-2xl">
       <CardHeader>
         <CardTitle>
           <h1>{t.flow.title}</h1>
@@ -155,7 +158,8 @@ function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = fals
           {t.flow.description}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-6">
+      <CardContent className="flex flex-col gap-7">
+        <StepThread steps={t.flow.steps} current={currentStep} label={t.flow.stepsLabel} />
         <ProfileSummary profile={profile} />
 
         {submitted && <SubmittedStatus submitted={submitted} profile={profile} />}
@@ -196,7 +200,7 @@ function SessionIntake({ sessionId, profile, preparedIntake, voiceEnabled = fals
               onChange={(value) => dispatch({ type: "set", field: "allergies", value })}
             />
             <div className="flex flex-wrap gap-2 border-t pt-4">
-              <Button type="button" className="h-11" onClick={() => setStep("review")}>
+              <Button type="button" variant="brand" className="h-11" onClick={() => setStep("review")}>
                 {t.flow.continueToReview}
               </Button>
               <Button type="button" variant="outline" className="h-11" onClick={startOver}>

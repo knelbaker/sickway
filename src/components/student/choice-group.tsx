@@ -32,8 +32,8 @@ export function ChoiceGroup<T>({
             aria-checked={checked}
             onClick={() => onSelect(index, choice.value)}
             className={cn(
-              "min-h-11 min-w-20 rounded-md border px-4 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
-              checked ? "border-primary bg-primary text-primary-foreground" : "bg-background hover:bg-muted",
+              "min-h-11 min-w-20 cursor-pointer rounded-full border-2 px-5 text-sm font-semibold transition-colors duration-200",
+              checked ? "border-ink bg-ink text-paper" : "border-ink/20 bg-paper hover:border-ink",
             )}
           >
             {choice.label}
