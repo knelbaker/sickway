@@ -4,6 +4,7 @@ import { Check, CircleHelp, RotateCcw, SquareCheckBig, SquareDashed } from "luci
 import { AnimatePresence, motion, MotionConfig, useInView } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SickwayMark } from "@/components/brand/sickway-logo";
+import { Disclaimer } from "@/components/disclaimer";
 import { SessionPanel } from "@/components/session/session-panel";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { BlurFade } from "@/components/ui/blur-fade";
@@ -138,9 +139,10 @@ function Hero() {
         </BlurFade>
         <BlurFade delay={0.15}>
           <p className="max-w-[54ch] text-lg leading-8 sm:text-xl sm:leading-9">{copy.sub}</p>
-          <p className="mt-4 max-w-[54ch] border-l-[3px] border-dashed border-ink-soft pl-4 leading-7 text-ink-soft">
-            {copy.honest}
-          </p>
+          <div className="mt-4 max-w-[54ch] border-l-[3px] border-dashed border-ink-soft pl-4 text-ink-soft">
+            <p className="leading-7">{copy.honest}</p>
+            <Disclaimer className="mt-1.5 text-sm leading-6" />
+          </div>
         </BlurFade>
         <BlurFade delay={0.25}>
           <div className="flex flex-col gap-3 pt-2">
