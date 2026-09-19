@@ -7,17 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatIsoWallTime, formatReportedList, isoToLocalInput, localInputToIso, NOT_REPORTED } from "@/lib/format";
-import { RED_FLAG_DEFINITIONS } from "@/lib/red-flags";
-
-const LANGUAGE_NAMES: Record<string, string> = { en: "English", es: "Spanish" };
+import { useLanguage } from "@/lib/client/language-store";
+import { formatIsoWallTime, formatReportedList, isoToLocalInput, localInputToIso } from "@/lib/format";
+import { LANGUAGES } from "@/lib/i18n/messages";
+import { RED_FLAG_KEYS } from "@/lib/red-flags";
+import type { InstructionLanguage } from "@/lib/schemas";
 
 function parseList(text: string): string[] {
   return text.split(",").map((item) => item.trim()).filter(Boolean);
 }
 
-function SourceBadge({ source }: { source: "student review" | "synthetic profile" }) {
-  return <Badge variant="outline">Source: {source}</Badge>;
+function SourceBadge({ source }: { source: "student" | "profile" }) {
+  const { t } = useLanguage();
+  return <Badge variant="outline">{source === "student" ? t.common.sourceStudent : t.common.sourceProfile}</Badge>;
 }
 
 function FieldRow({ id, label, hint, children }: { id: string; label: string; hint?: string; children: React.ReactNode }) {
@@ -25,7 +27,7 @@ function FieldRow({ id, label, hint, children }: { id: string; label: string; hi
     <div className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center gap-2">
         <Label htmlFor={id}>{label}</Label>
-        <SourceBadge source="student review" />
+        <SourceBadge source="student" />
       </div>
       {children}
       {hint && <p className="text-xs leading-5 text-muted-foreground">{hint}</p>}
@@ -41,27 +43,35 @@ export function ReviewForm({
   draft,
   dispatch,
   profile,
+  preferredLanguages,
+  onPreferredLanguagesChange,
   onEditAnswers,
 }: {
   draft: IntakeDraft;
   dispatch: Dispatch<DraftAction>;
   profile: StudentProfileSummary;
+  /** The student's own choice; it starts from the displayed profile selection (§6.1). */
+  preferredLanguages: InstructionLanguage[];
+  onPreferredLanguagesChange: (languages: InstructionLanguage[]) => void;
   onEditAnswers: () => void;
 }) {
-  const onsetText = formatIsoWallTime(draft.onsetIso);
+  const { language, t } = useLanguage();
+  const NOT_REPORTED = t.common.notReported;
+  const reported = { notReported: t.common.notReported, noneReported: t.common.noneReported };
+  const onsetText = formatIsoWallTime(draft.onsetIso, language);
 
   return (
     <section aria-labelledby="review-heading" className="flex flex-col gap-5">
       <div>
         <h2 id="review-heading" className="text-base font-semibold">
-          Review before sharing
+          {t.review.title}
         </h2>
         <p className="text-sm leading-6 text-muted-foreground">
-          Correct anything that is wrong. Blank fields are shared as “{NOT_REPORTED}”, never as “no”.
+          {t.review.intro(NOT_REPORTED)}
         </p>
       </div>
 
-      <FieldRow id="review-symptoms" label="Symptoms" hint="Separate symptoms with commas.">
+      <FieldRow id="review-symptoms" label={t.review.symptoms} hint={t.review.symptomsHint}>
         <Input
           id="review-symptoms"
           className="h-11"
@@ -71,7 +81,7 @@ export function ReviewForm({
         />
       </FieldRow>
 
-      <FieldRow id="review-temp" label="Highest temperature (°F)">
+      <FieldRow id="review-temp" label={t.review.temperature}>
         <Input
           id="review-temp"
           className="h-11"
@@ -92,11 +102,11 @@ export function ReviewForm({
       <div className="flex flex-col gap-2 rounded-lg border p-3">
         <FieldRow
           id="review-onset"
-          label="When it started"
+          label={t.review.onset}
           hint={
             draft.onsetPhrase
-              ? `You wrote “${draft.onsetPhrase}”. The time below was worked out from the displayed fixture clock (${formatIsoWallTime(profile.fixtureClock)}), not from today's real date.`
-              : "Leave this empty if you are not sure."
+              ? t.review.onsetHintPhrase(draft.onsetPhrase, formatIsoWallTime(profile.fixtureClock, language) ?? "")
+              : t.review.onsetHintEmpty
           }
         >
           <Input
@@ -119,19 +129,19 @@ export function ReviewForm({
             onCheckedChange={(checked) => dispatch({ type: "confirmOnset", confirmed: checked === true })}
           />
           <Label htmlFor="confirm-onset" className="min-h-11 flex-1 items-center text-sm leading-6 font-normal">
-            {onsetText ? `I confirm it started around ${onsetText}.` : "Add a time above to confirm it."}
+            {onsetText ? t.review.confirmOnset(onsetText) : t.review.confirmOnsetEmpty}
           </Label>
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
           {draft.onsetIso === null
-            ? `Onset will be shared as “${NOT_REPORTED}”.`
+            ? t.review.onsetWillBeNotReported(NOT_REPORTED)
             : draft.onsetConfirmed
-              ? "Confirmed by you."
-              : "Not confirmed: it will be shared as an unconfirmed time and no elapsed time will be shown."}
+              ? t.review.onsetConfirmed
+              : t.review.onsetUnconfirmed}
         </p>
       </div>
 
-      <FieldRow id="review-deadline" label="Deadline today">
+      <FieldRow id="review-deadline" label={t.review.deadline}>
         <Input
           id="review-deadline"
           className="h-11"
@@ -145,41 +155,64 @@ export function ReviewForm({
 
       <div className="flex flex-col gap-2 rounded-lg border p-3 text-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-semibold">Your follow-up answers</h3>
+          <h3 className="font-semibold">{t.review.answersTitle}</h3>
           <button type="button" className="min-h-11 px-2 text-sm underline underline-offset-4" onClick={onEditAnswers}>
-            Edit answers
+            {t.review.editAnswers}
           </button>
         </div>
         <dl className="flex flex-col gap-1.5">
-          {RED_FLAG_DEFINITIONS.map((flag) => {
+          {RED_FLAG_KEYS.map((key) => ({ key, label: t.followUps.redFlags[key].label })).map((flag) => {
             const answer = draft.redFlags[flag.key];
             return (
               <div key={flag.key} className="flex flex-wrap justify-between gap-x-3">
                 <dt>{flag.label}</dt>
                 <dd className="font-medium">
-                  {answer === true ? "Yes" : answer === false ? "No" : draft.notSure[flag.key] ? "Not sure" : "Not answered"}
+                  {answer === true ? t.common.yes : answer === false ? t.common.no : draft.notSure[flag.key] ? t.common.notSure : t.common.notAnswered}
                 </dd>
               </div>
             );
           })}
           <div className="flex flex-wrap justify-between gap-x-3 border-t pt-1.5">
-            <dt>Medications taken</dt>
-            <dd className="font-medium">{formatReportedList(draft.medsTaken)}</dd>
+            <dt>{t.review.meds}</dt>
+            <dd className="font-medium">{formatReportedList(draft.medsTaken, reported)}</dd>
           </div>
           <div className="flex flex-wrap justify-between gap-x-3">
-            <dt>Allergies</dt>
-            <dd className="font-medium">{formatReportedList(draft.allergies)}</dd>
+            <dt>{t.review.allergies}</dt>
+            <dd className="font-medium">{formatReportedList(draft.allergies, reported)}</dd>
           </div>
         </dl>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-muted-foreground">Instruction languages</span>
-        <span className="font-medium">
-          {profile.instructionLanguages.map((code) => LANGUAGE_NAMES[code] ?? code).join(" and ")}
-        </span>
-        <SourceBadge source="synthetic profile" />
-      </div>
+      <fieldset className="flex flex-col gap-1 rounded-lg border p-3">
+        <legend className="flex flex-wrap items-center gap-2 px-1 text-sm font-medium">
+          {t.review.languages} <SourceBadge source="student" />
+        </legend>
+        <p className="text-xs leading-5 text-muted-foreground">{t.review.languagesHelp}</p>
+        {LANGUAGES.map((option) => (
+          <div key={option.code} className="flex items-center gap-3">
+            <Checkbox
+              id={`preferred-language-${option.code}`}
+              className="size-5"
+              checked={preferredLanguages.includes(option.code)}
+              onCheckedChange={(checked) =>
+                onPreferredLanguagesChange(
+                  LANGUAGES.map((item) => item.code).filter((code) =>
+                    code === option.code ? checked === true : preferredLanguages.includes(code),
+                  ),
+                )
+              }
+            />
+            <Label htmlFor={`preferred-language-${option.code}`} lang={option.code} className="min-h-11 flex-1 items-center font-normal">
+              {option.name}
+            </Label>
+          </div>
+        ))}
+        {preferredLanguages.length === 0 && (
+          <p role="alert" className="text-sm">
+            {t.review.languagesNeedOne}
+          </p>
+        )}
+      </fieldset>
     </section>
   );
 }

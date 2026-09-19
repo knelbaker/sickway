@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Link from "next/link";
 import type { ReactNode } from "react";
-import { ResetDemoButton, SessionSupersededNotice } from "@/components/session/reset-controls";
+import { NoticeEquivalent } from "@/components/notice-equivalent";
+import { SessionSupersededNotice } from "@/components/session/reset-controls";
+import { SiteHeader } from "@/components/site-header";
 import { SyntheticBanner } from "@/components/synthetic-banner";
-import { Button } from "@/components/ui/button";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,26 +30,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <body className="flex min-h-full flex-col">
         <SyntheticBanner />
-        <header className="border-b">
-          <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-            <Link href="/" className="inline-flex min-h-11 items-center font-semibold tracking-tight">
-              Sick Day + Doorway
-            </Link>
-            <nav aria-label="Main navigation" className="flex flex-wrap gap-1 sm:gap-2">
-              <Button variant="ghost" asChild>
-                <Link href="/s">Student</Link>
-              </Button>
-              <Button variant="ghost" asChild>
-                <Link href="/hcp">Clinician</Link>
-              </Button>
-              <ResetDemoButton />
-            </nav>
-          </div>
-        </header>
+        <SiteHeader />
         <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 sm:py-10">
           <p className="mb-6 text-sm leading-6 text-muted-foreground">
-            Prototype workflow. Not medical advice. Do not enter real health
-            information.
+            <span lang="en">Prototype workflow. Not medical advice. Do not enter real health information.</span>
+            <NoticeEquivalent notice="disclaimer" className="block" />
           </p>
           <SessionSupersededNotice />
           <main>{children}</main>

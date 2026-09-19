@@ -2,16 +2,19 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/client/language-store";
 import { apiFetch } from "@/lib/client/session-store";
 
+// Values sent to the server stay fixed; only the labels come from the language catalogue.
 const CHOICES = [
-  { label: "Picked it up · feeling better", filled: true, symptomStatus: "improving" },
-  { label: "Picked it up · about the same", filled: true, symptomStatus: "about the same" },
-  { label: "Did not pick it up · feeling worse", filled: false, symptomStatus: "worse" },
+  { filled: true, symptomStatus: "improving" },
+  { filled: true, symptomStatus: "about the same" },
+  { filled: false, symptomStatus: "worse" },
 ];
 
 /** Two taps: open, then choose. The result shows up as the outcome chip on the next poll. */
 export function SimulateFollowUp({ encounterId }: { encounterId: string }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -37,7 +40,7 @@ export function SimulateFollowUp({ encounterId }: { encounterId: string }) {
     return (
       <div>
         <Button type="button" variant="outline" className="h-11" onClick={() => setOpen(true)}>
-          Simulate follow-up
+          {t.followUp.button}
         </Button>
       </div>
     );
@@ -45,18 +48,18 @@ export function SimulateFollowUp({ encounterId }: { encounterId: string }) {
 
   return (
     <fieldset className="flex flex-col gap-2 rounded-lg border p-3">
-      <legend className="px-1 text-sm font-medium">Simulated follow-up — pick a pretend answer</legend>
+      <legend className="px-1 text-sm font-medium">{t.followUp.legend}</legend>
       <p className="text-xs leading-5 text-muted-foreground">
-        A made-up self-report for the demo. It does not check a pharmacy and says nothing about real health.
+        {t.followUp.note}
       </p>
-      {CHOICES.map((choice) => (
-        <Button key={choice.label} type="button" variant="outline" className="h-11 justify-start" disabled={pending} onClick={() => void record(choice)}>
-          {choice.label}
+      {CHOICES.map((choice, index) => (
+        <Button key={choice.symptomStatus} type="button" variant="outline" className="h-11 justify-start" disabled={pending} onClick={() => void record(choice)}>
+          {t.followUp.choices[index]}
         </Button>
       ))}
       {failed && (
         <p role="alert" className="text-sm text-destructive">
-          Could not record that. Nothing was changed. Try again.
+          {t.followUp.failed}
         </p>
       )}
     </fieldset>

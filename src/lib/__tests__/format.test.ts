@@ -22,6 +22,17 @@ describe("formatIsoWallTime", () => {
   });
 });
 
+describe("Spanish formatting", () => {
+  it("writes dates and the two list states in Spanish without changing their meaning", () => {
+    expect(formatIsoWallTime("2026-09-18T08:00:00-04:00", "es")).toBe("18 de septiembre de 2026 a las 8:00 a. m.");
+    expect(formatIsoWallTime("2026-09-19T14:05:00-04:00", "es")).toBe("19 de septiembre de 2026 a las 2:05 p. m.");
+    const labels = { notReported: "no informado", noneReported: "ninguno informado" };
+    expect(formatReportedList(null, labels)).toBe("no informado");
+    expect(formatReportedList([], labels)).toBe("ninguno informado");
+    expect(formatReportedList(["ibuprofeno"], labels)).toBe("ibuprofeno");
+  });
+});
+
 describe("datetime-local round trip", () => {
   it("keeps the fixture clock's offset instead of the viewer's timezone", () => {
     const clock = "2026-09-19T10:00:00-04:00";

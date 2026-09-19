@@ -37,7 +37,7 @@ export function clearSessionToken(): void {
 
 /** The token of the session that replaced this one, once the server has reported a reset. */
 export function useSupersededByToken(): string | null {
-  return useSyncExternalStore(subscribe, () => supersededByToken, () => null);
+  return useSyncExternalStore(subscribeToSession, () => supersededByToken, () => null);
 }
 
 /** The part before the signature. Display and cache-key use only; the server never trusts it. */
@@ -47,7 +47,8 @@ export function sessionIdFromToken(token: string | null): string | null {
   return separator > 0 ? token.slice(0, separator) : null;
 }
 
-function subscribe(listener: () => void) {
+/** Subscribes to token changes on this device, including other tabs. */
+export function subscribeToSession(listener: () => void) {
   listeners.add(listener);
   // Another tab on the same device may start, join, or reset a session.
   window.addEventListener("storage", listener);
@@ -59,7 +60,7 @@ function subscribe(listener: () => void) {
 
 /** `undefined` while rendering on the server, then the stored token or null. */
 export function useSessionToken(): string | null | undefined {
-  return useSyncExternalStore(subscribe, getSessionToken, () => undefined);
+  return useSyncExternalStore(subscribeToSession, getSessionToken, () => undefined);
 }
 
 /** `fetch` for session-scoped API routes; attaches the pairing token. */

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { demoSessionResponseSchema } from "@/lib/api-contracts";
+import { carryLanguageIntoSession, useLanguage } from "@/lib/client/language-store";
 import {
   apiFetch,
   sessionIdFromToken,
@@ -16,13 +17,14 @@ import {
 } from "@/lib/client/session-store";
 
 export function RoleLinks() {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
       <Button asChild>
-        <Link href="/s">Student screen</Link>
+        <Link href="/s">{t.home.studentScreen}</Link>
       </Button>
       <Button variant="outline" asChild>
-        <Link href="/hcp">Clinician screen</Link>
+        <Link href="/hcp">{t.home.clinicianScreen}</Link>
       </Button>
     </div>
   );
@@ -31,6 +33,7 @@ export function RoleLinks() {
 /** Start a demo session on this device, then pair the second device with the join link. */
 export function SessionPanel() {
   const token = useSessionToken();
+  const { language, t } = useLanguage();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -42,8 +45,10 @@ export function SessionPanel() {
       const response = await apiFetch("/api/demo-session", { method: "POST" });
       if (!response.ok) throw new Error();
       setSessionToken(demoSessionResponseSchema.parse(await response.json()).token);
+      // The language chosen on this entry screen applies to the session it starts.
+      carryLanguageIntoSession(language);
     } catch {
-      setError("Could not start a demo session. Check the connection and try again.");
+      setError(t.home.startFailed);
     } finally {
       setPending(false);
     }
@@ -51,24 +56,23 @@ export function SessionPanel() {
 
   // Undefined until the browser has read its stored token.
   if (token === undefined) {
-    return <p className="text-sm text-muted-foreground">Loading demo session…</p>;
+    return <p className="text-sm text-muted-foreground">{t.home.loading}</p>;
   }
 
   if (token === null) {
     return (
       <div className="flex flex-col gap-3">
         <p className="text-sm leading-6">
-          Start an isolated synthetic session on this device, then open the join link on the
-          second device.
+          {t.home.startHelp}
         </p>
         <div>
           <Button onClick={start} disabled={pending}>
-            {pending ? "Starting…" : "Start demo session"}
+            {pending ? t.home.starting : t.home.start}
           </Button>
         </div>
         {error && (
           <Alert variant="destructive">
-            <AlertTitle>Session not started</AlertTitle>
+            <AlertTitle>{t.home.startFailedTitle}</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -90,15 +94,15 @@ export function SessionPanel() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span>Demo session</span>
+        <span>{t.home.session}</span>
         <Badge variant="secondary" className="font-mono">
           {sessionIdFromToken(token)?.slice(0, 8)}
         </Badge>
-        <span className="text-muted-foreground">Synthetic data only.</span>
+        <span className="text-muted-foreground">{t.home.syntheticOnly}</span>
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="join-link">Join link for the second device</Label>
+        <Label htmlFor="join-link">{t.home.joinLabel}</Label>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             id="join-link"
@@ -108,12 +112,11 @@ export function SessionPanel() {
             onFocus={(event) => event.currentTarget.select()}
           />
           <Button variant="outline" onClick={copy}>
-            {copied ? "Copied" : "Copy link"}
+            {copied ? t.home.copied : t.home.copy}
           </Button>
         </div>
         <p className="text-xs leading-5 text-muted-foreground">
-          Anyone with this link can see this demo session. It pairs two devices for a synthetic
-          demo and is not a secure login.
+          {t.home.joinNote}
         </p>
       </div>
 

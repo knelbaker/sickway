@@ -1,0 +1,606 @@
+import type { RedFlagKey } from "@/lib/red-flags";
+
+/**
+ * Prewritten, reviewed-by-hand UI copy for the student journey in English and
+ * Spanish (issue #61). Browser-safe. There is no runtime translation anywhere:
+ * what a student types stays in their own words, and these strings are the only
+ * Spanish the product produces, together with data/instructions.es.json.
+ *
+ * Writing rules: short sentences, everyday words, and a plain explanation the
+ * first time a healthcare or demo term appears. The Spanish uses "usted", like
+ * the existing packet instructions. It has not had professional or clinical
+ * translation review.
+ *
+ * `es` is typed as `Messages`, so a missing or extra Spanish key fails typecheck.
+ */
+
+export type Language = "en" | "es";
+export const LANGUAGES: { code: Language; name: string }[] = [
+  { code: "en", name: "English" },
+  { code: "es", name: "Español" },
+];
+
+const en = {
+  languageSelector: "Language",
+  // Shown under the required English notices when the screen is in another language.
+  bannerEquivalent: "",
+  disclaimerEquivalent: "",
+
+  nav: { student: "Student", clinician: "Clinician" },
+
+  common: {
+    notReported: "not reported",
+    noneReported: "none reported",
+    yes: "Yes",
+    no: "No",
+    notSure: "Not sure",
+    notAnswered: "Not answered",
+    and: "and",
+    languageNames: { en: "English", es: "Spanish" } as Record<string, string>,
+    sourceProfile: "Source: synthetic profile",
+    sourceFixture: "Source: demo fixture",
+    sourceStudent: "Source: student review",
+    sessionEnded: "This demo session has ended. Start or join a session again from the home page.",
+  },
+
+  poll: {
+    reconnecting: "Reconnecting…",
+    live: (time: string) => `Live · updated ${time}`,
+    stale: (time: string) => `Reconnecting… showing data from ${time}`,
+  },
+
+  reset: {
+    button: "Reset demo",
+    title: "Reset the demo?",
+    body: "This starts a fresh synthetic session. Both screens clear, consent starts unticked, and nothing from this run is shown again. The other device will be asked to join the new session.",
+    failed: "Could not reset. Nothing was changed. Check the connection and try again.",
+    keep: "Keep this session",
+    pending: "Resetting…",
+    supersededTitle: "The demo was reset on the other device",
+    supersededBody: "This screen belongs to the previous run and shows nothing from it any more.",
+    join: "Join the new session",
+  },
+
+  home: {
+    description:
+      "A synthetic workflow from student intake to a clinician brief and a returned patient packet. Open the student screen on a phone and the clinician screen on a laptop in the same demo session.",
+    loading: "Loading demo session…",
+    startHelp: "Start an isolated synthetic session on this device, then open the join link on the second device.",
+    start: "Start demo session",
+    starting: "Starting…",
+    startFailedTitle: "Session not started",
+    startFailed: "Could not start a demo session. Check the connection and try again.",
+    session: "Demo session",
+    syntheticOnly: "Synthetic data only.",
+    joinLabel: "Join link for the second device",
+    copy: "Copy link",
+    copied: "Copied",
+    joinNote: "Anyone with this link can see this demo session. It pairs two devices for a synthetic demo and is not a secure login.",
+    studentScreen: "Student screen",
+    clinicianScreen: "Clinician screen",
+  },
+
+  join: {
+    title: "Join demo session",
+    description: "Pairs this device with a synthetic demo session started on another device.",
+    joining: "Joining demo session…",
+    invalidTitle: "This join link is not valid",
+    invalidBody: "The demo session may have expired or been reset. Open a fresh join link from the first device, or start a new session.",
+    back: "Back to start",
+    joined: "Joined demo session",
+    choose: "Choose the screen for this device.",
+  },
+
+  gate: {
+    loading: "Loading demo session…",
+    body: "This device is not paired with a demo session yet. Start one, or open the join link from the other device.",
+    cta: "Start or join a demo session",
+  },
+
+  profile: {
+    title: "Synthetic demo patient",
+    nameAge: "Name and age",
+    plan: "Plan",
+    languages: "Instruction languages",
+    costCeiling: "Cost ceiling",
+    notSet: "not set",
+    fictionalAmount: "Fictional amount",
+    fixtureClock: "Fixture clock",
+    clockNote: "The demo uses this displayed clock, not the real time, so “yesterday morning” always means the same thing.",
+    // Plain-language explanations of demo and healthcare terms (issue #61).
+    explain:
+      "This is a made-up patient. “Plan” means health insurance; here it is pretend, and nobody checked real coverage. The “cost ceiling” is the most this made-up patient wants to pay.",
+  },
+
+  flow: {
+    title: "Student intake",
+    description: "Nothing you enter is shared with the demo clinic until you review it and give consent.",
+    continueToReview: "Continue to review",
+    startOver: "Start over",
+    backToTyping: "Back to typing my own",
+    notSharedTitle: "Not shared",
+    declined: "Your intake stays on this screen. The demo clinic cannot see it and nothing was sent.",
+    declinedPrepared: "The prepared case stays on this screen. The demo clinic cannot see it and nothing was sent.",
+    clinicBrief: "Clinic brief:",
+    medsLegend: "Have you taken any medications for this?",
+    medsInput: "Which medications?",
+    medsPlaceholder: "For example: ibuprofen",
+    allergiesLegend: "Do you have any allergies?",
+    allergiesInput: "Which allergies?",
+    allergiesPlaceholder: "For example: penicillin",
+    errors: {
+      consent_required: "Consent is required before anything is shared. Nothing was sent.",
+      invalid_intake: "Some answers could not be read. Go back, check them, and try again. Nothing was shared.",
+      session: "This demo session has ended. Start or join a session again from the home page.",
+      generic: "Could not reach the demo clinic. Nothing was shared. Try again.",
+    },
+  },
+
+  describe: {
+    label: "What is going on today?",
+    placeholder: "For example: I woke up with a 102 fever, my whole body aches, it started yesterday morning, and I have an exam at 2.",
+    fictionalOnly: "Use fictional details only. Do not enter real health information.",
+    ownWords: "",
+    continue: "Continue",
+    reading: "Reading…",
+    enterMyself: "Enter details myself",
+    usePrepared: "Use prepared demo instead",
+    preparedNote: "Loads the scripted demo case. It is labelled as prepared fixture output on every screen and is never used in place of something you typed.",
+    sessionEndedTitle: "Demo session ended",
+    sessionEndedBody: "Start or join a demo session again from the home page.",
+    outsideTitle: "Outside this demo scenario",
+    outsideBody: "That looks outside this demo scenario. Describe how you feel sick today, using fictional details only.",
+    failedTitle: "Could not read that automatically",
+    failedBody: "Nothing was filled in for you. You can try again, or continue and enter the details yourself.",
+  },
+
+  candidate: {
+    pickedUp: "Picked up from what you wrote",
+    nothing: "Nothing was filled in automatically",
+    note: "You will review and correct every field before anything is shared.",
+    symptoms: "Symptoms",
+    temperature: "Temperature",
+    started: "Started",
+    deadline: "Deadline today",
+    suggested: (time: string) => `Suggested: ${time} — not confirmed`,
+  },
+
+  followUps: {
+    checklistLegend: "1. Are any of these happening?",
+    checklistHelp: "Answer each one. “Not sure” is a fine answer, and skipped items stay unanswered. This is a prototype checklist, not a validated medical screening.",
+    none: "None",
+    some: "Yes",
+    skip: "Skip",
+    separate: "Separate items with commas. Fictional answers only.",
+    redFlags: {
+      breathing_chest_pain: { label: "Breathing difficulty or chest pain", description: "Shortness of breath, wheezing, or chest tightness / pain" },
+      confusion_fainting: { label: "Confusion or fainting", description: "Difficulty thinking, sudden dizziness, passing out, or altered mental state" },
+      stiff_neck_rash: { label: "Stiff neck or new rash", description: "Inability to flex neck to chest, or a sudden unexplained spreading rash" },
+      high_temperature: { label: "High temperature / fever", description: "Temperature of 103°F (39.4°C) or higher, or persistent unmanaged fever" },
+      dehydration: { label: "Dehydration or unable to keep liquids down", description: "Unable to keep fluids down for 12+ hours, dark urine, or severe dry mouth" },
+      sudden_severe_headache: { label: "Sudden severe headache", description: "Sudden onset severe headache or headache accompanied by neurological symptoms" },
+    } as Record<RedFlagKey, { label: string; description: string }>,
+  },
+
+  review: {
+    title: "Review before sharing",
+    intro: (notReported: string) => `Correct anything that is wrong. Blank fields are shared as “${notReported}”, never as “no”.`,
+    symptoms: "Symptoms",
+    symptomsHint: "Separate symptoms with commas.",
+    temperature: "Highest temperature (°F)",
+    onset: "When it started",
+    onsetHintPhrase: (phrase: string, clock: string) =>
+      `You wrote “${phrase}”. The time below was worked out from the displayed fixture clock (${clock}), not from today's real date.`,
+    onsetHintEmpty: "Leave this empty if you are not sure.",
+    confirmOnset: (time: string) => `I confirm it started around ${time}.`,
+    confirmOnsetEmpty: "Add a time above to confirm it.",
+    onsetWillBeNotReported: (notReported: string) => `Onset will be shared as “${notReported}”.`,
+    onsetConfirmed: "Confirmed by you.",
+    onsetUnconfirmed: "Not confirmed: it will be shared as an unconfirmed time and no elapsed time will be shown.",
+    deadline: "Deadline today",
+    answersTitle: "Your follow-up answers",
+    editAnswers: "Edit answers",
+    meds: "Medications taken",
+    allergies: "Allergies",
+    languages: "Instruction languages",
+    languagesHelp: "The languages you would like your visit instructions in. The demo clinician sees this and makes the final choice.",
+    languagesNeedOne: "Choose at least one language.",
+  },
+
+  consent: {
+    title: "Share with the demo clinic?",
+    label: "I agree to share this synthetic intake with the demo clinic in this demo session.",
+    note: "If you decline, your intake stays on this screen and the clinic sees nothing. Nothing is booked, prescribed, or sent anywhere outside this demo either way.",
+    explain: "“Consent” means you say yes to sharing. It is your choice, and the box starts empty.",
+    submit: "Submit to demo clinic",
+    sharing: "Sharing…",
+    decline: "Decline",
+  },
+
+  status: {
+    emergencyTitle: "This demo stops here",
+    emergencyBody: "You answered yes to an item on this prototype's emergency checklist, so the routine demo flow is bypassed and no clinic next step is shown.",
+    emergencyAction: "In a real situation, call 911 or your campus emergency number. This message is prototype copy, not a validated medical screening result.",
+    reviewTitle: "Shared — needs review",
+    reviewBody: "Some checklist items were not answered or need a second look, so the demo clinic will review your intake before any next step. This is not an all-clear.",
+    bookingNotConnected: "Booking not connected.",
+    readyTitle: "Shared with the demo clinic",
+    nextStep: "Demo next step: campus clinic",
+    keepOpen: "Keep this screen open. A packet from the demo clinic will appear here.",
+    packetTitle: "Your demo packet is ready",
+    packetBody: "The demo clinic attached a packet for you. It is available in this demo only.",
+    openPacket: "Open demo packet",
+  },
+
+  briefSource: {
+    generated: "Generated from the reviewed intake",
+    deterministic: "Deterministic summary — assembled without the model",
+    prepared_fixture: "Prepared fixture output",
+  },
+
+  prepared: {
+    title: "Prepared demo case",
+    badge: "Prepared fixture output",
+    body: "These are scripted answers from the demo fixture, not yours. The clinic's brief and audio for this case are also prepared in advance and will be labelled that way.",
+    words: "Words",
+    symptoms: "Symptoms",
+    temperature: "Highest temperature",
+    onset: "Onset",
+    confirmedInScript: "confirmed in the script",
+    deadline: "Deadline today",
+    meds: "Medications taken",
+    allergies: "Allergies",
+    noScripted: "No (scripted)",
+    fixture: "demo fixture",
+    scriptLanguageNote: "",
+  },
+
+  followUp: {
+    button: "Simulate follow-up",
+    legend: "Simulated follow-up — pick a pretend answer",
+    note: "A made-up self-report for the demo. It does not check a pharmacy and says nothing about real health.",
+    choices: ["Picked it up · feeling better", "Picked it up · about the same", "Did not pick it up · feeling worse"],
+    failed: "Could not record that. Nothing was changed. Try again.",
+    chip: "Simulated self-report",
+    pickedUp: "Says they picked it up",
+    notPickedUp: "Says they did not pick it up",
+    feeling: (status: string) => `feeling ${status}`,
+    statuses: { improving: "improving", "about the same": "about the same", worse: "worse" } as Record<string, string>,
+  },
+
+  dictation: {
+    start: "Dictate instead",
+    starting: "Starting…",
+    stop: "Stop dictation",
+    listening: "Listening — live speech to text",
+    off: "Dictation off",
+    hearing: (text: string) => `Hearing: ${text}`,
+    speakNow: "Speak now. Your words appear in the box above, where you can edit them.",
+    note: "Dictation only fills the text box. Fictional details only. Everything after this step, including consent, is done on screen.",
+    fallback: "Typing works exactly the same.",
+    micDenied: "Microphone access was not granted.",
+    unavailable: "Dictation is unavailable right now.",
+    failed: "Dictation could not start.",
+    stopped: "Dictation stopped.",
+  },
+
+  packet: {
+    loading: "Loading packet…",
+    unavailableTitle: "Packet unavailable",
+    unavailableRetry: "The packet could not be loaded. Check the connection; this page will retry.",
+    unavailableBody: "This packet is not available in this demo session. Packets can be opened only from the paired devices of the session they belong to.",
+    back: "Back to the student screen",
+    title: (name: string) => `Demo packet for ${name}`,
+    available: "Available in demo",
+    synthetic: "Synthetic packet. It exists only inside this demo session.",
+    therapy: "Demo therapy",
+    generic: "Generic",
+    brand: "Brand",
+    genericExplain: "“Generic” means a copy of a brand-name medicine that works the same way and usually costs less. Both therapies here are made up.",
+    fictionalTherapy: "Synthetic — fictional therapy",
+    pharmacy: "Pharmacy",
+    fictionalPharmacy: "Fictional pharmacy",
+    cost: "Estimated cost",
+    mockCost: "Mock cost",
+    coverage: "Coverage",
+    coverageExplain: "“Coverage” means what health insurance would pay. Here it is pretend: nobody checked real insurance.",
+    included: "Included by the demo clinician",
+    notTitle: "What this packet is not",
+    notBody: "Educational demo text, not clinically validated. No prescription was written, no pharmacy or clinic was contacted, and no coverage was checked.",
+    // Shown when the clinician did not include instructions in the language this screen is using.
+    missingLanguage: "",
+  },
+};
+
+export type Messages = typeof en;
+
+const es: Messages = {
+  languageSelector: "Idioma",
+  bannerEquivalent: "Paciente de demostración sintético: perfil y datos de acceso ficticios.",
+  disclaimerEquivalent: "Flujo de trabajo de un prototipo. No es asesoramiento médico. No introduzca información de salud real.",
+
+  nav: { student: "Estudiante", clinician: "Profesional clínico" },
+
+  common: {
+    notReported: "no informado",
+    noneReported: "ninguno informado",
+    yes: "Sí",
+    no: "No",
+    notSure: "No estoy seguro/a",
+    notAnswered: "Sin responder",
+    and: "y",
+    languageNames: { en: "inglés", es: "español" },
+    sourceProfile: "Fuente: perfil sintético",
+    sourceFixture: "Fuente: dato fijo de la demostración",
+    sourceStudent: "Fuente: revisión del estudiante",
+    sessionEnded: "Esta sesión de demostración terminó. Inicie o únase a una sesión de nuevo desde la página de inicio.",
+  },
+
+  poll: {
+    reconnecting: "Reconectando…",
+    live: (time) => `En vivo · actualizado a las ${time}`,
+    stale: (time) => `Reconectando… se muestran datos de las ${time}`,
+  },
+
+  reset: {
+    button: "Reiniciar demostración",
+    title: "¿Reiniciar la demostración?",
+    body: "Esto inicia una sesión sintética nueva. Las dos pantallas se borran, el consentimiento empieza sin marcar y no se vuelve a mostrar nada de esta ronda. Al otro dispositivo se le pedirá unirse a la nueva sesión.",
+    failed: "No se pudo reiniciar. No se cambió nada. Revise la conexión e inténtelo de nuevo.",
+    keep: "Conservar esta sesión",
+    pending: "Reiniciando…",
+    supersededTitle: "La demostración se reinició en el otro dispositivo",
+    supersededBody: "Esta pantalla pertenece a la ronda anterior y ya no muestra nada de ella.",
+    join: "Unirse a la nueva sesión",
+  },
+
+  home: {
+    description:
+      "Un flujo de trabajo sintético: desde la admisión del estudiante hasta un resumen para el profesional clínico y un paquete que vuelve al paciente. Abra la pantalla del estudiante en un teléfono y la del profesional clínico en una computadora, en la misma sesión de demostración.",
+    loading: "Cargando la sesión de demostración…",
+    startHelp: "Inicie una sesión sintética aislada en este dispositivo y luego abra el enlace para unirse en el segundo dispositivo.",
+    start: "Iniciar sesión de demostración",
+    starting: "Iniciando…",
+    startFailedTitle: "No se inició la sesión",
+    startFailed: "No se pudo iniciar una sesión de demostración. Revise la conexión e inténtelo de nuevo.",
+    session: "Sesión de demostración",
+    syntheticOnly: "Solo datos sintéticos.",
+    joinLabel: "Enlace para unir el segundo dispositivo",
+    copy: "Copiar enlace",
+    copied: "Copiado",
+    joinNote: "Cualquier persona con este enlace puede ver esta sesión de demostración. Sirve para emparejar dos dispositivos en una demostración sintética y no es un inicio de sesión seguro.",
+    studentScreen: "Pantalla del estudiante",
+    clinicianScreen: "Pantalla del profesional clínico",
+  },
+
+  join: {
+    title: "Unirse a la sesión de demostración",
+    description: "Empareja este dispositivo con una sesión de demostración sintética iniciada en otro dispositivo.",
+    joining: "Uniéndose a la sesión de demostración…",
+    invalidTitle: "Este enlace para unirse no es válido",
+    invalidBody: "Es posible que la sesión de demostración haya vencido o se haya reiniciado. Abra un enlace nuevo desde el primer dispositivo o inicie una sesión nueva.",
+    back: "Volver al inicio",
+    joined: "Se unió a la sesión de demostración",
+    choose: "Elija la pantalla para este dispositivo.",
+  },
+
+  gate: {
+    loading: "Cargando la sesión de demostración…",
+    body: "Este dispositivo todavía no está emparejado con una sesión de demostración. Inicie una o abra el enlace para unirse desde el otro dispositivo.",
+    cta: "Iniciar o unirse a una sesión de demostración",
+  },
+
+  profile: {
+    title: "Paciente de demostración sintético",
+    nameAge: "Nombre y edad",
+    plan: "Plan",
+    languages: "Idiomas de las instrucciones",
+    costCeiling: "Límite de costo",
+    notSet: "sin definir",
+    fictionalAmount: "Cantidad ficticia",
+    fixtureClock: "Reloj fijo de la demostración",
+    clockNote: "La demostración usa este reloj que se muestra, no la hora real, para que “ayer por la mañana” siempre signifique lo mismo.",
+    explain:
+      "Este es un paciente inventado. “Plan” significa seguro médico; aquí es de mentira y nadie verificó una cobertura real. El “límite de costo” es lo máximo que este paciente inventado quiere pagar.",
+  },
+
+  flow: {
+    title: "Admisión del estudiante",
+    description: "Nada de lo que escriba se comparte con la clínica de demostración hasta que usted lo revise y dé su consentimiento.",
+    continueToReview: "Continuar a la revisión",
+    startOver: "Empezar de nuevo",
+    backToTyping: "Volver a escribir lo mío",
+    notSharedTitle: "No se compartió",
+    declined: "Su admisión se queda en esta pantalla. La clínica de demostración no puede verla y no se envió nada.",
+    declinedPrepared: "El caso preparado se queda en esta pantalla. La clínica de demostración no puede verlo y no se envió nada.",
+    clinicBrief: "Resumen para la clínica:",
+    medsLegend: "¿Ha tomado algún medicamento para esto?",
+    medsInput: "¿Qué medicamentos?",
+    medsPlaceholder: "Por ejemplo: ibuprofeno",
+    allergiesLegend: "¿Tiene alguna alergia?",
+    allergiesInput: "¿Qué alergias?",
+    allergiesPlaceholder: "Por ejemplo: penicilina",
+    errors: {
+      consent_required: "Se necesita su consentimiento antes de compartir algo. No se envió nada.",
+      invalid_intake: "No se pudieron leer algunas respuestas. Regrese, revíselas e inténtelo de nuevo. No se compartió nada.",
+      session: "Esta sesión de demostración terminó. Inicie o únase a una sesión de nuevo desde la página de inicio.",
+      generic: "No se pudo contactar a la clínica de demostración. No se compartió nada. Inténtelo de nuevo.",
+    },
+  },
+
+  describe: {
+    label: "¿Qué le pasa hoy?",
+    placeholder: "Por ejemplo: Me desperté con fiebre de 102, me duele todo el cuerpo, empezó ayer por la mañana y tengo un examen a las 2.",
+    fictionalOnly: "Use solo datos ficticios. No introduzca información de salud real.",
+    ownWords: "Puede escribir en español. Sus palabras se comparten tal como las escribió: esta demostración no traduce.",
+    continue: "Continuar",
+    reading: "Leyendo…",
+    enterMyself: "Escribir los datos yo mismo/a",
+    usePrepared: "Usar la demostración preparada",
+    preparedNote: "Carga el caso de demostración con guion. Se marca como resultado preparado en todas las pantallas y nunca se usa en lugar de algo que usted escribió.",
+    sessionEndedTitle: "La sesión de demostración terminó",
+    sessionEndedBody: "Inicie o únase a una sesión de demostración de nuevo desde la página de inicio.",
+    outsideTitle: "Fuera del escenario de esta demostración",
+    outsideBody: "Eso parece estar fuera del escenario de esta demostración. Describa cómo se siente enfermo/a hoy, usando solo datos ficticios.",
+    failedTitle: "No se pudo leer eso automáticamente",
+    failedBody: "No se completó nada por usted. Puede intentarlo de nuevo o continuar y escribir los datos usted mismo/a.",
+  },
+
+  candidate: {
+    pickedUp: "Tomado de lo que usted escribió",
+    nothing: "No se completó nada automáticamente",
+    note: "Usted revisará y corregirá cada dato antes de compartir algo.",
+    symptoms: "Síntomas",
+    temperature: "Temperatura",
+    started: "Empezó",
+    deadline: "Compromiso de hoy",
+    suggested: (time) => `Sugerido: ${time} — sin confirmar`,
+  },
+
+  followUps: {
+    checklistLegend: "1. ¿Le está pasando algo de esto?",
+    checklistHelp: "Responda cada una. “No estoy seguro/a” es una buena respuesta, y lo que omita queda sin responder. Esta es una lista de un prototipo, no una evaluación médica validada.",
+    none: "Ninguno",
+    some: "Sí",
+    skip: "Omitir",
+    separate: "Separe los elementos con comas. Solo respuestas ficticias.",
+    redFlags: {
+      breathing_chest_pain: { label: "Dificultad para respirar o dolor en el pecho", description: "Falta de aire, silbidos al respirar, o presión o dolor en el pecho" },
+      confusion_fainting: { label: "Confusión o desmayo", description: "Dificultad para pensar, mareo repentino, pérdida del conocimiento o cambios en el estado mental" },
+      stiff_neck_rash: { label: "Cuello rígido o sarpullido nuevo", description: "No poder llevar la barbilla al pecho, o un sarpullido repentino que se extiende sin explicación" },
+      high_temperature: { label: "Temperatura alta / fiebre", description: "Temperatura de 103°F (39.4°C) o más, o fiebre que no baja" },
+      dehydration: { label: "Deshidratación o no poder retener líquidos", description: "No retener líquidos durante 12 horas o más, orina oscura o boca muy seca" },
+      sudden_severe_headache: { label: "Dolor de cabeza fuerte y repentino", description: "Dolor de cabeza fuerte que empieza de golpe, o acompañado de síntomas neurológicos" },
+    },
+  },
+
+  review: {
+    title: "Revise antes de compartir",
+    intro: (notReported) => `Corrija lo que esté mal. Los campos en blanco se comparten como “${notReported}”, nunca como “no”.`,
+    symptoms: "Síntomas",
+    symptomsHint: "Separe los síntomas con comas.",
+    temperature: "Temperatura más alta (°F)",
+    onset: "Cuándo empezó",
+    onsetHintPhrase: (phrase, clock) =>
+      `Usted escribió “${phrase}”. La hora de abajo se calculó con el reloj fijo que se muestra (${clock}), no con la fecha real de hoy.`,
+    onsetHintEmpty: "Déjelo vacío si no está seguro/a.",
+    confirmOnset: (time) => `Confirmo que empezó alrededor del ${time}.`,
+    confirmOnsetEmpty: "Agregue una hora arriba para confirmarla.",
+    onsetWillBeNotReported: (notReported) => `El inicio se compartirá como “${notReported}”.`,
+    onsetConfirmed: "Confirmado por usted.",
+    onsetUnconfirmed: "Sin confirmar: se compartirá como una hora sin confirmar y no se mostrará el tiempo transcurrido.",
+    deadline: "Compromiso de hoy",
+    answersTitle: "Sus respuestas de seguimiento",
+    editAnswers: "Editar respuestas",
+    meds: "Medicamentos tomados",
+    allergies: "Alergias",
+    languages: "Idiomas de las instrucciones",
+    languagesHelp: "Los idiomas en los que le gustaría recibir las instrucciones de su visita. El profesional clínico de la demostración lo ve y toma la decisión final.",
+    languagesNeedOne: "Elija al menos un idioma.",
+  },
+
+  consent: {
+    title: "¿Compartir con la clínica de demostración?",
+    label: "Acepto compartir esta admisión sintética con la clínica de demostración en esta sesión de demostración.",
+    note: "Si no acepta, su admisión se queda en esta pantalla y la clínica no ve nada. En cualquier caso, no se reserva, no se receta ni se envía nada fuera de esta demostración.",
+    explain: "“Consentimiento” significa que usted dice que sí a compartir. Es su decisión, y la casilla empieza vacía.",
+    submit: "Enviar a la clínica de demostración",
+    sharing: "Compartiendo…",
+    decline: "No aceptar",
+  },
+
+  status: {
+    emergencyTitle: "Esta demostración se detiene aquí",
+    emergencyBody: "Usted respondió que sí a un elemento de la lista de emergencia de este prototipo, así que se omite el flujo normal de la demostración y no se muestra un siguiente paso en la clínica.",
+    emergencyAction: "En una situación real, llame al 911 o al número de emergencias de su campus. Este mensaje es texto de un prototipo, no el resultado de una evaluación médica validada.",
+    reviewTitle: "Compartido — necesita revisión",
+    reviewBody: "Algunos elementos de la lista quedaron sin responder o necesitan otra mirada, así que la clínica de demostración revisará su admisión antes de cualquier siguiente paso. Esto no significa que todo esté bien.",
+    bookingNotConnected: "La reserva de citas no está conectada.",
+    readyTitle: "Compartido con la clínica de demostración",
+    nextStep: "Siguiente paso de la demostración: clínica del campus",
+    keepOpen: "Mantenga esta pantalla abierta. Aquí aparecerá un paquete de la clínica de demostración.",
+    packetTitle: "Su paquete de demostración está listo",
+    packetBody: "La clínica de demostración adjuntó un paquete para usted. Solo está disponible en esta demostración.",
+    openPacket: "Abrir el paquete de demostración",
+  },
+
+  briefSource: {
+    generated: "Generado a partir de la admisión revisada",
+    deterministic: "Resumen determinista — armado sin el modelo",
+    prepared_fixture: "Resultado preparado de la demostración",
+  },
+
+  prepared: {
+    title: "Caso de demostración preparado",
+    badge: "Resultado preparado de la demostración",
+    body: "Estas son respuestas con guion de la demostración, no las suyas. El resumen y el audio de la clínica para este caso también se prepararon de antemano y se marcarán así.",
+    words: "Palabras",
+    symptoms: "Síntomas",
+    temperature: "Temperatura más alta",
+    onset: "Inicio",
+    confirmedInScript: "confirmado en el guion",
+    deadline: "Compromiso de hoy",
+    meds: "Medicamentos tomados",
+    allergies: "Alergias",
+    noScripted: "No (con guion)",
+    fixture: "dato fijo",
+    scriptLanguageNote: "El caso preparado está escrito en inglés. Esta demostración no traduce.",
+  },
+
+  followUp: {
+    button: "Simular seguimiento",
+    legend: "Seguimiento simulado — elija una respuesta de mentira",
+    note: "Un informe inventado para la demostración. No consulta a ninguna farmacia y no dice nada sobre la salud real.",
+    choices: ["Lo recogí · me siento mejor", "Lo recogí · me siento igual", "No lo recogí · me siento peor"],
+    failed: "No se pudo registrar. No se cambió nada. Inténtelo de nuevo.",
+    chip: "Informe simulado",
+    pickedUp: "Dice que lo recogió",
+    notPickedUp: "Dice que no lo recogió",
+    feeling: (status) => `se siente ${status}`,
+    statuses: { improving: "mejor", "about the same": "igual", worse: "peor" },
+  },
+
+  dictation: {
+    start: "Dictar en lugar de escribir",
+    starting: "Iniciando…",
+    stop: "Detener el dictado",
+    listening: "Escuchando — voz a texto en vivo",
+    off: "Dictado apagado",
+    hearing: (text) => `Se escucha: ${text}`,
+    speakNow: "Hable ahora. Sus palabras aparecen en el cuadro de arriba, donde puede editarlas.",
+    note: "El dictado solo llena el cuadro de texto. Solo datos ficticios. Todo lo que sigue, incluido el consentimiento, se hace en la pantalla.",
+    fallback: "Escribir funciona exactamente igual.",
+    micDenied: "No se dio acceso al micrófono.",
+    unavailable: "El dictado no está disponible en este momento.",
+    failed: "No se pudo iniciar el dictado.",
+    stopped: "El dictado se detuvo.",
+  },
+
+  packet: {
+    loading: "Cargando el paquete…",
+    unavailableTitle: "Paquete no disponible",
+    unavailableRetry: "No se pudo cargar el paquete. Revise la conexión; esta página lo intentará de nuevo.",
+    unavailableBody: "Este paquete no está disponible en esta sesión de demostración. Los paquetes solo se pueden abrir desde los dispositivos emparejados de la sesión a la que pertenecen.",
+    back: "Volver a la pantalla del estudiante",
+    title: (name) => `Paquete de demostración para ${name}`,
+    available: "Disponible en la demostración",
+    synthetic: "Paquete sintético. Solo existe dentro de esta sesión de demostración.",
+    therapy: "Tratamiento de demostración",
+    generic: "Genérico",
+    brand: "De marca",
+    genericExplain: "“Genérico” significa una copia de un medicamento de marca que funciona igual y por lo general cuesta menos. Aquí los dos tratamientos son inventados.",
+    fictionalTherapy: "Sintético — tratamiento ficticio",
+    pharmacy: "Farmacia",
+    fictionalPharmacy: "Farmacia ficticia",
+    cost: "Costo estimado",
+    mockCost: "Costo simulado",
+    coverage: "Cobertura",
+    coverageExplain: "“Cobertura” significa lo que pagaría el seguro médico. Aquí es de mentira: nadie verificó un seguro real.",
+    included: "Incluido por el profesional clínico de la demostración",
+    notTitle: "Lo que este paquete no es",
+    notBody: "Texto educativo de demostración, sin validación clínica. No se hizo ninguna receta, no se contactó a ninguna farmacia ni clínica y no se verificó ninguna cobertura.",
+    missingLanguage: "El profesional clínico de la demostración no incluyó instrucciones en español. Se muestran en el idioma disponible; esta demostración no traduce.",
+  },
+};
+
+export const MESSAGES: Record<Language, Messages> = { en, es };

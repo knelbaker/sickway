@@ -9,7 +9,7 @@ export default function ClinicianPage() {
 
   // Catalogs and manufacturer resources stay on the server; they reach this screen only through the API.
   return (
-    <SessionGate title="Clinician workspace">
+    <SessionGate screen="clinician">
       <ClinicianWorkspace
         voiceEnabled={voiceAvailability().clinicianAgent}
         preparedSpokenScript={brief.sbar.spokenScript}

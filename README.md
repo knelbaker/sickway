@@ -4,6 +4,10 @@ A synthetic workflow prototype for student intake, a clinician brief, and a retu
 
 Prototype workflow. Not medical advice. Do not enter real health information.
 
+## Who it is for
+
+Two fictional users: a sick **student**, and a college-health **clinician**. Students who are **not native English speakers** are an explicit target audience: the whole student journey — entry and pairing, intake, review, consent, status, and the returned packet — is available in **English and Español**, in plain language, with unfamiliar healthcare and demo terms explained where they appear. English/Spanish is the first supported pair, not a claim to serve every language, and none of it is validated translation. Details, rules, a walkthrough for each language, and open wording questions: [docs/language-access.md](docs/language-access.md).
+
 ## What it does
 
 One synthetic scenario, end to end, on two paired devices: **intake → clinician brief → options → packet**.
@@ -37,6 +41,7 @@ One synthetic scenario, end to end, on two paired devices: **intake → clinicia
 | Options | Catalog join, generic-first sort, cost-ceiling marker | “Mock cost”, “Mock coverage — not verified”, “Mock stock” inside every cell |
 | Manufacturer resources | Locked until an explicit request for one named therapy's resources; enforced and audited on the server | “Manufacturer resource — fictional demo”; a demonstrated rule, not proof of neutrality; nothing is sent to a manufacturer |
 | Packet | The confirmed selection is stored once and appears on the paired student screen | “Available in demo”; no prescription, pharmacy, or clinic contact |
+| English / Español student experience | A visible language selector; prewritten copy for every student-facing screen and state; switching keeps the draft, unknowns, and consent; the student's instruction-language preference reaches the clinician, who still confirms | No runtime translation in either direction; Spanish not reviewed by a fluent speaker or clinician; clinician workspace is English only |
 | EN/ES instructions | Prewritten copy renders for the selected languages | Not live translation; “not clinically validated” |
 | Sessions, consent, reset | Signed pairing token, server-checked consent, per-session isolation, clean reset | Not production authentication, anonymity, or compliance |
 | Simulated follow-up (optional) | A two-tap made-up self-report updates an outcome chip on both screens | “Simulated self-report”; not evidence of fulfilment or a health outcome |
@@ -52,7 +57,7 @@ Everything about the patient, plan, prices, stock, pharmacies, therapies, and re
 - **Not secure in a production sense.** The join link is a bearer token in a URL; there are no accounts, rate limits, or data-governance controls.
 - **Generation depends on Gemini.** When it is slow or unavailable the demo continues with labelled fallbacks (deterministic brief, manual entry). Cached generations are not labelled as cached.
 - **One scenario.** One profile, one plan, one therapy category. Anything else returns “outside this demo scenario” or “No demo option found”.
-- **Student language preference is display-only**; the clinician chooses packet languages, defaulting to the profile.
+- **Two languages, unreviewed.** Spanish UI copy was written without a fluent or clinical reviewer. Typed or dictated text is never translated, so a clinician may read Spanish phrases in an English brief. The clinician workspace and voice agent are English only.
 - **Optional voice is unrehearsed.** Clinician voice and student dictation exist but are off unless `VOICE_MODE=live`, and nobody has yet used them with a real microphone or in a noisy room.
 
 ## Local development
@@ -136,6 +141,8 @@ Layout rules it protects: grids use `minmax(0, 1fr)` columns so wide content can
 - `src/components/packet/`: the `/packet/<id>` view.
 - `src/components/student/`: the `/s` intake flow; the draft lives in `use-intake-draft.ts` and stays in browser memory.
 - `src/lib/voice.ts`: brief audio rules — when the prepared recording may play, and the labelled fallbacks.
+- `src/lib/i18n/messages.ts`: all English and Spanish UI copy; `es` is type-checked against `en`.
+- `src/lib/client/language-store.ts`: the session-scoped language choice and `useLanguage()`.
 - `src/lib/format.ts`: browser-safe display helpers (fixture wall-clock times, “not reported”, mock dollars).
 - `src/lib/env.ts`: validated server configuration.
 - `src/lib/db.ts`: session-scoped DynamoDB helpers for the single demo table.

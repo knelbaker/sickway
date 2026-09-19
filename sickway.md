@@ -20,6 +20,9 @@ Status: draft v3 — core demo scoped · Owner: whole team · Submission deadlin
 ### 1.1 Student — Sick Day
 A fictional student has a fever and an exam today. While sick, they must explain symptoms, understand next steps, and keep track of visit instructions. This prototype demonstrates intake and a returned packet. Booking, transportation, food delivery, insurance verification, and prescription fulfillment remain outside the product demonstrated here.
 
+### 1.1a Students who are not native English speakers (added by issue #61)
+Describing symptoms, understanding healthcare terms, reviewing extracted information, and making an informed sharing choice are harder in a second language. These students are an explicit target audience. The first supported pair is English and Spanish: the student journey from entry to returned packet uses prewritten, plain-language copy in both, chosen with a visible “English / Español” selector. Language is never inferred from identity or profile. This does not establish comprehension, accessibility for every language, or clinical safety.
+
 ### 1.2 Clinician — Doorway (primary user)
 A fictional college-health nurse practitioner needs a concise intake summary and a convenient way to inspect access resources after choosing what to investigate. The demo tests whether a brief plus an options table makes that workflow understandable. It does not establish measured time savings, reduced prescription abandonment, or demand from clinicians or manufacturers.
 
@@ -48,7 +51,7 @@ The campus health map is a future research idea, not a third user surface for th
 - Lambda, EventBridge, S3, background audio pipelines, generated PA forms, or MSL requests.
 - Real insurance, pharmacy, booking, EHR, prescribing, email, or SMS integrations.
 - Accounts, production authentication, payments, or real patient data.
-- Runtime medical translation: use reviewed demo copy in EN and ES; do not claim clinical validation.
+- Runtime medical translation: use reviewed demo copy in EN and ES; do not claim clinical validation. (Issue #61 extends prewritten EN/ES copy from packet instructions to the whole student journey. It is still prewritten copy: nothing is translated at runtime, in either direction.)
 - Additional illness scenarios or infrastructure added solely for a prize.
 
 ---
@@ -149,7 +152,8 @@ DynamoDB is the only persistent backend. Do not replace it with server-process m
 | Field | Source | Missing or ambiguous behavior |
 |---|---|---|
 | Name, age, plan, optional cost ceiling | Visible synthetic profile | Block fixture setup if required profile fields are absent |
-| Preferred languages | Visible profile, editable in review | Default to the explicitly displayed profile selection |
+| Preferred languages | Visible profile, editable in review (issue #61: the student's choice is stored on the encounter and shown to the clinician, who still confirms the packet's languages) | Default to the explicitly displayed profile selection; never inferred from the interface language |
+| Interface language | Student's explicit choice of English or Español, per demo session | English; not reused after reset |
 | Symptoms, temperature, exam/deadline | Student text or transcript | Mark not reported; do not infer absent facts |
 | Onset | Student statement plus explicit review confirmation | Ask for clarification or leave unknown; omit elapsed-time claims |
 | Medications and allergies | Follow-up groups | Distinguish “none reported” from unanswered |
@@ -314,7 +318,7 @@ Keep model configuration, timeouts, schema validation, and bounded retries in `l
 | Brief audio | Current brief is played or spoken | Prepared recording only for matching fixture |
 | Options and resources | Catalog join, sort, unlock, and audit execute | All coverage, prices, stock, and resources mocked |
 | Packet | Selection is stored and appears on paired student screen | No prescription or external delivery |
-| EN/ES copy | Prewritten demo text renders | Not live translation or clinically validated instructions |
+| EN/ES copy | Prewritten demo text renders for the student journey and the packet; switching language preserves the draft, unknowns, and consent | Not live translation or clinically validated; Spanish wording not yet reviewed by a fluent speaker; clinician workspace is English only |
 | Optional voice | Speech operates the same tools, if implemented | Do not claim live voice for prerecorded segments |
 | Optional follow-up | Synthetic self-report updates a chip | No verified fulfillment or health outcome |
 | Privacy/security | Synthetic-only input, consent gate, session checks | No anonymity, compliance, or production-security claim |

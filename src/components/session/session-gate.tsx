@@ -4,14 +4,16 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/lib/client/language-store";
 import { useSessionToken } from "@/lib/client/session-store";
 
 /** Renders its children only on a device that is paired with a demo session. */
-export function SessionGate({ title, children }: { title: string; children: ReactNode }) {
+export function SessionGate({ screen, children }: { screen: "student" | "clinician" | "packet"; children: ReactNode }) {
   const token = useSessionToken();
+  const { t } = useLanguage();
 
   if (token === undefined) {
-    return <p className="text-sm text-muted-foreground">Loading demo session…</p>;
+    return <p className="text-sm text-muted-foreground">{t.gate.loading}</p>;
   }
 
   if (token === null) {
@@ -19,16 +21,15 @@ export function SessionGate({ title, children }: { title: string; children: Reac
       <Card>
         <CardHeader>
           <CardTitle>
-            <h1>{title}</h1>
+            {screen === "clinician" ? <h1 lang="en">Clinician workspace</h1> : <h1>{screen === "student" ? t.flow.title : t.packet.unavailableTitle}</h1>}
           </CardTitle>
           <CardDescription>
-            This device is not paired with a demo session yet. Start one, or open the join link
-            from the other device.
+            {t.gate.body}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild>
-            <Link href="/">Start or join a demo session</Link>
+            <Link href="/">{t.gate.cta}</Link>
           </Button>
         </CardContent>
       </Card>

@@ -6,7 +6,7 @@ export default async function PacketPage({ params }: { params: Promise<{ id: str
 
   // The session token lives in the browser, so the packet is fetched client-side with it.
   return (
-    <SessionGate title="Demo packet">
+    <SessionGate screen="packet">
       <PacketView packetId={id} />
     </SessionGate>
   );

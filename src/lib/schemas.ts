@@ -130,6 +130,12 @@ export const encounterSchema = z.object({
   fieldSources: z.record(z.string(), fieldSourceSchema),
   sbar: sbarSchema.optional(),
   unlockedTherapyIds: z.array(z.string()),
+  /**
+   * The student's own choice of instruction languages (issue #61). Optional: absent means the
+   * student did not choose and the profile's displayed selection applies. The clinician still
+   * confirms the packet's languages.
+   */
+  preferredInstructionLanguages: z.array(z.enum(["en", "es"])).min(1).optional(),
   chosenTherapyId: z.string().optional(),
   packetId: z.string().optional(),
   followUp: followUpSchema.optional(),

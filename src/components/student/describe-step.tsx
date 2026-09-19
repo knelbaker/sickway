@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { extractResponseSchema, type CandidateIntakeFields } from "@/lib/api-contracts";
+import { useLanguage } from "@/lib/client/language-store";
 import { apiFetch } from "@/lib/client/session-store";
 
 const MAX_LENGTH = 2000;
@@ -29,6 +30,7 @@ export function DescribeStep({
   /** True only when the server runs with VOICE_MODE=live. */
   voiceEnabled?: boolean;
 }) {
+  const { t } = useLanguage();
   const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
   const [notice, setNotice] = useState<Notice>(null);
@@ -48,21 +50,22 @@ export function DescribeStep({
         body: JSON.stringify({ text: transcript }),
       });
       if (response.status === 401) {
-        setNotice({ title: "Demo session ended", body: "Start or join a demo session again from the home page." });
+        setNotice({ title: t.describe.sessionEndedTitle, body: t.describe.sessionEndedBody });
         return;
       }
       if (!response.ok) throw new Error();
 
       const result = extractResponseSchema.parse(await response.json());
       if (result.outsideScenario) {
-        setNotice({ title: "Outside this demo scenario", body: result.message });
+        // The server's message is English; show the reviewed copy for this screen's language.
+        setNotice({ title: t.describe.outsideTitle, body: t.describe.outsideBody });
         return;
       }
       onExtracted(result.transcript, result.candidateFields);
     } catch {
       setNotice({
-        title: "Could not read that automatically",
-        body: "Nothing was filled in for you. You can try again, or continue and enter the details yourself.",
+        title: t.describe.failedTitle,
+        body: t.describe.failedBody,
       });
       setManualOffer(true);
     } finally {
@@ -73,19 +76,19 @@ export function DescribeStep({
   return (
     <form onSubmit={submit} className="flex flex-col gap-3">
       <Label htmlFor="intake-text" className="text-base font-semibold">
-        What is going on today?
+        {t.describe.label}
       </Label>
       <Textarea
         id="intake-text"
         value={text}
         maxLength={MAX_LENGTH}
         rows={4}
-        placeholder="For example: I woke up with a 102 fever, my whole body aches, it started yesterday morning, and I have an exam at 2."
+        placeholder={t.describe.placeholder}
         onChange={(event) => setText(event.target.value)}
         className="text-base"
       />
       <p className="text-xs leading-5 text-muted-foreground">
-        Use fictional details only. Do not enter real health information.
+        {t.describe.fictionalOnly} {t.describe.ownWords}
       </p>
       {voiceEnabled && (
         <VoiceInput
@@ -97,21 +100,20 @@ export function DescribeStep({
       )}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" className="h-11" disabled={pending || text.trim() === ""}>
-          {pending ? "Reading…" : "Continue"}
+          {pending ? t.describe.reading : t.describe.continue}
         </Button>
         {manualOffer && (
           <Button type="button" variant="outline" className="h-11" onClick={() => onExtracted(text.trim(), null)}>
-            Enter details myself
+            {t.describe.enterMyself}
           </Button>
         )}
       </div>
       <div className="border-t pt-3">
         <Button type="button" variant="ghost" className="h-11 px-2" disabled={pending} onClick={onUsePrepared}>
-          Use prepared demo instead
+          {t.describe.usePrepared}
         </Button>
         <p className="text-xs leading-5 text-muted-foreground">
-          Loads the scripted demo case. It is labelled as prepared fixture output on every screen and
-          is never used in place of something you typed.
+          {t.describe.preparedNote}
         </p>
       </div>
       {notice && (

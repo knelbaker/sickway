@@ -107,6 +107,12 @@ export const sampleExtractOutsideScenarioResponse: ExtractResponse = {
 
 export const intakeRequestSchema = z.object({
   intake: reviewedIntakeSchema,
+  /** The student's preferred instruction languages, if they chose any (issue #61). */
+  preferredInstructionLanguages: z
+    .array(instructionLanguageSchema)
+    .min(1)
+    .refine((languages) => new Set(languages).size === languages.length, "Languages must be unique")
+    .optional(),
   consent: z.object({
     shareWithClinic: z.literal(true),
   }),

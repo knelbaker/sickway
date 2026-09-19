@@ -92,7 +92,8 @@ export function EncounterView({
         <VisitPanel
           encounter={encounter}
           costCeiling={profile.costCeiling}
-          preferredLanguages={profile.instructionLanguages}
+          preferredLanguages={encounter.preferredInstructionLanguages ?? profile.instructionLanguages}
+          preferenceSource={encounter.preferredInstructionLanguages ? "student" : "profile"}
           voiceEnabled={voiceEnabled}
         />
       )}

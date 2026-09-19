@@ -40,11 +40,14 @@ export function VisitPanel({
   encounter,
   costCeiling,
   preferredLanguages,
+  preferenceSource = "profile",
   voiceEnabled = false,
 }: {
   encounter: Encounter;
   costCeiling: number | null;
   preferredLanguages: string[];
+  /** Whether the defaults are the student's own choice or the profile's displayed selection. */
+  preferenceSource?: "student" | "profile";
   /** True only when the server runs with VOICE_MODE=live and a configured agent. */
   voiceEnabled?: boolean;
 }) {
@@ -208,7 +211,9 @@ export function VisitPanel({
                 <Label htmlFor={`language-${language.code}`} className="min-h-11 flex-1 items-center font-normal">
                   {language.name}
                   {preferredLanguages.includes(language.code) && (
-                    <span className="text-xs text-muted-foreground"> — profile preference</span>
+                    <span className="text-xs text-muted-foreground">
+                      {preferenceSource === "student" ? " — student's preference" : " — profile preference"}
+                    </span>
                   )}
                 </Label>
               </div>

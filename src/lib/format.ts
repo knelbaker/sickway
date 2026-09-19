@@ -4,22 +4,28 @@
  * converted to the viewer's timezone or compared with the system clock.
  */
 
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
+const MONTHS = {
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  es: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
+};
 
 const ISO_LOCAL = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/;
 
-/** "September 18, 2026 at 8:00 AM", or null when the value is not an ISO timestamp. */
-export function formatIsoWallTime(iso: string | null | undefined): string | null {
+/**
+ * “September 18, 2026 at 8:00 AM” or “18 de septiembre de 2026 a las 8:00 a. m.”,
+ * or null when the value is not an ISO timestamp.
+ */
+export function formatIsoWallTime(iso: string | null | undefined, language: "en" | "es" = "en"): string | null {
   const match = iso ? ISO_LOCAL.exec(iso) : null;
   if (!match) return null;
   const [, year, month, day, hour, minute] = match;
-  const monthName = MONTHS[Number(month) - 1];
+  const monthName = MONTHS[language][Number(month) - 1];
   if (!monthName) return null;
   const h = Number(hour);
-  return `${monthName} ${Number(day)}, ${year} at ${h % 12 === 0 ? 12 : h % 12}:${minute} ${h < 12 ? "AM" : "PM"}`;
+  const clock = `${h % 12 === 0 ? 12 : h % 12}:${minute}`;
+  return language === "es"
+    ? `${Number(day)} de ${monthName} de ${year} a las ${clock} ${h < 12 ? "a. m." : "p. m."}`
+    : `${monthName} ${Number(day)}, ${year} at ${clock} ${h < 12 ? "AM" : "PM"}`;
 }
 
 /** Value for an <input type="datetime-local">, from the ISO string's own wall clock. */
@@ -38,9 +44,12 @@ export function localInputToIso(value: string, fixtureClock: string): string | n
 export const NOT_REPORTED = "not reported";
 
 /** [] means the student explicitly said none; null means they did not answer. */
-export function formatReportedList(values: string[] | null): string {
-  if (values === null) return NOT_REPORTED;
-  return values.length === 0 ? "none reported" : values.join(", ");
+export function formatReportedList(
+  values: string[] | null,
+  labels: { notReported: string; noneReported: string } = { notReported: NOT_REPORTED, noneReported: "none reported" },
+): string {
+  if (values === null) return labels.notReported;
+  return values.length === 0 ? labels.noneReported : values.join(", ");
 }
 
 export function formatMockDollars(amount: number): string {
