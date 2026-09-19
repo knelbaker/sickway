@@ -2,6 +2,7 @@ import "server-only";
 import type { AttachRequest } from "@/lib/api-contracts";
 import { getItem, putItemIfAbsent, sk, updateItem } from "@/lib/db";
 import { fixtures } from "@/lib/fixtures";
+import type { PacketView } from "@/lib/packet-view";
 import { findResource } from "@/lib/resources";
 import { encounterSchema, packetSchema, type Encounter, type Packet } from "@/lib/schemas";
 
@@ -101,4 +102,48 @@ export async function attachPacket(
     );
   }
   return { ok: true, packet };
+}
+
+/** Null when the packet is not in this session, even if the ID exists in another one. */
+export async function getPacket(sessionId: string, packetId: string): Promise<Packet | null> {
+  let key: string;
+  try {
+    key = sk.packet(packetId);
+  } catch {
+    return null; // an ID we could never have issued
+  }
+  return getItem(sessionId, key, packetSchema);
+}
+
+/**
+ * Adds display text to a stored packet. The price is the one stored at attach
+ * time; it is never recomputed from the fixtures.
+ */
+export function buildPacketView(packet: Packet): PacketView {
+  const { profile, plans, therapies, pharmacies, instructionsEn, instructionsEs } = fixtures;
+  const therapy = therapies.find((row) => row.id === packet.therapyId);
+  const pharmacy = pharmacies.find((row) => row.id === packet.pharmacyId);
+  const plan = plans.find((row) => row.id === profile.planId);
+  const coverage = plan?.formulary.find((row) => row.therapyId === packet.therapyId);
+  const price = pharmacy?.prices.find((row) => row.therapyId === packet.therapyId && row.planId === profile.planId);
+  const copy = { en: instructionsEn, es: instructionsEs };
+
+  return {
+    ...packet,
+    display: {
+      patientName: profile.name,
+      therapyName: therapy?.name ?? "Demo therapy",
+      generic: therapy?.generic ?? false,
+      pharmacyName: pharmacy?.name ?? "Fictional demo pharmacy",
+      planName: plan?.name ?? "Fictional demo plan",
+      coverageStatus: coverage?.coverageStatus ?? "Mock coverage",
+      coverageMockLabel: plan?.mockLabel ?? "Mock coverage — not verified",
+      stockStatus: price?.stockStatus ?? "Mock stock",
+      instructions: packet.instructionLanguages.flatMap((language) => {
+        const text = copy[language].therapies[packet.therapyId];
+        return text ? [{ language, mockLabel: copy[language].mockLabel, ...text }] : [];
+      }),
+      resources: packet.resourceIds.flatMap((id) => findResource(id) ?? []),
+    },
+  };
 }

@@ -1,33 +1,13 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { PacketView } from "@/components/packet/packet-view";
+import { SessionGate } from "@/components/session/session-gate";
 
-export default async function PacketPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function PacketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
+  // The session token lives in the browser, so the packet is fetched client-side with it.
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          <h1>Demo packet</h1>
-        </CardTitle>
-        <CardDescription>
-          This is a placeholder. No packet has been loaded.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="break-all text-sm text-muted-foreground">
-          Packet reference: {id}
-        </p>
-      </CardContent>
-    </Card>
+    <SessionGate title="Demo packet">
+      <PacketView packetId={id} />
+    </SessionGate>
   );
 }
