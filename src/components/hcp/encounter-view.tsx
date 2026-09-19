@@ -3,8 +3,8 @@
 import { BriefAudio } from "@/components/hcp/brief-audio";
 import { BriefView } from "@/components/hcp/brief-view";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/components/hcp/labels";
-import { OptionsPanel } from "@/components/hcp/options-panel";
 import { SourcePanel } from "@/components/hcp/source-panel";
+import { VisitPanel } from "@/components/hcp/visit-panel";
 import type { StudentProfileSummary } from "@/components/student/profile-summary";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -84,12 +84,12 @@ export function EncounterView({
         </BriefView>
       )}
 
-      {/* The emergency branch bypasses the routine flow: no options path at all. */}
+      {/* The emergency branch bypasses the routine flow: no options or packet path at all. */}
       {encounter.status !== "emergency" && (
-        <OptionsPanel
-          encounterId={encounter.id}
+        <VisitPanel
+          encounter={encounter}
           costCeiling={profile.costCeiling}
-          unlockedTherapyIds={encounter.unlockedTherapyIds}
+          preferredLanguages={profile.instructionLanguages}
         />
       )}
 
