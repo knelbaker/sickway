@@ -19,7 +19,7 @@ One synthetic scenario, end to end, on two paired devices: **intake → clinicia
 | Piece | Where | Notes |
 | --- | --- | --- |
 | Screens | `src/app/{page,join,s,hcp,packet/[id]}` + `src/components/` | Next.js App Router, React, Tailwind v4, shadcn/ui. Server pages pass only a profile summary to client components; catalogs and manufacturer resources never enter a client bundle. |
-| API routes | `src/app/api/` | All ten §9 routes (including the optional `followup`) plus `demo-session/reset` and `health`. Every session-scoped route starts with `requireSession`. |
+| API routes | `src/app/api/` | All ten §9 routes (including the optional `followup`) plus `demo-session/reset`, `health`, and the optional `voice/*` token routes. Every session-scoped route starts with `requireSession`. |
 | Persistence | `src/lib/db.ts` → one DynamoDB table | `SESSION#<id>` partition per demo session; items expire by `ttl`. No in-memory fallback. |
 | Generation | `src/lib/ai.ts` → Gemini via the AI SDK | Schema-validated output, timeout, bounded retries, session-scoped cache. Used for extraction and the brief only. |
 | Rules | `demo-routing.ts`, `options.ts`, `resources.ts`, `packet.ts`, `sbar.ts` | Routing, option matching, the resource gate, attach validation, and the brief's guardrails and fallback are deterministic code, never the model. |
@@ -40,7 +40,8 @@ One synthetic scenario, end to end, on two paired devices: **intake → clinicia
 | EN/ES instructions | Prewritten copy renders for the selected languages | Not live translation; “not clinically validated” |
 | Sessions, consent, reset | Signed pairing token, server-checked consent, per-session isolation, clean reset | Not production authentication, anonymity, or compliance |
 | Simulated follow-up (optional) | A two-tap made-up self-report updates an outcome chip on both screens | “Simulated self-report”; not evidence of fulfilment or a health outcome |
-| Voice agents (optional) | **Not implemented** | — |
+| Clinician voice (optional, off by default) | A live ElevenLabs agent operates the same options, resources, and confirm-dialog controls | “Live voice agent … cannot confirm or attach anything”; the resource gate judges the clinician's own words |
+| Student voice (optional) | **Not implemented** | — |
 
 Everything about the patient, plan, prices, stock, pharmacies, therapies, and resources is fictional fixture data.
 
@@ -52,7 +53,7 @@ Everything about the patient, plan, prices, stock, pharmacies, therapies, and re
 - **Generation depends on Gemini.** When it is slow or unavailable the demo continues with labelled fallbacks (deterministic brief, manual entry). Cached generations are not labelled as cached.
 - **One scenario.** One profile, one plan, one therapy category. Anything else returns “outside this demo scenario” or “No demo option found”.
 - **Student language preference is display-only**; the clinician chooses packet languages, defaulting to the profile.
-- **Optional scope not built:** clinician voice and student voice. The shared ElevenLabs key is currently rejected as invalid.
+- **Optional scope not built:** student voice. Clinician voice exists but is off unless `VOICE_MODE=live`, and has not been rehearsed in a noisy room.
 
 ## Local development
 
@@ -198,6 +199,19 @@ fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_
 Without a key, the macOS system voice works too: `say -v Samantha -r 175 -f brief.txt -o brief.aiff && ffmpeg -y -i brief.aiff -codec:a libmp3lame -b:a 96k -ac 1 public/demo-brief.mp3`.
 
 `GET /api/packet/:id` (session-guarded, `no-store`) returns the stored packet in the §9 contract shape plus a `display` object resolved on the server from the fixtures: names, mock labels, the prewritten instruction copy for the selected languages only, and only the resources attached to that packet. The price is the one stored at attach time. A packet from another session, or an unknown ID, is a 404. `/packet/<id>` renders it with a synthetic or mock label beside every value and the status “Available in demo”; the student screen polls its shared encounter and shows an “Open demo packet” link once the status is `packet_available`.
+
+### Optional live voice
+
+Off by default (`VOICE_MODE=baseline`): no microphone control renders and nothing contacts ElevenLabs. With `VOICE_MODE=live`, an `ELEVENLABS_API_KEY`, and `NEXT_PUBLIC_DOORWAY_AGENT_ID`, `/hcp` shows **Voice (optional)** above the options for an encounter that can take a packet.
+
+- **The agent is configuration in this repo.** `pnpm voice:agent` creates or updates the ElevenLabs agent “Sick Day Doorway — clinician demo” from `scripts/voice-agent.mjs` (prompt, voice, LLM, 5-minute cap, three client tools) and prints its ID.
+- **It has no powers of its own.** Its tools — `show_options`, `request_manufacturer_resources`, `propose_packet` — run in the clinician's browser and drive the same controls and server routes as typing. `propose_packet` only opens the confirmation dialog; there is no tool that confirms or attaches, so only the on-screen button can.
+- **The resource gate hears the clinician, not the agent.** `request_manufacturer_resources` ignores the agent's wording and sends the server the clinician's own transcribed words, so an agent that rephrases “tell me about the brand option” into a resources request unlocks nothing. Server name and category matching ignores spacing and punctuation so speech-to-text output such as “anti viral” still matches.
+- **Spoken numbers are labelled.** The agent may state costs, coverage, and stock only from tool results, and those strings already say “mock cost … mock coverage, not verified … mock stock”.
+- **The key stays on the server.** The agent is private. `POST /api/voice/conversation-token` (session-guarded, 404 unless live) mints a short-lived WebRTC token, so an agent ID alone cannot start a conversation or spend credits.
+- **Failure is quiet.** A denied microphone, an unavailable token, an error, or a dropped connection shows “Voice is off … The typed controls below do everything voice does.” The session ends when the encounter view closes.
+
+Identify the actual voice mode used when presenting (sickway.md §16): this is a live agent; the brief's “Prepared recording” is not.
 
 ### Fallbacks and failure rehearsal
 

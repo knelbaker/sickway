@@ -64,7 +64,14 @@ describe("matchOptions", () => {
     expect(match.found && new Set(match.rows.map((row) => row.therapyId))).toEqual(new Set([BRAND]));
   });
 
-  it.each(["Show antibiotic options", "what are the options?", "inhaler prices", "   "])(
+  it.each(["show the anti viral demo options", "Anti-Viral options?", "ANTIVIRAL", "options for the flu"])(
+    "matches the category despite speech-to-text spacing or punctuation in %j",
+    (query) => {
+      expect(matchOptions(query).found).toBe(true);
+    },
+  );
+
+  it.each(["Show antibiotic options", "what are the options?", "inhaler prices", "influence", "   "])(
     "does not fabricate a match for %j",
     (query) => {
       expect(matchOptions(query)).toEqual({ found: false });
@@ -77,5 +84,8 @@ describe("namedTherapyIds", () => {
     expect(namedTherapyIds(`show resources for ${fixtures.therapies[1].name}`)).toEqual([BRAND]);
     expect(namedTherapyIds("show antiviral options")).toEqual([]);
     expect(namedTherapyIds("the brand one")).toEqual([]);
+    // Speech-to-text often splits or hyphenates "antiviral".
+    expect(namedTherapyIds("resources for fictional brand anti viral demo, please")).toEqual([BRAND]);
+    expect(namedTherapyIds("Fictional Brand Anti-Viral Demo")).toEqual([BRAND]);
   });
 });

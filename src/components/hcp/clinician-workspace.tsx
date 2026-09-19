@@ -10,14 +10,14 @@ import { sessionIdFromToken, useSessionToken } from "@/lib/client/session-store"
 import { usePolling } from "@/lib/client/use-polling";
 
 /** Keyed by session so a new or reset session never shows the previous run's selection. */
-type WorkspaceProps = { profile: StudentProfileSummary; preparedSpokenScript: string };
+type WorkspaceProps = { profile: StudentProfileSummary; preparedSpokenScript: string; voiceEnabled?: boolean };
 
 export function ClinicianWorkspace(props: WorkspaceProps) {
   const sessionId = sessionIdFromToken(useSessionToken() ?? null);
   return <SessionWorkspace key={sessionId ?? "unpaired"} {...props} />;
 }
 
-function SessionWorkspace({ profile, preparedSpokenScript }: WorkspaceProps) {
+function SessionWorkspace({ profile, preparedSpokenScript, voiceEnabled = false }: WorkspaceProps) {
   const queue = usePolling("/api/encounters", encountersQueueResponseSchema);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Only ever show an encounter that is in this session's queue.
@@ -43,6 +43,7 @@ function SessionWorkspace({ profile, preparedSpokenScript }: WorkspaceProps) {
               encounterId={openId}
               profile={profile}
               preparedSpokenScript={preparedSpokenScript}
+              voiceEnabled={voiceEnabled}
             />
           ) : (
             <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">

@@ -19,10 +19,12 @@ export function EncounterView({
   encounterId,
   profile,
   preparedSpokenScript,
+  voiceEnabled = false,
 }: {
   encounterId: string;
   profile: StudentProfileSummary;
   preparedSpokenScript: string;
+  voiceEnabled?: boolean;
 }) {
   const poll = usePolling(`/api/encounters/${encounterId}`, encounterDetailResponseSchema);
   const { data: encounter, error } = poll;
@@ -91,6 +93,7 @@ export function EncounterView({
           encounter={encounter}
           costCeiling={profile.costCeiling}
           preferredLanguages={profile.instructionLanguages}
+          voiceEnabled={voiceEnabled}
         />
       )}
 
