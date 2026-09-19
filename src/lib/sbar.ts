@@ -16,7 +16,7 @@ import type { ReviewedIntake, Sbar } from "@/lib/schemas";
  * a therapy or manufacturer, or claim that coverage was verified.
  */
 
-export const SBAR_PROMPT_VERSION = "sbar-v1";
+export const SBAR_PROMPT_VERSION = "sbar-v3";
 
 type Profile = Fixtures["profile"];
 
@@ -60,6 +60,19 @@ function hoursText(hours: number): string {
   return `${rounded} hour${rounded === 1 ? "" : "s"}`;
 }
 
+/** One sentence for the whole checklist, so neither path recites six answers one by one. */
+function checklistSentence(yes: string[], unanswered: string[]): string {
+  const parts: string[] = [];
+  if (yes.length > 0) parts.push(`Answered yes: ${list(yes)}.`);
+  if (unanswered.length > 0) parts.push(`Not answered: ${list(unanswered)}.`);
+  if (yes.length === 0 && unanswered.length === 0) {
+    parts.push("Every demo checklist item was answered no by the student.");
+  } else {
+    parts.push("All other checklist items were answered no.");
+  }
+  return parts.join(" ");
+}
+
 /** The reviewed facts, with every gap already rendered as "not reported". */
 export function sbarFacts(intake: ReviewedIntake, profile: Profile, routing: DemoRoutingResult) {
   const plan = fixtures.plans.find((row) => row.id === profile.planId);
@@ -83,26 +96,14 @@ export function sbarFacts(intake: ReviewedIntake, profile: Profile, routing: Dem
     medicationsTaken: reportedList(intake.medsTaken),
     allergies: reportedList(intake.allergies),
     checklistAnsweredYes: flags(true),
-    checklistAnsweredNo: flags(false),
     checklistNotAnswered: flags(null),
+    checklistSummary: checklistSentence(flags(true), flags(null)),
     coverage: `${plan?.name ?? "Fictional demo plan"} — mock coverage, not verified`,
     demoRoutingResult: BRANCH_LABEL[routing.branch],
     demoRoutingReasons: routing.reasons,
+    // Fixed wording from the routing rules, so the model never writes its own next step.
+    nextStep: RECOMMENDATION[routing.branch],
   };
-}
-
-function checklistSentence(facts: ReturnType<typeof sbarFacts>): string {
-  const parts: string[] = [];
-  if (facts.checklistAnsweredYes.length > 0) {
-    parts.push(`Answered yes: ${list(facts.checklistAnsweredYes)}.`);
-  }
-  if (facts.checklistNotAnswered.length > 0) {
-    parts.push(`Not answered: ${list(facts.checklistNotAnswered)}.`);
-  }
-  if (facts.checklistAnsweredYes.length === 0 && facts.checklistNotAnswered.length === 0) {
-    parts.push("Every demo checklist item was answered no by the student.");
-  }
-  return parts.join(" ");
 }
 
 /** Same shape as the generated brief, assembled from current fields with no model call. */
@@ -112,7 +113,7 @@ export function deterministicSbar(
   routing: DemoRoutingResult,
 ): Sbar {
   const facts = sbarFacts(intake, profile, routing);
-  const checklist = checklistSentence(facts);
+  const checklist = facts.checklistSummary;
 
   return {
     situation: `${profile.name}, age ${profile.age}, reports symptoms: ${facts.symptoms}. Maximum temperature: ${facts.maxTemperature}. Deadline today: ${facts.deadlineToday}.`,
@@ -138,8 +139,8 @@ Rules:
 - Do not diagnose or name any condition. Do not recommend or mention any drug, therapy, product, or manufacturer.
 - Coverage is mock and not verified. Never say or imply that insurance or coverage was checked or verified.
 - The assessment must start with "Demo routing result:" and state that it is not a diagnosis.
-- The recommendation must state that booking is not connected.
-- spokenScript is what a presenter reads aloud: plain sentences, 50 to 65 words, but never drop a reported fact to meet the length.`;
+- The recommendation must restate FACTS.nextStep in full and add nothing to it.
+- spokenScript is what a presenter reads aloud: plain sentences, 50 to 65 words, but never drop a reported fact to meet the length. For the checklist, use FACTS.checklistSummary word for word and do not list answers one by one. End with the next step.`;
 
 const FORBIDDEN_CLAIMS = [
   /\b(coverage|insurance)\b[^.]{0,60}\b(is|was|has been|were)\s+verified\b/i,

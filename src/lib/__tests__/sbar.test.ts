@@ -57,6 +57,17 @@ describe("sbarFacts", () => {
     expect(facts.coverage).toContain("not verified");
   });
 
+  it("supplies the next step as fixed wording from the routing rules", () => {
+    const flagged = intakeWith({ redFlags: { ...seeded.redFlags, dehydration: null } });
+
+    expect(sbarFacts(seeded, profile, routeIntake(seeded)).nextStep).toBe(
+      "Review the synthetic intake with the demo clinic. Booking is not connected.",
+    );
+    expect(sbarFacts(flagged, profile, routeIntake(flagged)).nextStep).toContain(
+      "Review the unanswered or unexpected items with the student before continuing",
+    );
+  });
+
   it("states elapsed time only for a confirmed onset", () => {
     const routing = { branch: "ready" as const, reasons: [] };
 
@@ -96,6 +107,7 @@ describe("deterministicSbar", () => {
 
     expect(sbar.assessment).toContain("needs review");
     expect(sbar.assessment).toContain("Not answered: Dehydration or unable to keep liquids down.");
+    expect(sbar.assessment).toContain("All other checklist items were answered no.");
     expect(sbar.assessment).not.toContain("answered no by the student");
   });
 
@@ -148,6 +160,9 @@ describe("generateSbar", () => {
     expect(call.sessionId).toBe("s1");
     expect(call.prompt).toContain('"allergies": "not reported"');
     expect(call.system).toContain("Never turn it into a negative");
+    expect(call.system).toContain("restate FACTS.nextStep in full");
+    expect(call.system).toContain("use FACTS.checklistSummary word for word");
+    expect(call.promptVersion).toBe("sbar-v3");
   });
 
   it("returns null when generation fails", async () => {
