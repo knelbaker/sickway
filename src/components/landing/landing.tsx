@@ -1,15 +1,21 @@
 "use client";
 
 import { Check, CircleHelp, RotateCcw, SquareCheckBig, SquareDashed } from "lucide-react";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, MotionConfig, useInView } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SickwayMark } from "@/components/brand/sickway-logo";
 import { SessionPanel } from "@/components/session/session-panel";
+import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { DotPattern } from "@/components/ui/dot-pattern";
+import FluidOrb from "@/components/ui/fluid-orb";
+import FolderComponent from "@/components/ui/folder-component";
+import { HookSidebar } from "@/components/ui/hook-sidebar";
 import { Iphone } from "@/components/ui/iphone";
 import { Safari } from "@/components/ui/safari";
+import { StepPlayer } from "@/components/ui/step-player";
+import { TaskList } from "@/components/ui/task-list";
 import { useLanguage } from "@/lib/client/language-store";
 import { useMediaQuery } from "@/lib/client/use-media-query";
 import { cn } from "@/lib/utils";
@@ -17,6 +23,14 @@ import { cn } from "@/lib/utils";
 const PROMISE_ICONS = [CircleHelp, SquareCheckBig, SquareDashed, RotateCcw];
 
 /** Real screenshots of this app, regenerated with `pnpm shots:brand`. */
+/** Landing sections, in page order; the side rail and scroll position share them. */
+const SECTION_IDS = ["start", "journey", "real", "promises", "try"] as const;
+
+function scrollToId(id: string) {
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.getElementById(id)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+}
+
 const SHOTS = {
   student: "/brand/shot-student.png",
   clinician: "/brand/shot-clinician.png",
@@ -30,10 +44,11 @@ export function Landing() {
   return (
     <MotionConfig reducedMotion="user">
     <div lang={language} className="flex flex-col gap-24 pb-8 sm:gap-36">
+      <PageRail />
       <Hero />
       <Showcase />
 
-      <section aria-labelledby="real-title">
+      <section id="real" aria-labelledby="real-title">
         <BlurFade inView>
           <h2 id="real-title" className="display max-w-[16ch] text-4xl sm:text-6xl">
             {copy.realTitle}
@@ -71,7 +86,7 @@ export function Landing() {
         <p className="mt-6 max-w-[70ch] leading-7 text-ink-soft">{copy.notBuilt}</p>
       </section>
 
-      <section aria-labelledby="promises-title">
+      <section id="promises" aria-labelledby="promises-title">
         <BlurFade inView>
           <h2 id="promises-title" className="display max-w-[16ch] text-4xl sm:text-6xl">
             {copy.promisesTitle}
@@ -97,6 +112,8 @@ export function Landing() {
         </div>
       </section>
 
+      <TryIt />
+
       <footer className="flex flex-col gap-4 border-t border-ink/10 pt-8 text-sm text-ink-soft sm:flex-row sm:items-center sm:justify-between">
         <span lang="en" className="inline-flex items-center gap-3">
           <SickwayMark className="h-8" />
@@ -114,7 +131,7 @@ function Hero() {
   const copy = t.landing;
 
   return (
-    <section className="grid items-center gap-14 pt-4 lg:grid-cols-[1fr_1fr] lg:gap-10 lg:pt-10">
+    <section id="start" className="grid items-center gap-14 pt-4 lg:grid-cols-[1fr_1fr] lg:gap-10 lg:pt-10">
       <div className="flex flex-col gap-7">
         <BlurFade delay={0.05}>
           <h1 className="display text-[clamp(3rem,8.2vw,6rem)]">{copy.headline}</h1>
@@ -133,15 +150,128 @@ function Hero() {
         </BlurFade>
       </div>
 
-      <BlurFade delay={0.3} className="relative mx-auto w-full max-w-xl pb-10 lg:max-w-none">
-        <figure className="ml-auto w-[90%]">
-          <Safari url="sickway.app/hcp" imageSrc={SHOTS.clinician} className="h-auto w-full drop-shadow-[0_30px_40px_rgba(60,40,0,0.22)]" />
-          <figcaption className="mt-3 text-right text-sm text-ink-soft">{copy.laptopCaption}</figcaption>
-        </figure>
-        <figure className="absolute bottom-0 left-0 w-[32%] min-w-28">
-          <Iphone src={SHOTS.student} className="h-auto w-full drop-shadow-[0_24px_30px_rgba(60,40,0,0.3)]" />
-          <figcaption className="mt-3 text-sm text-ink-soft">{copy.phoneCaption}</figcaption>
-        </figure>
+      <BlurFade delay={0.3} className="relative isolate mx-auto w-full max-w-xl lg:max-w-none">
+        {/* The red line, as light: a slow orb rising behind the two devices. It scales with the
+            column and is turned over so its red half shows above the laptop, clear of the captions. */}
+        <FluidOrb
+          aria-hidden
+          size={340}
+          color="#ee121d"
+          style={{ width: "min(300px, 52%)", height: "auto", aspectRatio: "1" }}
+          className="pointer-events-none absolute -top-[22%] right-[13%] -z-10 rotate-180"
+        />
+        {/* Two rows shared by both figures, so the devices stand on one line and the captions on another. */}
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.27fr)] grid-rows-[auto_auto] items-end gap-x-4 gap-y-3 sm:gap-x-7">
+          <figure className="row-span-2 grid grid-rows-subgrid">
+            <Safari url="sickway.app/hcp" imageSrc={SHOTS.clinician} className="h-auto w-full self-end drop-shadow-[0_30px_40px_rgba(60,40,0,0.22)]" />
+            <figcaption className="self-start text-sm text-ink-soft">{copy.laptopCaption}</figcaption>
+          </figure>
+          <figure className="row-span-2 grid grid-rows-subgrid">
+            <Iphone src={SHOTS.student} className="h-auto w-full self-end drop-shadow-[0_24px_30px_rgba(60,40,0,0.3)]" />
+            <figcaption className="self-start text-sm text-ink-soft">{copy.phoneCaption}</figcaption>
+          </figure>
+        </div>
+      </BlurFade>
+
+      <Facts />
+    </section>
+  );
+}
+
+/** True facts about the product, never usage numbers. Each rolls up once, when first seen. */
+function Facts() {
+  const { t } = useLanguage();
+  const ref = useRef<HTMLDListElement>(null);
+  const seen = useInView(ref, { once: true, amount: 0.6 });
+
+  return (
+    <dl ref={ref} className="grid grid-cols-3 gap-4 border-t border-ink/10 pt-8 lg:col-span-2">
+      {t.landing.facts.map((fact) => (
+        <div key={fact.label} className="flex flex-col-reverse gap-1">
+          <dt className="max-w-[22ch] text-sm leading-5 text-ink-soft sm:text-base sm:leading-6">{fact.label}</dt>
+          <dd className="display text-5xl leading-none text-ink sm:text-7xl">
+            <AnimatedCounter value={seen ? fact.value : 0} duration={0.9} />
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** "On this page", for screens wide enough to have a margin. Follows the scroll position. */
+function PageRail() {
+  const { t } = useLanguage();
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setCurrent(SECTION_IDS.indexOf(entry.target.id as (typeof SECTION_IDS)[number]));
+        }
+      },
+      { rootMargin: "-45% 0px -45% 0px" },
+    );
+    for (const id of SECTION_IDS) {
+      const element = document.getElementById(id);
+      if (element) observer.observe(element);
+    }
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <HookSidebar
+      aria-label={t.landing.onThisPage}
+      items={[...t.landing.sections]}
+      value={current}
+      onChange={(index) => scrollToId(SECTION_IDS[index])}
+      color="#ee121d"
+      dashed={false}
+      className="fixed top-1/2 left-3 z-30 hidden w-32 -translate-y-1/2 min-[1440px]:flex"
+    />
+  );
+}
+
+/** The closing section: what comes back, and a four-move guide to trying the demo. */
+function TryIt() {
+  const { t } = useLanguage();
+  const copy = t.landing;
+  const roomy = useMediaQuery("(min-width: 640px)", true);
+  const [done, setDone] = useState<ReadonlySet<string>>(new Set());
+  // Labels follow the language; only the ticks are state, and they never leave this screen.
+  const tasks = copy.tryTasks.map((label, index) => ({ id: String(index), label, done: done.has(String(index)) }));
+
+  return (
+    <section id="try" aria-labelledby="try-title" className="grid grid-cols-[minmax(0,1fr)] items-center gap-12 lg:grid-cols-2 lg:gap-16">
+      <BlurFade inView>
+        <h2 id="try-title" className="display max-w-[14ch] text-4xl sm:text-6xl">
+          {copy.tryTitle}
+        </h2>
+        <p className="mt-5 max-w-[56ch] text-lg leading-8 text-ink-soft">{copy.tryIntro}</p>
+        <TaskList
+          tasks={tasks}
+          onTasksChange={(next) => setDone(new Set(next.filter((task) => task.done).map((task) => task.id)))}
+          accent="#c8121b"
+          size="lg"
+          className="mt-8 max-w-xl"
+        />
+      </BlurFade>
+
+      <BlurFade inView delay={0.1}>
+        {/* The top padding is headroom: the cards rise out of the folder when it opens. */}
+        <div className="glass flex flex-col items-center rounded-[2.5rem] px-6 pt-24 pb-8 text-center sm:px-10 sm:pt-32">
+          <FolderComponent
+            color="red"
+            size={roomy ? "md" : "sm"}
+            labels={[...copy.folderLabels]}
+            label={copy.folderOpen}
+            className={roomy ? "h-[17rem]" : "h-[11.5rem]"}
+          />
+          <h3 className="display mt-4 text-2xl sm:text-3xl">{copy.folderTitle}</h3>
+          <p className="mt-3 max-w-[48ch] leading-7 text-ink-soft">{copy.folderBody}</p>
+          <p className="mt-3 text-sm text-ink-soft">{copy.folderHint}</p>
+        </div>
       </BlurFade>
     </section>
   );
@@ -158,10 +288,20 @@ function Showcase() {
   const copy = t.landing;
   const wide = useMediaQuery("(min-width: 1024px)", true);
   const [active, setActive] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const captions = [copy.phoneCaption, copy.laptopCaption, copy.packetCaption];
+  const sectionRef = useRef<HTMLElement>(null);
+  const onStage = useInView(sectionRef, { amount: 0.2 });
+
+  // The player drives the page: each finished step scrolls the next one into the middle,
+  // and the scroll position stays the single source of truth for which step is active.
+  const goTo = useCallback((index: number) => {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById(`journey-step-${index}`)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+  }, []);
 
   return (
-    <section aria-labelledby="journey-title">
+    <section ref={sectionRef} id="journey" aria-labelledby="journey-title">
       <BlurFade inView>
         <h2 id="journey-title" className="display max-w-[14ch] text-4xl sm:text-6xl">
           {copy.journeyTitle}
@@ -171,7 +311,7 @@ function Showcase() {
       <div className="mt-10 grid gap-10 lg:mt-4 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
         <ol className="flex flex-col gap-16 lg:gap-0">
           {copy.steps.map((step, index) => (
-            <Step key={step.where} index={index} active={wide && active === index} onActive={setActive} tall={wide}>
+            <Step key={step.where} id={`journey-step-${index}`} index={index} active={wide && active === index} onActive={setActive} tall={wide}>
               <span aria-hidden className="display text-xl text-brand-red-ink">
                 {index + 1}
               </span>
@@ -200,10 +340,23 @@ function Showcase() {
                   transition={{ duration: 0.35, ease: "easeOut" }}
                   className="relative flex h-full w-full flex-col items-center justify-center gap-4"
                 >
-                  <Device index={active} className="max-h-[calc(100%-2.5rem)]" />
+                  <Device index={active} reveal className="max-h-[calc(100%-6.5rem)]" />
                   <figcaption className="text-sm text-ink-soft">{captions[active]}</figcaption>
                 </motion.figure>
               </AnimatePresence>
+              {/* Remounts per step so the fill restarts when scrolling, not only when playing. */}
+              <StepPlayer
+                key={active}
+                steps={copy.steps.map((step) => ({ label: step.where, duration: 5000 }))}
+                value={active}
+                onValueChange={goTo}
+                playing={playing && onStage}
+                onPlayingChange={setPlaying}
+                onComplete={() => setPlaying(false)}
+                controlPosition="left"
+                controlLabels={copy.player}
+                className="absolute inset-x-8 bottom-6 z-10"
+              />
               <BorderBeam size={160} duration={10} colorFrom="#ee121d" colorTo="#ee121d" borderWidth={2} />
             </div>
           </div>
@@ -213,25 +366,28 @@ function Showcase() {
   );
 }
 
-function Device({ index, className }: { index: number; className?: string }) {
+function Device({ index, reveal, className }: { index: number; reveal?: boolean; className?: string }) {
   if (index === 1) {
-    return <Safari url="sickway.app/hcp" imageSrc={SHOTS.clinician} className={cn("h-auto w-full max-w-2xl drop-shadow-[0_24px_32px_rgba(60,40,0,0.2)]", className)} />;
+    return <Safari url="sickway.app/hcp" imageSrc={SHOTS.clinician} reveal={reveal} className={cn("h-auto w-full max-w-2xl drop-shadow-[0_24px_32px_rgba(60,40,0,0.2)]", className)} />;
   }
   return (
     <Iphone
       src={index === 0 ? SHOTS.student : SHOTS.packet}
+      reveal={reveal}
       className={cn("h-auto w-56 max-w-full drop-shadow-[0_24px_32px_rgba(60,40,0,0.28)] lg:h-full lg:w-auto", className)}
     />
   );
 }
 
 function Step({
+  id,
   index,
   active,
   tall,
   onActive,
   children,
 }: {
+  id: string;
   index: number;
   active: boolean;
   tall: boolean;
@@ -252,7 +408,7 @@ function Step({
   }, [index, onActive]);
 
   return (
-    <li ref={ref} className={cn("relative pl-6 sm:pl-8", tall && "flex min-h-[70vh] flex-col justify-center")}>
+    <li ref={ref} id={id} className={cn("relative pl-6 sm:pl-8", tall && "flex min-h-[70vh] flex-col justify-center")}>
       <span aria-hidden className="absolute top-0 bottom-0 left-0 w-[3px] rounded-full bg-ink/10" />
       {active && (
         <motion.span

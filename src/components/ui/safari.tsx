@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import type { HTMLAttributes } from "react"
 
+import { GridReveal } from "@/components/ui/grid-reveal"
+
 const SAFARI_WIDTH = 1203
 const SAFARI_HEIGHT = 753
 const SCREEN_X = 1
@@ -20,12 +22,15 @@ export interface SafariProps extends HTMLAttributes<HTMLDivElement> {
   url?: string
   imageSrc?: string
   videoSrc?: string
+  /** Assemble the screenshot with a grid reveal instead of showing it at once. */
+  reveal?: boolean
   mode?: SafariMode
 }
 
 export function Safari({
   imageSrc,
   videoSrc,
+  reveal = false,
   url,
   mode = "default",
   className,
@@ -77,11 +82,11 @@ export function Safari({
             borderRadius: "0 0 11px 11px",
           }}
         >
-          <img
-            src={imageSrc}
-            alt=""
-            className="block size-full object-cover object-top"
-          />
+          {reveal ? (
+            <GridReveal src={imageSrc} aspect={1200 / 700} className="size-full rounded-none bg-transparent" />
+          ) : (
+            <img src={imageSrc} alt="" className="block size-full object-cover object-top" />
+          )}
         </div>
       )}
 

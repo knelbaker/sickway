@@ -3,8 +3,8 @@
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import MatrixOrb from "@/components/ui/matrix-orb";
 import { apiFetch } from "@/lib/client/session-store";
 import { USE_TYPED_CONTROLS } from "@/lib/voice-tools";
 
@@ -114,9 +114,14 @@ function VoiceSession({ actions }: { actions: VoiceActions }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" role="status">
-            {connected ? (conversation.isSpeaking ? "Speaking" : "Listening") : busy ? "Connecting…" : "Off"}
-          </Badge>
+          {/* The orb is the agent's state at a glance; its label is the status for screen readers. */}
+          <MatrixOrb
+            state={connected ? (conversation.isSpeaking ? "thinking" : "listening") : busy ? "thinking" : "idle"}
+            labels={{ idle: "Off", listening: "Listening", thinking: connected ? "Speaking" : "Connecting…" }}
+            size={40}
+            color="#c8121b"
+            className="flex-row gap-2"
+          />
           {connected ? (
             <Button type="button" variant="outline" className="h-11" onClick={() => conversation.endSession()}>
               Stop voice
