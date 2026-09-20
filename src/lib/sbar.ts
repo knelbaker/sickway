@@ -16,7 +16,7 @@ import type { ReviewedIntake, Sbar } from "@/lib/schemas";
  * a therapy or manufacturer, or claim that coverage was verified.
  */
 
-export const SBAR_PROMPT_VERSION = "sbar-v3";
+export const SBAR_PROMPT_VERSION = "sbar-v4";
 
 type Profile = Fixtures["profile"];
 
@@ -32,16 +32,16 @@ const generatedSchema = z.object({
 
 const BRANCH_LABEL: Record<DemoRoutingResult["branch"], string> = {
   ready: "routine campus clinic demo",
-  needs_review: "needs review before continuing",
-  emergency: "emergency branch — routine demo flow bypassed",
+  needs_review: "needs review — unanswered items remain unknown",
+  emergency: "emergency branch — positive demo checklist answers",
 };
 
 const RECOMMENDATION: Record<DemoRoutingResult["branch"], string> = {
   ready: "Review the synthetic intake with the demo clinic. Booking is not connected.",
   needs_review:
-    "Review the unanswered or unexpected items with the student before continuing. Booking is not connected.",
+    "Review the unanswered or unexpected items with the student. Mock options and a fictional packet are available for demonstrating the workflow; they are not treatment recommendations. Booking is not connected.",
   emergency:
-    "A demo checklist item was answered yes, so the routine demo flow is bypassed. This prototype message is not a validated screening result.",
+    "Review the positive demo checklist answers. Mock options and a fictional packet are available for demonstrating the workflow; they are not treatment recommendations. This prototype message is not a validated screening result.",
 };
 
 function list(values: string[]): string {
@@ -67,7 +67,7 @@ function checklistSentence(yes: string[], unanswered: string[]): string {
   if (unanswered.length > 0) parts.push(`Not answered: ${list(unanswered)}.`);
   if (yes.length === 0 && unanswered.length === 0) {
     parts.push("Every demo checklist item was answered no by the student.");
-  } else {
+  } else if (yes.length + unanswered.length < RED_FLAG_KEYS.length) {
     parts.push("All other checklist items were answered no.");
   }
   return parts.join(" ");
@@ -169,8 +169,8 @@ export function sbarGuardrailViolation(
   if (intake.medsTaken === null && /\b(no|not taking any|denies) (medications?|meds)\b/i.test(text)) {
     return "invents a negative for medications";
   }
-  const unanswered = RED_FLAG_KEYS.some((key) => intake.redFlags[key] === null);
-  if (unanswered && /\bno red flags?\b/i.test(text)) {
+  const flaggedOrUnanswered = RED_FLAG_KEYS.some((key) => intake.redFlags[key] !== false);
+  if (flaggedOrUnanswered && /\bno red flags?\b/i.test(text)) {
     return "invents a clean checklist";
   }
   return null;
@@ -192,6 +192,16 @@ export async function generateSbar(
   });
   if (!result.ok) return null;
   if (sbarGuardrailViolation(result.data, intake)) return null;
+  if (routing.branch !== "ready") {
+    const facts = sbarFacts(intake, profile, routing);
+    // A generated brief must preserve every positive/unknown checklist answer
+    // in both the visible assessment and audio, and retain the routed next step.
+    if (
+      !result.data.assessment.includes(facts.checklistSummary) ||
+      !result.data.spokenScript.includes(facts.checklistSummary) ||
+      result.data.recommendation !== facts.nextStep
+    ) return null;
+  }
   return { ...result.data, source: "generated" };
 }
 

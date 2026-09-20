@@ -53,8 +53,8 @@ export function VisitPanel({
   const [error, setError] = useState<string | null>(null);
   const [attached, setAttached] = useState(false);
 
-  const canAttach = encounter.status === "ready" || encounter.status === "in_visit";
-  const done = attached || encounter.status === "packet_available";
+  const done = attached || encounter.status === "packet_available" || Boolean(encounter.packetId);
+  const canAttach = !done;
   const selected = rows.find((row) => rowKey(row) === selectedKey) ?? null;
   // Only resources the server unlocked, and only for the chosen therapy, are ever offered.
   const offered = selected ? (unlocked[selected.therapyId]?.resources ?? []) : [];

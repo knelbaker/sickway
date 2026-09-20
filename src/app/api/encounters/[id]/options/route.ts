@@ -15,8 +15,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   const encounter = await getEncounter(auth.session.id, id);
   if (!encounter) return errorJson(404, "encounter_not_found");
-  // The emergency branch bypasses the routine demo flow.
-  if (encounter.status === "emergency") return errorJson(409, "not_available_for_emergency");
 
   const body = optionsRequestSchema.safeParse(await request.json().catch(() => null));
   if (!body.success || body.data.query.length > 500) return errorJson(400, "invalid_request");

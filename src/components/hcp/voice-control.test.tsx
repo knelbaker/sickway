@@ -86,7 +86,7 @@ describe("availability", () => {
     expect(screen.getByRole("button", { name: "Show antiviral demo options" })).toBeDefined();
   });
 
-  test.each([{ status: "needs_review" }, { status: "packet_available", packetId: "p1" }])(
+  test.each([{ status: "packet_available", packetId: "p1" }])(
     "offers no voice for an encounter that cannot take a packet (%j)",
     (changes) => {
       renderPanel(true, changes);
@@ -94,6 +94,10 @@ describe("availability", () => {
       expect(screen.queryByRole("button", { name: "Start voice" })).toBeNull();
     },
   );
+  test.each(["emergency", "needs_review"])("offers the same optional voice controls for %s", (status) => {
+    renderPanel(true, { status });
+    expect(screen.getByRole("button", { name: "Start voice" })).toBeDefined();
+  });
 });
 
 describe("starting", () => {

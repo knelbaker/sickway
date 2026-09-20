@@ -466,11 +466,11 @@ const en = {
   },
 
   status: {
-    emergencyTitle: "This demo stops here",
-    emergencyBody: "You answered yes to an item on this prototype's emergency checklist, so the routine demo flow is bypassed and no clinic next step is shown.",
+    emergencyTitle: "Shared — emergency checklist flagged",
+    emergencyBody: "You answered yes to an item on this prototype's emergency checklist. The clinician can review your answers and create a fictional demo packet. This does not mean the listed options are appropriate treatment.",
     emergencyAction: "In a real situation, call 911 or your campus emergency number. This message is prototype copy, not a validated medical screening result.",
     reviewTitle: "Shared — needs review",
-    reviewBody: "Some checklist items were not answered or need a second look, so the demo clinic will review your intake before any next step. This is not an all-clear.",
+    reviewBody: "Some checklist items were not answered or need a second look. The clinician can review your answers and create a fictional demo packet; unanswered items stay unknown. This is not an all-clear.",
     bookingNotConnected: "Booking not connected.",
     readyTitle: "Shared with the demo clinic",
     nextStep: "Demo next step: campus clinic",
@@ -1004,11 +1004,11 @@ const es: Messages = {
   },
 
   status: {
-    emergencyTitle: "Esta demostración se detiene aquí",
-    emergencyBody: "Usted respondió que sí a un elemento de la lista de emergencia de este prototipo, así que se omite el flujo normal de la demostración y no se muestra un siguiente paso en la clínica.",
+    emergencyTitle: "Compartido — alerta en la lista de emergencia",
+    emergencyBody: "Usted respondió que sí a un elemento de la lista de emergencia de este prototipo. El profesional clínico puede revisar sus respuestas y crear un paquete ficticio de demostración. Esto no significa que las opciones sean un tratamiento adecuado.",
     emergencyAction: "En una situación real, llame al 911 o al número de emergencias de su campus. Este mensaje es texto de un prototipo, no el resultado de una evaluación médica validada.",
     reviewTitle: "Compartido — necesita revisión",
-    reviewBody: "Algunos elementos de la lista quedaron sin responder o necesitan otra mirada, así que la clínica de demostración revisará su admisión antes de cualquier siguiente paso. Esto no significa que todo esté bien.",
+    reviewBody: "Algunos elementos de la lista quedaron sin responder o necesitan otra mirada. El profesional clínico puede revisar sus respuestas y crear un paquete ficticio de demostración; las respuestas faltantes siguen siendo desconocidas. Esto no significa que todo esté bien.",
     bookingNotConnected: "La reserva de citas no está conectada.",
     readyTitle: "Compartido con la clínica de demostración",
     nextStep: "Siguiente paso de la demostración: clínica del campus",

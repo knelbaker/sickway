@@ -209,10 +209,17 @@ describe("POST /api/encounters/:id/resources", () => {
     expect(auditEvents()).toEqual([]);
   });
 
-  it("refuses an emergency encounter", async () => {
-    await seed(SESSION_A, "enc-emergency", { status: "emergency" });
+  it.each(["emergency", "needs_review"])("retains the therapy-specific resource gate for a %s encounter", async (status) => {
+    await seed(SESSION_A, "enc-emergency", { status });
 
-    expect((await ask("enc-emergency", { therapyId: BRAND })).status).toBe(409);
+    const category = await ask("enc-emergency", { text: "Show antiviral options" });
+    expect((await category.json()).unlocked).toBe(false);
+    expect(unlocked(SESSION_A, "enc-emergency")).toEqual([]);
+    const named = await ask("enc-emergency", { therapyId: BRAND });
+    expect(named.status).toBe(200);
+    expect((await named.json()).unlocked).toBe(true);
+    expect(unlocked(SESSION_A, "enc-emergency")).toEqual([BRAND]);
+    expect(auditEvents()).toHaveLength(1);
   });
 
   it("returns nothing when the unlock cannot be recorded", async () => {

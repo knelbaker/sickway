@@ -61,21 +61,28 @@ export function EncounterView({
 
       {encounter.followUp && <OutcomeChip followUp={encounter.followUp} localized />}
 
-      {encounter.status === "emergency" && (
+      {(positive.length > 0 || encounter.status === "emergency") && (
         <Alert variant="destructive">
-          <AlertTitle>{e.emergencyTitle}</AlertTitle>
+          <AlertTitle>Emergency checklist flagged — synthetic demo</AlertTitle>
           <AlertDescription>
-            <p>{e.emergencyBody(flagNames(positive))}</p>
-            <p className="mt-2">{e.emergencyNote}</p>
+            <p>
+              The student answered yes to: {positive.map((flag) => flag.label).join("; ")}. Review
+              the SBAR and source values below. You can continue with mock options and a demo packet;
+              these fixture choices are not treatment recommendations for the reported symptoms.
+            </p>
+            <p className="mt-2">Prototype rule execution, not a validated screening result.</p>
           </AlertDescription>
         </Alert>
       )}
 
-      {encounter.status === "needs_review" && (
+      {(unanswered.length > 0 || encounter.status === "needs_review") && (
         <Alert>
           <AlertTitle>{e.reviewTitle}</AlertTitle>
           <AlertDescription>
-            {unanswered.length > 0 ? e.reviewUnanswered(flagNames(unanswered)) : e.reviewUnexpected} {e.reviewTail}
+            {unanswered.length > 0
+              ? `Not answered by the student: ${unanswered.map((flag) => flag.label).join("; ")}.`
+              : "The intake contained unexpected or out-of-scenario input."}{" "}
+            You can continue with mock options and a demo packet. Creating a packet does not resolve these unanswered items.
           </AlertDescription>
         </Alert>
       )}
@@ -86,16 +93,13 @@ export function EncounterView({
         </BriefView>
       )}
 
-      {/* The emergency branch bypasses the routine flow: no options or packet path at all. */}
-      {encounter.status !== "emergency" && (
-        <VisitPanel
-          encounter={encounter}
-          costCeiling={profile.costCeiling}
-          preferredLanguages={encounter.preferredInstructionLanguages ?? profile.instructionLanguages}
-          preferenceSource={encounter.preferredInstructionLanguages ? "student" : "profile"}
-          voiceEnabled={voiceEnabled}
-        />
-      )}
+      <VisitPanel
+        encounter={encounter}
+        costCeiling={profile.costCeiling}
+        preferredLanguages={encounter.preferredInstructionLanguages ?? profile.instructionLanguages}
+        preferenceSource={encounter.preferredInstructionLanguages ? "student" : "profile"}
+        voiceEnabled={voiceEnabled}
+      />
 
       <SourcePanel encounter={encounter} profile={profile} />
     </article>

@@ -4,7 +4,7 @@ import { getItem, putItemIfAbsent, queryByPrefix, sk, SK_PREFIX } from "@/lib/db
 import { routeIntake } from "@/lib/demo-routing";
 import { fixtures } from "@/lib/fixtures";
 import type { EncounterQueueItem } from "@/lib/api-contracts";
-import { buildSbar, preparedSbar } from "@/lib/sbar";
+import { buildSbar, deterministicSbar, preparedSbar } from "@/lib/sbar";
 import {
   encounterSchema,
   type DemoSession,
@@ -53,13 +53,10 @@ export async function createEncounter(
   const routing = routeIntake(intake);
   const now = new Date().toISOString();
 
-  // The emergency branch bypasses the routine flow: no brief, options, or packet path.
-  const sbar =
-    routing.branch === "emergency"
-      ? undefined
-      : prepared
-        ? preparedSbar()
-        : await buildSbar({ sessionId: session.id, intake, profile: fixtures.profile, routing });
+  // Every consented intake gets a brief, including positive and unanswered checklist items.
+  const sbar = prepared
+    ? preparedSbar()
+    : await buildSbar({ sessionId: session.id, intake, profile: fixtures.profile, routing });
 
   const encounter = encounterSchema.parse({
     id: randomUUID(),
@@ -106,5 +103,13 @@ export async function getEncounter(sessionId: string, encounterId: string): Prom
   } catch {
     return null; // an ID we could never have issued
   }
-  return getItem(sessionId, key, encounterSchema);
+  const encounter = await getItem(sessionId, key, encounterSchema);
+  if (!encounter || encounter.sbar) return encounter;
+
+  // Older emergency encounters were saved without a brief. Summarize their own
+  // reviewed answers on read so existing demo sessions work without resubmitting.
+  return {
+    ...encounter,
+    sbar: deterministicSbar(encounter.intake, fixtures.profile, routeIntake(encounter.intake)),
+  };
 }

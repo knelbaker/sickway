@@ -122,11 +122,15 @@ test("shows unanswered values as not reported, explicit none as none reported, e
   expect(sources.textContent).not.toMatch(/no known|no red flags/i);
 });
 
-test("an emergency encounter is visibly distinct and offers no brief", async () => {
+test("an emergency encounter offers options and retains its warning after packet creation", async () => {
   queue = [{ ...sampleEncountersQueueResponse[0], status: "emergency" }];
   encounters["enc-demo-001"] = encounter({
     status: "emergency",
-    sbar: undefined,
+    sbar: {
+      ...sampleEncounterDetailResponse.sbar!,
+      source: "deterministic",
+      assessment: "Demo routing result: emergency branch. Answered yes: Breathing difficulty or chest pain.",
+    },
     intake: {
       ...sampleEncounterDetailResponse.intake,
       redFlags: { ...sampleEncounterDetailResponse.intake.redFlags, breathing_chest_pain: true },
@@ -136,9 +140,19 @@ test("an emergency encounter is visibly distinct and offers no brief", async () 
   await tick();
   await open("enc-demo-001");
 
-  expect(screen.getByText("Emergency branch — routine demo flow bypassed")).toBeDefined();
+  expect(screen.getByText("Emergency checklist flagged — synthetic demo")).toBeDefined();
   expect(screen.getByRole("alert").textContent).toContain("Breathing difficulty or chest pain");
-  expect(screen.queryByRole("region", { name: "Clinician brief (SBAR)" })).toBeNull();
+  const brief = screen.getByRole("region", { name: "Clinician brief (SBAR)" });
+  for (const heading of ["Situation", "Background", "Assessment", "Recommendation"]) {
+    expect(within(brief).getByText(heading)).toBeDefined();
+  }
+  expect(within(brief).getByText(/Answered yes: Breathing difficulty/)).toBeDefined();
+  expect(screen.getByRole("region", { name: "Source values" })).toBeDefined();
+  expect(screen.getByRole("region", { name: "Access options" })).toBeDefined();
+  encounters["enc-demo-001"] = { ...encounters["enc-demo-001"], status: "packet_available", packetId: "enc-demo-001" };
+  await tick(2000);
+  expect(screen.getByText("Emergency checklist flagged — synthetic demo")).toBeDefined();
+  expect(screen.getByRole("region", { name: "Clinician brief (SBAR)" })).toBeDefined();
 });
 
 test("a needs-review encounter names the unanswered items and never reads as an all-clear", async () => {
@@ -157,6 +171,11 @@ test("a needs-review encounter names the unanswered items and never reads as an 
   const notice = screen.getByRole("alert");
   expect(notice.textContent).toContain("Needs review — not an all-clear");
   expect(notice.textContent).toContain("Stiff neck or new rash");
+  expect(screen.getByRole("region", { name: "Clinician brief (SBAR)" })).toBeDefined();
+  expect(screen.getByRole("region", { name: "Access options" })).toBeDefined();
+  encounters["enc-demo-001"] = { ...encounters["enc-demo-001"], status: "packet_available", packetId: "enc-demo-001" };
+  await tick(2000);
+  expect(screen.getByText("Needs review — not an all-clear")).toBeDefined();
 });
 
 test("updates the open encounter's status on the next poll", async () => {

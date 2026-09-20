@@ -181,11 +181,18 @@ test("sends an included resource only after the clinician ticks it", async () =>
   expect(attachBodies[0]).toMatchObject({ therapyId: BRAND, mockPrice: 45, resourceIds: ["resource-demo-copay"] });
 });
 
-test("offers no selection for a needs-review encounter", async () => {
-  renderPanel({ status: "needs_review" });
+test.each(["emergency", "needs_review"] as const)("completes selection, review, and packet attachment for a %s encounter", async (status) => {
+  renderPanel({ status });
   await showOptions();
 
-  expect(screen.queryAllByRole("radio")).toEqual([]);
+  select(GENERIC_NAME, "Fictional Demo Pharmacy A");
+  fireEvent.click(screen.getByRole("button", { name: "Review and confirm" }));
+  const dialog = await screen.findByRole("dialog");
+  expect(attachBodies).toEqual([]);
+  fireEvent.click(within(dialog).getByRole("button", { name: "Confirm and attach" }));
+  expect(await screen.findByText("Packet available in demo")).toBeDefined();
+  expect(attachBodies).toHaveLength(1);
+  expect(attachRequestSchema.parse(attachBodies[0]).therapyId).toBe("therapy-generic-demo");
 });
 
 test("shows the packet status and no attach controls for an encounter that already has a packet", async () => {

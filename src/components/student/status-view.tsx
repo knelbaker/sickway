@@ -66,6 +66,8 @@ export function StatusView({
         <AlertDescription>
           <p>{t.status.emergencyBody}</p>
           <p className="mt-2">{t.status.emergencyAction}</p>
+          <p className="mt-2">{t.status.keepOpen}</p>
+          <p className="mt-2">{t.status.waitingHow}</p>
         </AlertDescription>
       </Alert>
     );
@@ -78,6 +80,8 @@ export function StatusView({
         <AlertDescription>
           <p>{t.status.reviewBody}</p>
           <p className="mt-2 font-medium">{t.status.bookingNotConnected}</p>
+          <p className="mt-2">{t.status.keepOpen}</p>
+          <p className="mt-2">{t.status.waitingHow}</p>
         </AlertDescription>
       </Alert>
     );
