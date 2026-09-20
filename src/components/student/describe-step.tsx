@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { VoiceInput } from "@/components/student/voice-input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -78,6 +79,23 @@ export function DescribeStep({
       <Label htmlFor="intake-text" className="text-base font-semibold">
         {t.describe.label}
       </Label>
+      {/* Optional help finding the words. It is text to read, never a control that fills the box:
+          a prompt must not become the student's answer. */}
+      <details className="group rounded-2xl border border-ink/12 bg-paper/70">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+          {t.describe.helpTitle}
+          <ChevronDown aria-hidden className="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" />
+        </summary>
+        <div className="border-t border-ink/10 px-4 pt-3 pb-4 text-sm leading-6">
+          <p className="text-muted-foreground">{t.describe.helpIntro}</p>
+          <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
+            {t.describe.prompts.map((prompt) => (
+              <li key={prompt}>{prompt}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">{t.describe.helpNote}</p>
+        </div>
+      </details>
       <Textarea
         id="intake-text"
         value={text}

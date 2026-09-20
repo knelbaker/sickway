@@ -17,6 +17,13 @@ Status: draft v3 — core demo scoped · Owner: whole team · Submission deadlin
 
 ## 1. Problem and users
 
+### 1.0 The problem this project centers (issue #87)
+**Language barriers in student healthcare communication.** A student who is sick and less comfortable in English may know how they feel but struggle to find symptom words, understand healthcare terminology, or check whether a clinician understood them. The social issue is unequal access to understandable healthcare communication. English proficiency is not intelligence or health literacy, and the student is the authority on their own experience.
+
+Message direction: *“Feeling sick is hard. Explaining it in another language should not be.”* Every step of **intake → clinician brief → options → packet** is explained by the barrier it addresses: approachable prompts, student-controlled review, a traceable handoff that keeps the student's own words, and understandable prewritten packet copy. The clinician brief stays central to the handoff; mock access options are supporting context.
+
+What is demonstrated is assistance and student control. Reduced language barriers are the **intended** benefit. The project does not claim measured reductions in disparities, better health outcomes, translation accuracy, or real patient adoption.
+
 ### 1.1 Student — Sick Day
 A fictional student has a fever and an exam today. While sick, they must explain symptoms, understand next steps, and keep track of visit instructions. This prototype demonstrates intake and a returned packet. Booking, transportation, food delivery, insurance verification, and prescription fulfillment remain outside the product demonstrated here.
 
@@ -31,6 +38,9 @@ The campus health map is a future research idea, not a third user surface for th
 ---
 
 ## 2. Goals and non-goals
+
+### Goal added by issue #87
+Make language access the primary purpose, in both supported languages: the first screen names the barrier and the supported scope (English and Spanish screens, entered text not translated); the intake offers optional EN/ES prompts that never become answers; the student can compare the reviewed details with their original text; the clinician sees that text beside the brief with a notice that nothing is translated and that the English brief and audio may not resolve a language mismatch.
 
 ### Required deliverable
 1. One synthetic scenario works end to end on a phone and laptop: **intake → clinician brief → options → packet**.
@@ -51,6 +61,7 @@ The campus health map is a future research idea, not a third user surface for th
 - Lambda, EventBridge, S3, background audio pipelines, generated PA forms, or MSL requests.
 - Real insurance, pharmacy, booking, EHR, prescribing, email, or SMS integrations.
 - Accounts, production authentication, payments, or real patient data.
+- Interpreter services, support for languages beyond English and Spanish, or replacing professional interpreters (issue #87 keeps these out).
 - Runtime medical translation: use reviewed demo copy in EN and ES; do not claim clinical validation. (Issue #61 extends prewritten EN/ES copy from packet instructions to the whole student journey. It is still prewritten copy: nothing is translated at runtime, in either direction.)
 - Additional illness scenarios or infrastructure added solely for a prize.
 
@@ -65,6 +76,9 @@ The campus health map is a future research idea, not a third user surface for th
 - Show the profile fields and their source. They are not extracted from the opening sentence.
 - Load a displayed fixture clock and explicit symptom onset for the scripted case. Do not interpret “yesterday morning” as an exact timestamp silently.
 - Consent begins unchecked on every reset.
+
+### The judging story (issue #87)
+The central story is a fictional student who struggles to describe symptoms in English. With the interface in Español they open the optional prompts, write in their own words (“Desde ayer por la mañana tengo fiebre de 102 y me duele todo el cuerpo…”), check the extracted details against what they wrote, confirm the onset, give separate consent, and later read prewritten instructions in Spanish. On the clinician screen the brief is in English and quotes the student's Spanish phrases; their full original wording sits beside it with the notice that nothing was translated. Say that limit out loud in the demo. The original English flow below still works and remains the fallback.
 
 ### Scene 1 — Student intake (about 60 seconds)
 1. Student enters: “I woke up with a 102 fever, my whole body aches, it started yesterday morning, and I have an exam at 2.” Typed input is the baseline; voice is optional.

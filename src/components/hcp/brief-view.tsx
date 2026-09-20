@@ -13,7 +13,7 @@ const SECTIONS = [
 ] as const;
 
 /** The brief as visible text, always with its source. Audio controls are passed in by the caller. */
-export function BriefView({ sbar, children }: { sbar: Sbar; children?: React.ReactNode }) {
+export function BriefView({ sbar, words, children }: { sbar: Sbar; words?: string | null; children?: React.ReactNode }) {
   const { t } = useLanguage();
   const b = t.clinician.brief;
   return (
@@ -39,6 +39,17 @@ export function BriefView({ sbar, children }: { sbar: Sbar; children?: React.Rea
           </div>
         ))}
       </dl>
+      {/* The handoff keeps the student's wording next to the summary of it. It may be in another
+          language than the brief, so it carries no lang attribute of its own. */}
+      {words !== undefined && (
+        <figure className="mt-2 rounded-2xl border border-dashed border-ink-soft/70 p-4">
+          <figcaption className="text-sm font-bold">{b.wordsTitle}</figcaption>
+          {words ? <blockquote className="mt-1.5 leading-7">“{words}”</blockquote> : <p className="mt-1.5 text-muted-foreground">{b.wordsNone}</p>}
+          <p role="note" className="mt-2 text-xs leading-5 text-muted-foreground">
+            {b.notTranslated}
+          </p>
+        </figure>
+      )}
       <p className="mt-3 text-xs leading-5 text-muted-foreground">
         {b.note}
       </p>

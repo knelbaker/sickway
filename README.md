@@ -2,9 +2,18 @@
 
 [sickway.health](https://sickway.health/)
 
-A synthetic workflow prototype for student intake, a clinician brief, and a returned patient packet. The product scope and demo scenario are in [sickway.md](sickway.md).
+**Feeling sick is hard. Explaining it in another language should not be.**
+
+A synthetic prototype about one barrier: a student who is sick, and less comfortable in English, may know exactly how they feel and still struggle to find the words, follow healthcare terms, or tell whether the clinic understood. The workflow is student intake, a clinician brief, and a returned patient packet, and every step exists to help the student say it and check it. The product scope and demo scenario are in [sickway.md](sickway.md); the language work is recorded in [docs/language-access.md](docs/language-access.md).
 
 Prototype workflow. Not medical advice. Do not enter real health information.
+
+## The problem, what this shows, and what it does not
+
+- **The problem.** Unequal access to understandable healthcare communication because of language. It is a communication gap, not a gap in intelligence or in knowing one's own body; the student is the authority on their experience.
+- **What the prototype demonstrates.** Optional plain-language prompts in English and Spanish that help a student say what feels wrong, when it started, and what they want understood (read-only guidance: a prompt never becomes an answer). A review the student controls, with their original words above the extracted details. The same words, unchanged, beside the clinician's brief. Prewritten packet instructions in the language the student chose.
+- **The intended benefit, not measured.** Fewer students staying silent because of language. There are no patients, no user research, and no outcome data here, and none is claimed.
+- **The limit that matters most.** Interface text is localized; **what a student types is never translated**. In the recorded Spanish walkthrough the English brief read “reports fiebre and me duele todo el cuerpo”. A clinician who does not read Spanish is not helped by that, and the screen says so beside the student's words: helping someone organize a concern does not establish that a language mismatch has been resolved. Runtime translation and interpreter services are out of scope.
 
 ## Who it is for
 
