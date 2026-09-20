@@ -101,7 +101,7 @@ Open [localhost:3000](http://localhost:3000). The home page starts or resumes a 
 
 The root `.env` is tracked at the repository owner's request and contains shared configuration, including credentials. Keep its contents out of logs and documentation. For local overrides, copy `.env.example` to `.env.local` and fill in the required values. The example intentionally contains empty values only; `.env.local` stays ignored by Git.
 
-Server code must import `env` from `@/lib/env` instead of reading environment variables directly. Importing the module validates all settings and throws an error listing missing or invalid variable names without including their values. The module is marked `server-only`, so it cannot be imported into a Client Component.
+Server code must import `env` from `@/lib/env` instead of reading environment variables directly. The first configuration read validates all settings and caches them for the server process; invalid configuration throws an error listing missing or invalid variable names without including their values. Importing route modules during `pnpm build` does not require runtime credentials. The deployed server still requires all settings below before handling requests that use configuration; set them in the deployment environment and redeploy after changes. The module is marked `server-only`, so it cannot be imported into a Client Component.
 
 Required settings:
 

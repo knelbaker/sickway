@@ -1,9 +1,12 @@
+import { connection } from "next/server";
 import { SessionGate } from "@/components/session/session-gate";
 import { StudentFlow } from "@/components/student/student-flow";
 import { fixtures } from "@/lib/fixtures";
 import { voiceAvailability } from "@/lib/voice-server";
 
-export default function StudentPage() {
+export default async function StudentPage() {
+  // Voice availability depends on the deployed server's runtime configuration.
+  await connection();
   const { profile, plans } = fixtures;
   const plan = plans.find((row) => row.id === profile.planId);
 

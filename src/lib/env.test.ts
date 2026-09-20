@@ -37,6 +37,25 @@ afterEach(() => {
 });
 
 describe("server environment", () => {
+  it("can be imported without runtime credentials", async () => {
+    for (const name of Object.keys(requiredVariables)) {
+      vi.stubEnv(name, undefined);
+    }
+    const { env } = await import("./env");
+    expect(() => env.DEMO_SESSION_SECRET).toThrow(
+      `Missing or invalid environment variables: ${Object.keys(requiredVariables).join(", ")}`,
+    );
+  });
+
+  it("reads configuration at first access and caches the validated settings", async () => {
+    vi.stubEnv("DDB_TABLE", undefined);
+    const { env } = await import("./env");
+    vi.stubEnv("DDB_TABLE", "runtime-table");
+    expect(env.DDB_TABLE).toBe("runtime-table");
+    vi.stubEnv("DDB_TABLE", "changed-table");
+    expect(env.DDB_TABLE).toBe("runtime-table");
+  });
+
   it("loads required configuration and defaults to baseline voice", async () => {
     const { env } = await import("./env");
 
@@ -47,13 +66,14 @@ describe("server environment", () => {
   });
 
   it.each(Object.keys(requiredVariables))(
-    "rejects missing or blank %s on import without exposing values",
+    "rejects missing or blank %s on access without exposing values",
     async (name) => {
       for (const value of [undefined, "", "   "]) {
         vi.resetModules();
         vi.stubEnv(name, value);
 
-        await expect(import("./env")).rejects.toThrow(
+        const { env } = await import("./env");
+        expect(() => env.DEMO_SESSION_SECRET).toThrow(
           new Error(`Missing or invalid environment variables: ${name}`),
         );
       }
@@ -96,7 +116,8 @@ describe("server environment", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
     try {
-      await expect(import("./env")).rejects.toThrow(
+      const { env } = await import("./env");
+      expect(() => env.DEMO_SESSION_SECRET).toThrow(
         new Error("Missing or invalid environment variables: DDB_TABLE, VOICE_MODE"),
       );
       expect(log).not.toHaveBeenCalled();

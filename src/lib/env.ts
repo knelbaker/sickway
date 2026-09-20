@@ -28,12 +28,31 @@ const envSchema = z.object({
   DEMO_SIMULATE_AI_FAILURE: optionalString,
 });
 
-const result = envSchema.safeParse(process.env);
+type Env = z.infer<typeof envSchema>;
+let validatedEnv: Env | undefined;
 
-if (!result.success) {
-  // Report names only: Zod errors can contain the rejected input.
-  const names = result.error.issues.map((issue) => issue.path.join("."));
-  throw new Error(`Missing or invalid environment variables: ${names.join(", ")}`);
+function getEnv(): Env {
+  if (validatedEnv) return validatedEnv;
+  const result = envSchema.safeParse(process.env);
+
+  if (!result.success) {
+    // Report names only: Zod errors can contain the rejected input.
+    const names = result.error.issues.map((issue) => issue.path.join("."));
+    throw new Error(`Missing or invalid environment variables: ${names.join(", ")}`);
+  }
+
+  validatedEnv = result.data;
+  return validatedEnv;
 }
 
-export const env = result.data;
+// Next.js imports route modules during builds. Require credentials only when
+// server code reads configuration, then reuse the validated runtime snapshot.
+export const env = Object.defineProperties(
+  {},
+  Object.fromEntries(
+    Object.keys(envSchema.shape).map((key) => [key, {
+      enumerable: true,
+      get: () => getEnv()[key as keyof Env],
+    }]),
+  ),
+) as Env;
