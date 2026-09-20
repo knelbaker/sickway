@@ -2,6 +2,8 @@
 
 [sickway.health](https://sickway.health/)
 
+Source and issue tracker: [knelbaker/sickway](https://github.com/knelbaker/sickway). The cleaned commit history and numbered issue/PR records were migrated from the private predecessor repository; see [migration notes](docs/repository-migration.md).
+
 **Feeling sick is hard. Explaining it in another language should not be.**
 
 A synthetic prototype about one barrier: a student who is sick, and less comfortable in English, may know exactly how they feel and still struggle to find the words, follow healthcare terms, or tell whether the clinic understood. The workflow is student intake, a clinician brief, and a returned patient packet, and every step exists to help the student say it and check it. The product scope and demo scenario are in [sickway.md](sickway.md); the language work is recorded in [docs/language-access.md](docs/language-access.md).
@@ -173,7 +175,7 @@ Required settings:
 
 ## Deployment and health check
 
-The repository is connected to a Vercel project owned by one teammate, and production is live at <https://vthacks-14.vercel.app>. **Known issue (September 19):** Vercel reports “Deployment was blocked” for every commit not authored by the project owner, which is how the Hobby plan treats private repositories, so production can lag `main` until the project owner redeploys from the Vercel dashboard (or pushes a commit themselves). Preview URLs sit behind Vercel login and cannot be used on a judge's device. `vercel.json` pins the Next.js framework preset and runs functions in `iad1`, next to the DynamoDB table in `us-east-1`. Use one Vercel project and one set of accounts for judging; do not migrate configuration late (sickway.md §4.1).
+The existing deployment is at <https://vthacks-14.vercel.app>, with the project site linked above. The source repository is now `knelbaker/sickway`; reconnect the existing Vercel project to that repository before relying on automatic deployments from it. The repository migration does not move hosting credentials, domains, or deployment history. Preview URLs may require Vercel login and should be checked on the judging device. `vercel.json` pins the Next.js framework preset and runs functions in `iad1`, next to the DynamoDB table in `us-east-1`. Keep the existing project and service configuration when reconnecting it (sickway.md §4.1).
 
 Server settings must exist in the Vercel project for Production, Preview, and Development. With the Vercel CLI linked to the project, teammates can fetch them instead of passing keys around:
 
