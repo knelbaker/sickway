@@ -63,14 +63,10 @@ export function EncounterView({
 
       {(positive.length > 0 || encounter.status === "emergency") && (
         <Alert variant="destructive">
-          <AlertTitle>Emergency checklist flagged — synthetic demo</AlertTitle>
+          <AlertTitle>{e.emergencyTitle}</AlertTitle>
           <AlertDescription>
-            <p>
-              The student answered yes to: {positive.map((flag) => flag.label).join("; ")}. Review
-              the SBAR and source values below. You can continue with mock options and a demo packet;
-              these fixture choices are not treatment recommendations for the reported symptoms.
-            </p>
-            <p className="mt-2">Prototype rule execution, not a validated screening result.</p>
+            <p>{e.emergencyBody(flagNames(positive))}</p>
+            <p className="mt-2">{e.emergencyNote}</p>
           </AlertDescription>
         </Alert>
       )}
@@ -79,10 +75,7 @@ export function EncounterView({
         <Alert>
           <AlertTitle>{e.reviewTitle}</AlertTitle>
           <AlertDescription>
-            {unanswered.length > 0
-              ? `Not answered by the student: ${unanswered.map((flag) => flag.label).join("; ")}.`
-              : "The intake contained unexpected or out-of-scenario input."}{" "}
-            You can continue with mock options and a demo packet. Creating a packet does not resolve these unanswered items.
+            {unanswered.length > 0 ? e.reviewUnanswered(flagNames(unanswered)) : e.reviewUnexpected} {e.reviewTail}
           </AlertDescription>
         </Alert>
       )}
