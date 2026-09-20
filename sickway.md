@@ -101,7 +101,7 @@ The campus health map is a future research idea, not a third user surface for th
 | AI SDK + Gemini | Structured intake extraction and SBAR drafting; never invent missing fields |
 | DynamoDB, one table | Demo sessions, encounters, packets, resource audit events, cached generation |
 | Static files in `/data` and `/public` | Synthetic profile, mock catalogs, approved demo copy, prerecorded brief |
-| Browser speech synthesis | Audio for changed briefs when live TTS is unavailable |
+| ElevenLabs text-to-speech | Audio for changed briefs using the prepared recording's voice and model; text remains available on failure |
 | ElevenLabs, optional integration | Clinician voice first; student voice only after core completion |
 
 No Lambda, S3, scheduled jobs, map, websockets, or second application. Poll the active encounter and queue every two seconds during the demo. Stop polling on inactive screens.
@@ -112,7 +112,7 @@ DynamoDB is the only persistent backend. Do not replace it with server-process m
 - Target $0 spend; verify actual account entitlements and quotas before relying on any service. Do not present unverified free-tier allowances as guarantees.
 - Make one deployed Gemini call, one database round trip, and one paired-device read before building optional features.
 - Cache generated output by normalized input, model, and prompt version. A cached fixture response is visibly labeled as such.
-- Use typed input and browser speech during development. Reserve available ElevenLabs usage for integration and rehearsal within account terms.
+- Use typed input and the matching prepared recording during development. Generate changed-brief ElevenLabs audio only on Play and reuse it while that brief stays open, within account terms.
 - Use one tested judging configuration. Do not migrate accounts or agent configurations on Saturday night.
 - If live generation is unavailable, expose “Use prepared demo” explicitly. Never silently substitute a fixture for a judge's different input.
 - Default Vercel URL is sufficient. A custom domain is optional polish, not a prerequisite.
@@ -183,8 +183,8 @@ Retain the original scenario's checklist categories: breathing/chest pain, confu
 ### 6.4 Brief audio
 - Keep a prerecorded brief for the exact seeded case under `/public`.
 - Use it only when the current approved brief matches that fixture.
-- For changed inputs, speak the current brief using browser speech synthesis; otherwise show the text with an explicit audio-unavailable state.
-- Optional live TTS is added only after rehearsal. No background generation service is required.
+- For changed inputs, generate audio from the saved current brief using the same ElevenLabs voice, model, and format as the prepared recording. If generation fails, show the text with an explicit audio-unavailable state; never substitute system speech.
+- TTS runs only on Play, behind server-side session ownership and saved-script checks. Keep the key server-side, bound request time, cancel pending playback on Stop, and reuse downloaded audio while the brief stays open. No background generation service is required.
 - Aim for 50–65 words, but time the actual recording. Never sacrifice factual completeness solely to hit 20 seconds.
 
 ---
@@ -388,7 +388,7 @@ Original calendar targets are retained below. If a target has passed, complete i
 ### Cut order
 1. Student voice and simulated follow-up.
 2. Clinician voice input; retain typed controls and brief audio.
-3. Live TTS; retain matching prepared brief plus browser speech/text for changed input.
+3. Live TTS; retain matching prepared brief plus text for changed input.
 4. Custom domain and decorative polish.
 
 Never cut the typed end-to-end flow, reviewed intake and consent, traceable brief, mock labels, server-enforced resource gate, or returned packet. Map, Side Kick, and background jobs are already cut, not late fallbacks.
@@ -515,7 +515,7 @@ AWS_ACCESS_KEY_ID=             # least privilege for the demo table
 AWS_SECRET_ACCESS_KEY=
 DDB_TABLE=sickday
 DEMO_SESSION_SECRET=
-VOICE_MODE=baseline           # baseline or live; baseline uses typed input + browser/static audio
+VOICE_MODE=baseline           # baseline or live microphone features; brief playback uses prepared/ElevenLabs audio
 # Optional only after baseline works:
 ELEVENLABS_API_KEY=
 NEXT_PUBLIC_DOORWAY_AGENT_ID=

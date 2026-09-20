@@ -157,10 +157,10 @@ describe("extractIntake", () => {
     });
   });
 
-  it("returns a typed failure, never fixture data, when the model fails", async () => {
-    generateStructured.mockResolvedValue({ ok: false, reason: "timeout" });
+  it.each(["timeout", "rate_limited"])("preserves %s failures without substituting fixture data", async (reason) => {
+    generateStructured.mockResolvedValue({ ok: false, reason });
 
-    await expect(extractIntake("s1", SEEDED, CLOCK)).resolves.toEqual({ ok: false, reason: "timeout" });
+    await expect(extractIntake("s1", SEEDED, CLOCK)).resolves.toEqual({ ok: false, reason });
   });
 
   it("sends only the student's text, scoped to the caller's session", async () => {

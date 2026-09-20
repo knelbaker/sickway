@@ -10,6 +10,7 @@ const optionalString = z.preprocess(blankToUndefined, z.string().optional());
 
 const envSchema = z.object({
   GOOGLE_GENERATIVE_AI_API_KEY: requiredString,
+  GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK: z.preprocess(blankToUndefined, requiredString.optional()),
   GEMINI_MODEL: requiredString,
   AWS_REGION: requiredString,
   AWS_ACCESS_KEY_ID: requiredString,

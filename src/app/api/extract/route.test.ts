@@ -70,12 +70,12 @@ describe("POST /api/extract", () => {
     },
   );
 
-  it("returns a typed 503 and no fixture data when the model fails", async () => {
-    extractIntake.mockResolvedValue({ ok: false, reason: "timeout" });
+  it.each(["timeout", "rate_limited"])("returns a typed 503 for %s and no fixture data", async (reason) => {
+    extractIntake.mockResolvedValue({ ok: false, reason });
 
     const response = await POST(post(sampleExtractRequest));
 
     expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ error: "extraction_unavailable", reason: "timeout" });
+    expect(await response.json()).toEqual({ error: "extraction_unavailable", reason });
   });
 });

@@ -3,17 +3,17 @@
  *
  * The prerecorded file is `public/demo-brief.mp3`, rendered from the exact
  * `spokenScript` in `data/demo-brief.json`. It may be played only when the
- * brief on screen says the same thing; any other brief is spoken by the browser
- * or, failing that, shown with an explicit audio-unavailable state.
+ * brief on screen says the same thing; other briefs use the same ElevenLabs
+ * voice and model on demand, or show an explicit audio-unavailable state.
  */
 
 export const PREPARED_BRIEF_AUDIO_SRC = "/demo-brief.mp3";
 
-export type BriefAudioMode = "prepared_recording" | "browser_speech" | "unavailable";
+export type BriefAudioMode = "prepared_recording" | "elevenlabs" | "unavailable";
 
 export const BRIEF_AUDIO_LABEL: Record<BriefAudioMode, string> = {
   prepared_recording: "Prepared recording",
-  browser_speech: "Browser speech",
+  elevenlabs: "ElevenLabs audio",
   unavailable: "Audio unavailable — read the brief below",
 };
 
@@ -31,13 +31,4 @@ export function normalizeScript(script: string): string {
 export function matchesPreparedScript(script: string, preparedScript: string): boolean {
   const normalized = normalizeScript(script);
   return normalized !== "" && normalized === normalizeScript(preparedScript);
-}
-
-export function briefAudioMode(
-  script: string,
-  preparedScript: string,
-  support: { speechSynthesis: boolean; preparedFileFailed?: boolean },
-): BriefAudioMode {
-  if (matchesPreparedScript(script, preparedScript) && !support.preparedFileFailed) return "prepared_recording";
-  return support.speechSynthesis ? "browser_speech" : "unavailable";
 }

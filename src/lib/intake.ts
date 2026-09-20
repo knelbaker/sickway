@@ -119,7 +119,7 @@ function groundedTemperature(value: number | null, text: string): number | null 
 
 export type ExtractResult =
   | { ok: true; response: ExtractResponse }
-  | { ok: false; reason: "timeout" | "invalid_output" | "provider_error" | "cache_error" };
+  | { ok: false; reason: "timeout" | "invalid_output" | "rate_limited" | "provider_error" | "cache_error" };
 
 export async function extractIntake(
   sessionId: string,

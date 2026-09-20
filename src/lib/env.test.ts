@@ -15,6 +15,7 @@ const requiredVariables = {
 };
 
 const optionalVariables = [
+  "GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK",
   "ELEVENLABS_API_KEY",
   "NEXT_PUBLIC_DOORWAY_AGENT_ID",
   "NEXT_PUBLIC_INTAKE_AGENT_ID",

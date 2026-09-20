@@ -143,11 +143,12 @@ const en = {
       stop: "Stop",
       audio: {
         prepared_recording: "Prepared recording",
-        browser_speech: "Browser speech",
+        elevenlabs: "ElevenLabs audio",
         unavailable: "Audio unavailable — read the brief below",
       },
       preparedNote: "Recorded in advance for this exact seeded case. Not live voice.",
-      browserNote: "Your browser reads the current brief aloud.",
+      preparingAudio: "Preparing audio…",
+      generatedNote: "Reads the current brief with the same ElevenLabs voice as the prepared recording.",
     },
     voice: {
       title: "Voice (optional)",
@@ -695,11 +696,12 @@ const es: Messages = {
       stop: "Detener",
       audio: {
         prepared_recording: "Grabación preparada",
-        browser_speech: "Voz del navegador",
+        elevenlabs: "Audio de ElevenLabs",
         unavailable: "Audio no disponible: lea el resumen abajo",
       },
       preparedNote: "Grabado de antemano para este caso exacto de la demostración. No es voz en vivo. El audio está en inglés.",
-      browserNote: "Su navegador lee en voz alta el resumen actual, que está en inglés.",
+      preparingAudio: "Preparando el audio…",
+      generatedNote: "Lee el resumen actual en inglés con la misma voz de ElevenLabs que la grabación preparada.",
     },
     voice: {
       title: "Voz (opcional)",

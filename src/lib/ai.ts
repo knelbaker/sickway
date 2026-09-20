@@ -14,14 +14,13 @@ import { env } from "@/lib/env";
 
 const REQUEST_TIMEOUT_MS = 12_000;
 const MAX_RETRIES = 2;
-const google = createGoogle({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY });
 const cacheSchema = z.object({ data: z.unknown(), ttl: z.number() });
 
 export type StructuredResult<T> =
   | { ok: true; data: T; cached: boolean }
   | {
       ok: false;
-      reason: "timeout" | "invalid_output" | "provider_error" | "cache_error";
+      reason: "timeout" | "invalid_output" | "rate_limited" | "provider_error" | "cache_error";
     };
 
 /**
@@ -79,6 +78,13 @@ export async function generateStructured<T>({
       : { ok: false, reason: "invalid_output" };
   }
 
+  const apiKeys = [...new Set([
+    env.GOOGLE_GENERATIVE_AI_API_KEY,
+    ...(env.GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK ? [env.GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK] : []),
+  ])];
+  const providers = apiKeys.map((apiKey) => createGoogle({ apiKey }));
+  let providerIndex = 0;
+
   for (let attempt = 0; ; attempt++) {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -95,7 +101,7 @@ export async function generateStructured<T>({
       });
       const result = await Promise.race([
         generateText({
-          model: google(env.GEMINI_MODEL),
+          model: providers[providerIndex](env.GEMINI_MODEL),
           output: Output.object({ schema }),
           system,
           prompt,
@@ -114,9 +120,14 @@ export async function generateStructured<T>({
 
       const timedOut = controller.signal.aborted || (error instanceof Error && error.name === "TimeoutError");
       const retryable = timedOut || (APICallError.isInstance(error) && error.isRetryable);
+      const rateLimited = APICallError.isInstance(error) && error.statusCode === 429;
       if (!retryable || attempt >= MAX_RETRIES) {
-        return { ok: false, reason: timedOut ? "timeout" : "provider_error" };
+        // Preserve quota/rate-limit failures without exposing provider request details.
+        return { ok: false, reason: timedOut ? "timeout" : rateLimited ? "rate_limited" : "provider_error" };
       }
+      // Switching credentials consumes the same retry budget. Never return to
+      // a key that was already rate-limited during this request.
+      if (rateLimited) providerIndex = Math.min(providerIndex + 1, providers.length - 1);
     } finally {
       clearTimeout(timer);
     }

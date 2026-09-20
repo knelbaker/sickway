@@ -49,7 +49,7 @@ The look comes from the logo (`public/brand/sickway-logo.png`, redrawn as SVG in
 | Piece | Where | Notes |
 | --- | --- | --- |
 | Screens | `src/app/{page,join,s,hcp,packet/[id]}` + `src/components/` | Next.js App Router, React, Tailwind v4, shadcn/ui. Server pages pass only a profile summary to client components; catalogs and manufacturer resources never enter a client bundle. |
-| API routes | `src/app/api/` | All ten §9 routes (including the optional `followup`) plus `demo-session/reset`, `health`, and the optional `voice/*` token routes. Every session-scoped route starts with `requireSession`. |
+| API routes | `src/app/api/` | All ten §9 routes (including the optional `followup`) plus `demo-session/reset`, `health`, encounter brief `audio`, and the optional `voice/*` token routes. Every session-scoped route starts with `requireSession`. |
 | Persistence | `src/lib/db.ts` → one DynamoDB table | `SESSION#<id>` partition per demo session; items expire by `ttl`. No in-memory fallback. |
 | Generation | `src/lib/ai.ts` → Gemini via the AI SDK | Schema-validated output, timeout, bounded retries, session-scoped cache. Used for extraction and the brief only. |
 | Rules | `demo-routing.ts`, `options.ts`, `resources.ts`, `packet.ts`, `sbar.ts` | Routing, option matching, the resource gate, attach validation, and the brief's guardrails and fallback are deterministic code, never the model. |
@@ -63,7 +63,7 @@ The look comes from the logo (`public/brand/sickway-logo.png`, redrawn as SVG in
 | Intake extraction and review | Typed text becomes candidate fields; the student reviews, corrects, and confirms | Synthetic patient; gaps stay “not reported”; onset is unconfirmed until ticked |
 | Demo routing | `emergency` / `needs_review` / `ready` decided by server rules | “Demo routing result, not a diagnosis”; not clinically validated triage |
 | Clinician brief (SBAR) | Generated from reviewed facts, or assembled deterministically when generation fails | Source badge on both screens: generated, deterministic summary, or prepared fixture |
-| Brief audio | The current brief is played or spoken, with its text always visible | “Prepared recording … Not live voice” only for the matching prepared case; otherwise “Browser speech” |
+| Brief audio | The current brief is played with ElevenLabs audio, with its text always visible | “Prepared recording … Not live voice” only for the matching prepared case; otherwise “ElevenLabs audio”, or an explicit unavailable state |
 | Options | Catalog join, generic-first sort, cost-ceiling marker | “Mock cost”, “Mock coverage — not verified”, “Mock stock” inside every cell |
 | Manufacturer resources | Locked until an explicit request for one named therapy's resources; enforced and audited on the server | “Manufacturer resource — fictional demo”; a demonstrated rule, not proof of neutrality; nothing is sent to a manufacturer |
 | Packet | The confirmed selection is stored once and appears on the paired student screen | “Available in demo”; no prescription, pharmacy, or clinic contact |
@@ -109,7 +109,9 @@ Required settings:
 - `AWS_REGION`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY`
 - `DDB_TABLE` and `DEMO_SESSION_SECRET`
 
-`DEMO_SIMULATE_AI_FAILURE` is optional and for rehearsal only (see Fallbacks). `VOICE_MODE` accepts `baseline` or `live` and defaults to `baseline` when absent or blank. `ELEVENLABS_API_KEY`, `NEXT_PUBLIC_DOORWAY_AGENT_ID`, and `NEXT_PUBLIC_INTAKE_AGENT_ID` are optional and may be blank. Voice integrations are not implemented yet. Only the agent IDs have public names; never put secrets in `NEXT_PUBLIC_` variables.
+`GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK` is optional. The original key stays primary; after a Gemini HTTP 429, the next attempt uses the fallback key for the same model. Both keys share the existing three-attempt limit. Keys in the same Google project share quota, so adding another key from that project does not increase capacity. Set the fallback variable in each deployment environment where you want it available, then restart the local server or redeploy.
+
+`DEMO_SIMULATE_AI_FAILURE` is optional and for rehearsal only (see Fallbacks). `VOICE_MODE` accepts `baseline` or `live` and defaults to `baseline` when absent or blank. `ELEVENLABS_API_KEY`, `NEXT_PUBLIC_DOORWAY_AGENT_ID`, and `NEXT_PUBLIC_INTAKE_AGENT_ID` are optional and may be blank. See Optional live voice below for setup; student dictation does not use an agent ID. Only the agent IDs have public names; never put secrets in `NEXT_PUBLIC_` variables.
 
 ## Deployment and health check
 
@@ -198,7 +200,9 @@ Server code calls `generateStructured({ sessionId, schema, system, prompt, promp
 The helper uses the Google provider with `GOOGLE_GENERATIVE_AI_API_KEY` and `GEMINI_MODEL` from `env.ts`; there is no default model. Verify the configured model against the team's key before deployment. Each model attempt has a 12-second timeout. Timeouts and provider-designated transient errors receive at most two retries (three attempts total), with 500 ms and 1 second backoff. Schema-invalid output and permanent provider errors are not retried. SDK retries are disabled so they cannot multiply this bound.
 
 - Success: `{ ok: true, data, cached }`, with `data` validated against the supplied schema. Callers must use `cached` to label reused output.
-- Failure: `{ ok: false, reason }`, where `reason` is `timeout`, `invalid_output`, `provider_error`, or `cache_error`. Provider errors and output are not exposed, and fixtures are never substituted. Cache read/write failures are explicit failures; a failed write does not retry generation.
+- Failure: `{ ok: false, reason }`, where `reason` is `timeout`, `invalid_output`, `rate_limited`, `provider_error`, or `cache_error`. Provider errors and output are not exposed, and fixtures are never substituted. Cache read/write failures are explicit failures; a failed write does not retry generation.
+
+If student extraction returns `503 extraction_unavailable`, inspect the response's `reason`. `rate_limited` means Gemini returned HTTP 429 after bounded retries: check the configured model's project quota in Google AI Studio. Daily quota exhaustion requires waiting for the reset or arranging sufficient quota; repeated submissions and new keys in the same project do not restore it. Google's [rate-limit documentation](https://ai.google.dev/gemini-api/docs/rate-limits) states that daily quotas reset at midnight Pacific time. Continue through **Enter details myself** or explicitly choose **Use prepared demo instead** while generation is unavailable. `provider_error` indicates another provider failure, `timeout` an exceeded request deadline, `invalid_output` a response that could not be validated, and `cache_error` a DynamoDB cache failure.
 
 Cache keys hash the whitespace-normalized system and user prompts, configured model, and prompt version under `SESSION#<sessionId>` / `CACHE#<hash>`. Original prompts are passed to Gemini. Records inherit the database helper's 24-hour TTL; expired records are ignored even before DynamoDB removes them. Cached JSON is revalidated on every hit. Bump `promptVersion` whenever the prompt contract or schema changes. Concurrent first requests can each generate output; the cache does not coalesce in-flight requests.
 
@@ -218,25 +222,23 @@ Cache keys hash the whitespace-normalized system and user prompts, configured mo
 
 ### Brief audio
 
-`public/demo-brief.mp3` is a prepared recording of the exact `spokenScript` in `data/demo-brief.json` (52 words, 23.9 s). “Play brief” on `/hcp` uses it only when the brief on screen would say the same words (`matchesPreparedScript` compares normalised script text, never encounter IDs). Any other brief is read by the browser's Speech Synthesis API, and if that is missing the screen says “Audio unavailable — read the brief below”. The mode is always labelled — “Prepared recording” or “Browser speech” — so a prepared clip is never mistaken for live voice, playback is always manual, and the SBAR text stays visible.
+`public/demo-brief.mp3` is a prepared recording of the exact `spokenScript` in `data/demo-brief.json` (52 words, 26.6 s). “Play brief” on `/hcp` uses it only when the brief on screen would say the same words (`matchesPreparedScript` compares normalised script text, never encounter IDs). Other briefs use ElevenLabs text-to-speech on demand with the same voice, model, and output format as that recording. The mode is labelled “Prepared recording” or “ElevenLabs audio”; playback is manual and the SBAR text stays visible. Browser/system speech is never used.
 
-The current file was generated once with ElevenLabs text-to-speech (voice “Sarah”, model `eleven_multilingual_v2`, `mp3_44100_128`) from that exact text. It is a static asset: the app never calls ElevenLabs at runtime, so judging does not depend on the key or on credits. If `spokenScript` changes, regenerate the file from the new text and keep the filename, otherwise the recording will no longer match and the player will correctly fall back to browser speech:
+The recording and live clinician agent share **Alice**, ElevenLabs' premade British English female voice, pinned to voice ID `Xb7hH8MSUJpSbSDYk0k2` in `data/demo-voice.json`. That file also pins `eleven_multilingual_v2` and `mp3_44100_128` for both prepared and on-demand brief audio. The matching static recording needs no runtime key or credits. After changing the fixture's `spokenScript`, regenerate its recording with an `ELEVENLABS_API_KEY` in `.env.local` or `.env`:
 
 ```bash
-node -e '
-process.loadEnvFile(".env.local");
-const fs = require("fs");
-const text = require("./data/demo-brief.json").sbar.spokenScript;
-const voiceId = process.argv[1]; // from GET https://api.elevenlabs.io/v1/voices
-fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
-  method: "POST",
-  headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY, "content-type": "application/json" },
-  body: JSON.stringify({ text, model_id: "eleven_multilingual_v2" }),
-}).then(async (r) => fs.writeFileSync("public/demo-brief.mp3", Buffer.from(await r.arrayBuffer())));
-' <voice-id>
+pnpm voice:brief
 ```
 
-Without a key, the macOS system voice works too: `say -v Samantha -r 175 -f brief.txt -o brief.aiff && ffmpeg -y -i brief.aiff -codec:a libmp3lame -b:a 96k -ac 1 public/demo-brief.mp3`.
+The command preserves the existing recording on a failed, non-audio, or empty response. Listen to the result before committing it; a successful API response does not establish voice quality.
+
+**Changed briefs use the same generator.** `POST /api/encounters/:id/audio` validates the demo session and encounter ownership, checks that the requested script still equals the saved brief, and sends only that saved script to ElevenLabs. The API key stays server-side. This playback works in both `VOICE_MODE` settings when the key is configured; `VOICE_MODE` controls the optional microphone features. Generation starts only on Play, takes provider credits, and has a 30-second timeout. The downloaded audio is reused while that brief remains open and discarded when the brief changes or closes. Stop cancels a pending download as well as playback.
+
+If the prepared file fails, Play tries the same script through ElevenLabs. If ElevenLabs is unconfigured, unavailable, or returns invalid audio, the player shows “Audio unavailable — read the brief below” and allows another Play attempt. It never substitutes browser speech or an unrelated recording.
+
+**Voice rehearsal:** on the target demo device, play the prepared brief, then a changed brief, then start the live clinician agent and request mock options. Record the displayed mode and listen for a natural British female voice in each path. Verify Stop and the typed controls too; automated checks cannot judge naturalness or a physical device's installed voices.
+
+To diagnose a silent changed brief, inspect the Play request to `POST /api/encounters/:id/audio`: a 404 means the route is missing from the running deployment or the encounter belongs to another session; a 409 means the saved brief changed; a 503 means audio could not be generated (check that `ELEVENLABS_API_KEY` is configured and the account has TTS access and credits). Never expose the key in browser requests. Regression coverage lives beside the audio route and in `src/components/hcp/brief-audio.test.tsx`.
 
 `GET /api/packet/:id` (session-guarded, `no-store`) returns the stored packet in the §9 contract shape plus a `display` object resolved on the server from the fixtures: names, mock labels, the prewritten instruction copy for the selected languages only, and only the resources attached to that packet. The price is the one stored at attach time. A packet from another session, or an unknown ID, is a 404. `/packet/<id>` renders it with a synthetic or mock label beside every value and the status “Available in demo”; the student screen polls its shared encounter and shows an “Open demo packet” link once the status is `packet_available`.
 
@@ -244,7 +246,7 @@ Without a key, the macOS system voice works too: `say -v Samantha -r 175 -f brie
 
 Off by default (`VOICE_MODE=baseline`): no microphone control renders and nothing contacts ElevenLabs. With `VOICE_MODE=live`, an `ELEVENLABS_API_KEY`, and `NEXT_PUBLIC_DOORWAY_AGENT_ID`, `/hcp` shows **Voice (optional)** above the options for an encounter that can take a packet.
 
-- **The agent is configuration in this repo.** `pnpm voice:agent` creates or updates the ElevenLabs agent “Sick Day Doorway — clinician demo” from `scripts/voice-agent.mjs` (prompt, voice, LLM, 5-minute cap, three client tools) and prints its ID.
+- **The agent is configuration in this repo.** `pnpm voice:agent` creates or updates the ElevenLabs agent “Sick Day Doorway — clinician demo” from `scripts/voice-agent.mjs` (prompt, Alice's pinned voice ID, `eleven_flash_v2`, LLM, 5-minute cap, three client tools) and prints its ID. It checks that the exact voice ID is available before changing tools or the agent; it fails instead of substituting a same-name or arbitrary voice.
 - **It has no powers of its own.** Its tools — `show_options`, `request_manufacturer_resources`, `propose_packet` — run in the clinician's browser and drive the same controls and server routes as typing. `propose_packet` only opens the confirmation dialog; there is no tool that confirms or attaches, so only the on-screen button can.
 - **The resource gate hears the clinician, not the agent.** `request_manufacturer_resources` ignores the agent's wording and sends the server the clinician's own transcribed words, so an agent that rephrases “tell me about the brand option” into a resources request unlocks nothing. Server name and category matching ignores spacing and punctuation so speech-to-text output such as “anti viral” still matches.
 - **Spoken numbers are labelled.** The agent may state costs, coverage, and stock only from tool results, and those strings already say “mock cost … mock coverage, not verified … mock stock”.
