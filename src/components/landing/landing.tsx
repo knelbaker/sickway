@@ -433,22 +433,26 @@ function Showcase() {
     >
       <div
         ref={pinRef}
-        // The text column is the wider one, so the descriptions run in long lines; the top padding is small
-        // so the heading sits high, and it is on this block so the device panel starts on the same line.
-        className="sticky top-36 grid h-[calc(100svh-10.5rem)] grid-cols-[1.12fr_0.88fr] items-start gap-16 pt-[clamp(0.25rem,4vh,3rem)] short:pt-[2vh]"
+        // One row that fills the pinned screen, so both columns can be full height. The block grows into the
+        // empty right margin (--bleed, as the hero's devices do): the panel gets wide without shortening the
+        // text's lines. The top padding is small, so the heading sits high and the panel starts level with it.
+        className="hero-bleed sticky top-36 grid h-[calc(100svh-10.5rem)] grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] grid-rows-[minmax(0,1fr)] gap-16 pt-[clamp(0.25rem,4vh,3rem)] pb-2 lg:mr-[calc(-1*var(--bleed))] short:pt-[2vh]"
       >
         {/* Anchored from the top, not centred: the steps differ in length, and a centred column
             would nudge the pinned heading every time the step changes. */}
-        <div className="flex min-h-0 flex-col justify-start">
+        <div className="flex h-full min-h-0 flex-col">
           <h2 id="journey-title" className="display max-w-[14ch] text-5xl xl:text-6xl short:text-4xl xl:short:text-4xl">
             {copy.journeyTitle}
           </h2>
 
-          <ol className="mt-10 flex flex-col short:mt-6">
+          {/* The list takes all the height that is left and each step a third of it, so the line runs the
+              full height and the three steps are spread along it. Titles sit at the top of their third,
+              so they hold still while the current step's description opens beneath. */}
+          <ol className="mt-10 flex min-h-0 flex-1 flex-col short:mt-6">
             {copy.steps.map((step, index) => {
               const current = active === index;
               return (
-                <li key={step.where} className="relative py-6 pl-8 short:py-3">
+                <li key={step.where} className="relative flex-1 py-5 pl-8 short:py-2">
                   <span aria-hidden className="absolute top-0 bottom-0 left-0 w-[3px] bg-ink/10 first:rounded-t-full" />
                   {current && (
                     <motion.span
@@ -493,7 +497,7 @@ function Showcase() {
           </ol>
         </div>
 
-        <div className="glass relative flex h-[min(100%,37rem)] min-h-0 flex-col items-center gap-5 overflow-hidden rounded-[2.5rem] p-7">
+        <div className="glass relative flex h-full max-h-[50rem] min-h-0 flex-col items-center gap-5 overflow-hidden rounded-[2.5rem] p-8">
           <DotPattern width={20} height={20} cr={1} className="text-ink/15 [mask-image:radial-gradient(closest-side,black,transparent)]" />
           <AnimatePresence mode="wait">
             <motion.figure
