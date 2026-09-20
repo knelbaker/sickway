@@ -140,6 +140,10 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* A short window, such as a 13-inch laptop with the browser's toolbars showing. The pinned story
+   has a fixed height, so its type and spacing tighten by window height, not width. */
+@custom-variant short (@media (max-height: 880px));
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
