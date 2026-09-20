@@ -1,5 +1,7 @@
 # Sick Day + Doorway
 
+[sickway.health](https://www.sickway.health/)
+
 A synthetic workflow prototype for student intake, a clinician brief, and a returned patient packet. The product scope and demo scenario are in [sickway.md](sickway.md).
 
 Prototype workflow. Not medical advice. Do not enter real health information.
