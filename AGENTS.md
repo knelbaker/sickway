@@ -19,7 +19,7 @@ Implement the assigned issue's acceptance criteria and respect its out-of-scope 
 
 - Read application environment variables through `src/lib/env.ts`. It is server-only: never import it from a Client Component or log configuration values.
 - Keep `.env.example` values empty and synchronized with the validated variables. `.env.local` remains ignored.
-- The root `.env` is tracked at the repository owner's explicit request. Preserve it; do not copy credentials into code, documentation, tests, logs, or responses.
+- Keep the root `.env` untracked and ignored. Preserve local copies; do not copy credentials into code, documentation, tests, logs, or responses.
 - Use synthetic patient data only. Preserve unknown information instead of inventing values or treating unanswered fields as negative findings.
 - Every screen must retain the non-dismissible banner: “Synthetic demo patient — fictional profile and access data.”
 - Retain the disclaimer: “Prototype workflow. Not medical advice. Do not enter real health information.”
