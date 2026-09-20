@@ -20,6 +20,21 @@ One synthetic scenario, end to end, on two paired devices: **intake → clinicia
 
 **Reset demo** in the header starts a clean run. Nothing is booked, prescribed, verified, or sent anywhere.
 
+## Tech stack
+
+| Layer | Technologies | Role |
+| --- | --- | --- |
+| Runtime and tooling | Node.js 24, pnpm 10.3.0, TypeScript 5 | Local development, dependency management, and shared types |
+| Application | Next.js 16 App Router, React 19, Vercel | One application serving pages and server API routes |
+| UI | Tailwind CSS v4, shadcn/ui, Radix UI, Lucide, Motion | Styling, accessible UI primitives, icons, and animation; vendored MagicUI and RareUI components |
+| Validation | Zod 4 | Runtime validation of configuration, API payloads, stored records, and generated output |
+| AI | AI SDK 7, Google Gemini (`@ai-sdk/google`) | Structured intake extraction and clinician SBAR drafting |
+| Persistence | Amazon DynamoDB, AWS SDK v3 | One table for sessions, encounters, packets, resource audit events, and generation cache |
+| Audio and voice | ElevenLabs, `@elevenlabs/react` | Brief text-to-speech; optional live clinician voice and student dictation |
+| Quality checks | ESLint 9, Vitest, Testing Library, jsdom, Playwright Core | Static checks, unit/component/API tests, and scripted browser layout checks |
+
+Exact dependency versions and commands live in [package.json](package.json). The student experience uses prewritten English and Spanish copy, with no runtime translation.
+
 ## Design
 
 The look comes from the logo (`public/brand/sickway-logo.png`, redrawn as SVG in `src/components/brand/sickway-logo.tsx`): cream paper, black ink, and one red line.
@@ -44,7 +59,41 @@ The look comes from the logo (`public/brand/sickway-logo.png`, redrawn as SVG in
   - `matrix-orb`: the state of the optional voice features (off, connecting, listening, speaking) for the clinician agent and student dictation. Its label is the `role="status"` text.
   - Local changes to the vendored files: brand colours and translatable labels on the step player; a red theme, card titles, and keyboard access (`role="button"`, Enter/Space, focus ring) on the folder; 44px rows and AA contrast on the sidebar; and `useSafeReducedMotion` (`src/lib/client/`) in every component that changes its markup under reduced motion, which otherwise causes a hydration mismatch. `step-player` adds the `flubber` dependency, typed in `src/types/flubber.d.ts`.
 
-## Architecture
+## Project architecture
+
+The student and clinician use the same Next.js application on paired devices. Server pages provide the shared shell and initial profile summary; client components manage forms, browser state, audio, and polling. API routes delegate validation and workflow rules to server modules in `src/lib/`.
+
+```mermaid
+flowchart TD
+    Student["Student: /s and /packet/[id]"] -->|HTTP with demo session token| API["Next.js API routes"]
+    Clinician["Clinician: /hcp"] -->|HTTP with demo session token| API
+    API --> Guards["Session ownership, consent, and payload checks"]
+    Guards --> Workflow["Intake, SBAR, options, resource gate, and packet logic"]
+    Workflow --> DB[("DynamoDB: one table, partitioned by session")]
+    Workflow --> Fixtures["Synthetic JSON fixtures: data/"]
+    Workflow --> AI["AI SDK + Gemini: extraction and brief drafting"]
+    API --> Audio["ElevenLabs: brief audio and optional voice tokens"]
+```
+
+The student reviews extracted candidate fields before consenting to share them. Submission creates an encounter and brief; the clinician's queue polls for it. Options come from fixture catalogs, manufacturer resources require an explicit therapy-specific request, and a confirmed selection creates a packet. The student's status polling then reveals the packet link. Session ownership, consent, resource access, and selection validation are enforced on the server; model output does not decide these permissions.
+
+```text
+src/
+  app/                 Pages, shared layout, and api/ route handlers
+  components/          Student, clinician, packet, session, and landing UI
+    ui/                Shared UI primitives and vendored components
+  lib/                 Server workflow, persistence, validation, and helpers
+    client/            Browser stores, polling, and responsive hooks
+    i18n/              Prewritten English and Spanish UI messages
+    __tests__/         Shared logic tests (other tests sit beside their code)
+  types/               Additional TypeScript declarations
+data/                  Synthetic profiles, catalogs, copy, and prepared fixtures
+public/                Static assets, branding, and prepared audio
+scripts/               Acceptance, responsive, voice, and screenshot tooling
+docs/                  Supporting documentation
+```
+
+### Main modules and boundaries
 
 | Piece | Where | Notes |
 | --- | --- | --- |
