@@ -1,4 +1,5 @@
-# Sick Day + Doorway
+# Sickway
+A VTHacks 14 Project
 
 [sickway.health](https://sickway.health/)
 
