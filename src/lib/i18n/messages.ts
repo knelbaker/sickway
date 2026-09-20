@@ -75,6 +75,7 @@ const en = {
     folderOpen: "Open the packet folder",
     folderHint: "Hover or tap the folder",
     closingCta: "Start a demo session",
+    pair: "Pair a second device",
     promisesTitle: "Four promises the interface keeps",
     promises: [
       { title: "Unknown is never “no”", body: "A skipped or unsure answer stays unknown on every screen and in the brief." },
@@ -270,7 +271,7 @@ const en = {
     },
   },
 
-  nav: { student: "Student", clinician: "Clinician" },
+  nav: { student: "Student", clinician: "Clinician", demo: "Demo" },
 
   common: {
     notReported: "not reported",
@@ -617,6 +618,7 @@ const es: Messages = {
     folderOpen: "Abrir la carpeta del paquete",
     folderHint: "Pase el cursor o toque la carpeta",
     closingCta: "Iniciar una sesión de demostración",
+    pair: "Vincular un segundo dispositivo",
     promisesTitle: "Cuatro promesas que la interfaz cumple",
     promises: [
       { title: "Desconocido nunca es “no”", body: "Una respuesta omitida o insegura se queda como desconocida en todas las pantallas y en el resumen." },
@@ -808,7 +810,7 @@ const es: Messages = {
     },
   },
 
-  nav: { student: "Estudiante", clinician: "Profesional clínico" },
+  nav: { student: "Estudiante", clinician: "Profesional clínico", demo: "Demo" },
 
   common: {
     notReported: "no informado",

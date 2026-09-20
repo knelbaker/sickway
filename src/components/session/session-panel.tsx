@@ -30,15 +30,13 @@ export function RoleLinks() {
   );
 }
 
-/** Start a demo session on this device, then pair the second device with the join link. */
-export function SessionPanel() {
-  const token = useSessionToken();
+/** Starting a session, shared by the Demo menu and the landing page's own button. Resolves true on success. */
+export function useStartSession() {
   const { language, t } = useLanguage();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
-  async function start() {
+  async function start(): Promise<boolean> {
     setPending(true);
     setError(null);
     try {
@@ -47,12 +45,24 @@ export function SessionPanel() {
       setSessionToken(demoSessionResponseSchema.parse(await response.json()).token);
       // The language chosen on this entry screen applies to the session it starts.
       carryLanguageIntoSession(language);
+      return true;
     } catch {
       setError(t.home.startFailed);
+      return false;
     } finally {
       setPending(false);
     }
   }
+
+  return { start, pending, error };
+}
+
+/** Start a demo session on this device, then pair the second device with the join link. */
+export function SessionPanel() {
+  const token = useSessionToken();
+  const { t } = useLanguage();
+  const { start, pending, error } = useStartSession();
+  const [copied, setCopied] = useState(false);
 
   // Undefined until the browser has read its stored token.
   if (token === undefined) {
@@ -66,7 +76,7 @@ export function SessionPanel() {
           {t.home.startHelp}
         </p>
         <div>
-          <Button variant="brand" className="min-h-12 px-7 text-base" onClick={start} disabled={pending}>
+          <Button variant="brand" className="min-h-12 px-7 text-base" onClick={() => void start()} disabled={pending}>
             {pending ? t.home.starting : t.home.start}
           </Button>
         </div>
@@ -111,7 +121,7 @@ export function SessionPanel() {
             className="font-mono text-xs"
             onFocus={(event) => event.currentTarget.select()}
           />
-          <Button variant="outline" onClick={copy}>
+          <Button variant="outline" className="shrink-0 sm:whitespace-nowrap" onClick={copy}>
             {copied ? t.home.copied : t.home.copy}
           </Button>
         </div>
