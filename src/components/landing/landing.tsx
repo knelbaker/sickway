@@ -4,6 +4,7 @@ import { Check, CircleHelp, RotateCcw, SquareCheckBig, SquareDashed } from "luci
 import { AnimatePresence, motion, MotionConfig, useInView } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SickwayMark } from "@/components/brand/sickway-logo";
+import { DeviceSlideshow } from "@/components/landing/device-slideshow";
 import { Disclaimer } from "@/components/disclaimer";
 import { RoleLinks, useStartSession } from "@/components/session/session-panel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -158,17 +159,12 @@ function Hero() {
       </div>
 
       <BlurFade delay={0.3} className="hero-bleed mx-auto w-full max-w-xl lg:mr-[calc(-1*var(--bleed))] lg:ml-0 lg:w-[calc(100%+var(--bleed))] lg:max-w-none">
-        {/* Two rows shared by both figures, so the devices stand on one line and the captions on another. */}
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.26fr)] grid-rows-[auto_auto] items-end gap-x-4 gap-y-3 sm:gap-x-6">
-          <figure className="row-span-2 grid grid-rows-subgrid">
-            <Safari url="sickway.app/hcp" imageSrc={SHOTS.clinician} className="h-auto w-full self-end drop-shadow-[0_30px_40px_rgba(60,40,0,0.22)]" />
-            <figcaption className="self-start text-sm text-ink-soft">{copy.laptopCaption}</figcaption>
-          </figure>
-          <figure className="row-span-2 grid grid-rows-subgrid">
-            <Iphone src={SHOTS.student} className="h-auto w-full self-end drop-shadow-[0_24px_30px_rgba(60,40,0,0.3)]" />
-            <figcaption className="self-start text-sm text-ink-soft">{copy.phoneCaption}</figcaption>
-          </figure>
-        </div>
+        <DeviceSlideshow
+          slides={[
+            { kind: "laptop", src: SHOTS.clinician, caption: copy.laptopCaption },
+            { kind: "phone", src: SHOTS.student, caption: copy.phoneCaption },
+          ]}
+        />
       </BlurFade>
     </section>
   );
