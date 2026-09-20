@@ -47,3 +47,28 @@ test("resumes an existing session after a refresh", async () => {
   expect(await screen.findByLabelText("Join link for the second device")).toBeDefined();
   expect(screen.queryByRole("button", { name: "Start demo session" })).toBeNull();
 });
+
+test("offers the join link as a QR code, drawn locally, and says when the link cannot work on a phone", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(Response.json(sampleDemoSessionResponse, { status: 201 }));
+  vi.stubGlobal("fetch", fetchMock);
+  render(<SessionPanel />);
+  fireEvent.click(await screen.findByRole("button", { name: "Start demo session" }));
+  await screen.findByLabelText("Join link for the second device");
+
+  // Hidden until asked for: the code carries the session token, like the link does.
+  expect(screen.queryByRole("img", { name: "QR code of the join link" })).toBeNull();
+  const toggle = screen.getByRole("button", { name: "Show QR code" });
+  expect(toggle.getAttribute("aria-expanded")).toBe("false");
+
+  fireEvent.click(toggle);
+  expect(screen.getByRole("img", { name: "QR code of the join link" })).toBeDefined();
+  expect(screen.getByRole("button", { name: "Hide QR code" }).getAttribute("aria-expanded")).toBe("true");
+  // The test page is on localhost, which a phone cannot open; the panel must say so.
+  expect(screen.getByRole("note").textContent).toContain("localhost");
+
+  // Showing the code starts no request: nothing is sent to an outside QR service.
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+
+  fireEvent.click(screen.getByRole("button", { name: "Hide QR code" }));
+  expect(screen.queryByRole("img", { name: "QR code of the join link" })).toBeNull();
+});

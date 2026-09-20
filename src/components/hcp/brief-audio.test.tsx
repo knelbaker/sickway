@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { BriefAudio } from "@/components/hcp/brief-audio";
+import { setLanguage } from "@/lib/client/language-store";
 
 const PREPARED = "Alex Demo reports fever to 102 degrees. Booking is not connected.";
 const CHANGED = "Alex Demo reports fever to 100.4 degrees. Booking is not connected.";
@@ -10,6 +11,18 @@ let play: ReturnType<typeof vi.fn<() => Promise<void>>>;
 let pause: ReturnType<typeof vi.fn<() => void>>;
 let fetchAudio: ReturnType<typeof vi.fn>;
 let browserSpeech: ReturnType<typeof vi.fn>;
+
+test("keeps Spanish controls when switching language during playback without regenerating audio", async () => {
+  render(<BriefAudio {...props} />);
+  fireEvent.click(screen.getByRole("button", { name: "Play brief" }));
+  await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
+  act(() => setLanguage("es"));
+  expect(screen.getByRole("status").textContent).toBe("Audio de ElevenLabs");
+  fireEvent.click(screen.getByRole("button", { name: "Detener" }));
+  fireEvent.click(screen.getByRole("button", { name: "Reproducir el resumen" }));
+  await waitFor(() => expect(play).toHaveBeenCalledTimes(2));
+  expect(fetchAudio).toHaveBeenCalledTimes(1);
+});
 
 beforeEach(() => {
   localStorage.setItem("sickday.demoSessionToken", "session.token");

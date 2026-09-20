@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SickwayLogo, SickwayMark } from "@/components/brand/sickway-logo";
 import { LanguageSelector } from "@/components/language-selector";
+import { DemoMenu } from "@/components/session/demo-menu";
 import { ResetDemoButton } from "@/components/session/reset-controls";
 import { useLanguage } from "@/lib/client/language-store";
 import { useMediaQuery } from "@/lib/client/use-media-query";
@@ -55,10 +56,13 @@ export function SiteHeader() {
                 <ResetDemoButton />
               </nav>
             )}
+            {wide && <DemoMenu wide />}
             <LanguageSelector />
           </div>
         </div>
       </header>
+
+      {!wide && <DemoMenu wide={false} />}
 
       {!wide && (
         <nav

@@ -12,7 +12,7 @@ Students who are not native English speakers are a target audience. The first su
 | Returned packet page, including loading, unavailable, and reconnecting states | ✓ | ✓ |
 | Packet instructions | `data/instructions.en.json` | `data/instructions.es.json` |
 | Required banner and disclaimer | exact English, always | Spanish equivalent shown underneath |
-| Clinician workspace (`/hcp`) | ✓ | English only (out of scope) |
+| Clinician workspace (`/hcp`) | ✓ | ✓ interface; the brief and fixture data stay in English |
 | Fixture names and labels (plan, therapies, pharmacies, “Mock coverage — not verified”) | ✓ | English; explained in plain Spanish beside them |
 
 All Spanish lives in `src/lib/i18n/messages.ts` and `data/instructions.es.json`. `es` is typed against `en`, so a missing string fails `pnpm typecheck`, and a test fails if any Spanish string is empty.
@@ -26,7 +26,7 @@ All Spanish lives in `src/lib/i18n/messages.ts` and `data/instructions.es.json`.
 - **Plain language.** Short sentences; terms explained where they first appear: plan (seguro médico), cost ceiling, consent, generic, coverage, the fixture clock.
 - **Instruction-language preference.** The student can edit it in review (it starts from the displayed profile selection). It is sent as `preferredInstructionLanguages`, stored on the encounter with source `student_review`, shown to the clinician, and used as the default for the packet's language checkboxes (“student's preference”). The clinician still reviews and confirms; the packet matches what the clinician confirmed. If the packet lacks the screen's language, the packet page says so instead of translating.
 - **Onset phrases.** `suggestOnsetIso` understands common Spanish phrases (“ayer por la mañana”, “anoche”, “hace dos días”, “hace 3 horas”, “anteayer”) the same way as English ones, and does not mistake “mañana” (tomorrow) for a past morning. Anything else gives no suggestion and the student enters the time.
-- **Page language.** `<html lang>` follows the selector; English-only regions (required notices, brand, clinician workspace, English instructions) carry `lang="en"`, and each instruction block carries its own `lang`.
+- **Page language.** `<html lang>` follows the selector; English-only regions (required notices, brand, the clinician brief, fixture names and statuses, English instructions) carry `lang="en"`, and each instruction block carries its own `lang`.
 
 ## Walkthrough (run once in each language)
 
@@ -55,4 +55,4 @@ The Spanish was written by an AI assistant, not by a professional translator. **
 5. Temperatures stay in °F because the fixture and the seeded sentence use °F. Should °C be shown alongside?
 6. “La reserva de citas no está conectada” for *Booking not connected*.
 
-Known limitations: fixture names and the label “Mock coverage — not verified” remain in English (explained in Spanish beside them); the clinician workspace, the clinician brief, and the voice agent are English only; dictation listens in the selected language but nothing is translated.
+Known limitations: fixture names and the label “Mock coverage — not verified” remain in English (explained in Spanish beside them); the clinician brief, the brief audio, and the voice agent are English only (the Spanish clinician screen says so at the top and marks that text `lang="en"`); dictation listens in the selected language but nothing is translated.

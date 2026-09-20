@@ -72,13 +72,14 @@ describe("POST /api/encounters/:id/options", () => {
     expect((await ask("enc-b", sampleOptionsRequest)).status).toBe(404);
   });
 
-  it("refuses options for an emergency encounter", async () => {
-    await seed(SESSION_A, "enc-emergency", { status: "emergency" });
+  it.each(["emergency", "needs_review"])("offers fixture options for a %s encounter", async (status) => {
+    await seed(SESSION_A, "enc-emergency", { status });
 
     const response = await ask("enc-emergency", sampleOptionsRequest);
 
-    expect(response.status).toBe(409);
-    expect(await response.json()).toEqual({ error: "not_available_for_emergency" });
+    expect(response.status).toBe(200);
+    const body = optionsResponseSchema.parse(await response.json());
+    expect(body.found && body.rows.length).toBeGreaterThan(0);
   });
 
   it.each([{}, { query: "" }, { query: "x".repeat(501) }])("returns 400 for the invalid body %j", async (body) => {

@@ -135,7 +135,7 @@ describe("POST /api/intake", () => {
     expect(encounter.sbar?.situation).toContain("dizziness");
     expect(encounter.sbar?.assessment).toContain(`Answered yes: ${label}`);
     expect(encounter.sbar?.spokenScript).toContain(label);
-    expect(encounter.sbar?.recommendation).toContain("routine demo flow is bypassed");
+    expect(encounter.sbar?.recommendation).toContain("Mock options and a fictional packet are available");
   });
 
   it.each([true, null])("summarizes all checklist answers set to %s without inventing any no answers", async (answer) => {

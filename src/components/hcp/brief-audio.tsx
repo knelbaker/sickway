@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/client/session-store";
-import { BRIEF_AUDIO_LABEL, matchesPreparedScript, PREPARED_BRIEF_AUDIO_SRC } from "@/lib/voice";
+import { useLanguage } from "@/lib/client/language-store";
+import { matchesPreparedScript, PREPARED_BRIEF_AUDIO_SRC } from "@/lib/voice";
 
 type Props = { encounterId: string; script: string; preparedScript: string };
 
@@ -14,6 +15,7 @@ export function BriefAudio(props: Props) {
 }
 
 function BriefPlayer({ encounterId, script, preparedScript }: Props) {
+  const b = useLanguage().t.clinician.brief;
   const [generated, setGenerated] = useState(!matchesPreparedScript(script, preparedScript));
   const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -81,15 +83,13 @@ function BriefPlayer({ encounterId, script, preparedScript }: Props) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md bg-muted/50 p-3">
       <Button type="button" className="h-11 min-w-28" onClick={active ? stop : play}>
-        {active ? "Stop" : "Play brief"}
+        {active ? b.stop : b.play}
       </Button>
       <Badge variant="outline" role="status">
-        {state === "loading" ? "Preparing audio…" : BRIEF_AUDIO_LABEL[mode]}
+        {state === "loading" ? b.preparingAudio : b.audio[mode]}
       </Badge>
       <span className="text-xs text-muted-foreground">
-        {generated
-          ? "Reads the current brief with the same ElevenLabs voice as the prepared recording."
-          : "Recorded in advance for this exact seeded case. Not live voice."}
+        {generated ? b.generatedNote : b.preparedNote}
       </span>
       <audio
         ref={audioRef}

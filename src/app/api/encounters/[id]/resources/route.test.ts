@@ -85,6 +85,33 @@ describe("decideUnlock", () => {
     });
   });
 
+  // The clinician screen also works in Spanish. Fixture therapy names stay in English; the rule does not change.
+  it("unlocks exactly one therapy for an unambiguous named request in Spanish", () => {
+    expect(decideUnlock({ text: `Mostrar los recursos del fabricante de ${BRAND_NAME}` })).toEqual({
+      unlock: true,
+      therapyId: BRAND,
+      reason: "named_therapy_request",
+    });
+  });
+
+  it.each([
+    "Mostrar las opciones antivirales de demostración y sus costos de ejemplo",
+    "muéstreme los recursos del fabricante",
+    "¿y la tarjeta de copago?",
+  ])("keeps %j locked: a Spanish category or unnamed request unlocks nothing", (text) => {
+    expect(decideUnlock({ text }).unlock).toBe(false);
+  });
+
+  it.each([
+    `Mostrar las opciones de ${BRAND_NAME} y sus costos`,
+    `¿cuánto cuesta ${BRAND_NAME} en la farmacia A?`,
+  ])("keeps %j locked: naming a therapy in Spanish without asking for its resources is not enough", (text) => {
+    expect(decideUnlock({ text })).toEqual({
+      unlock: false,
+      reason: "That asked about a therapy, not its manufacturer resources. Resources remain locked.",
+    });
+  });
+
   it("stays locked when more than one therapy is named", () => {
     const text = `manufacturer resources for ${fixtures.therapies.map((therapy) => therapy.name).join(" and ")}`;
 
@@ -182,10 +209,17 @@ describe("POST /api/encounters/:id/resources", () => {
     expect(auditEvents()).toEqual([]);
   });
 
-  it("refuses an emergency encounter", async () => {
-    await seed(SESSION_A, "enc-emergency", { status: "emergency" });
+  it.each(["emergency", "needs_review"])("retains the therapy-specific resource gate for a %s encounter", async (status) => {
+    await seed(SESSION_A, "enc-emergency", { status });
 
-    expect((await ask("enc-emergency", { therapyId: BRAND })).status).toBe(409);
+    const category = await ask("enc-emergency", { text: "Show antiviral options" });
+    expect((await category.json()).unlocked).toBe(false);
+    expect(unlocked(SESSION_A, "enc-emergency")).toEqual([]);
+    const named = await ask("enc-emergency", { therapyId: BRAND });
+    expect(named.status).toBe(200);
+    expect((await named.json()).unlocked).toBe(true);
+    expect(unlocked(SESSION_A, "enc-emergency")).toEqual([BRAND]);
+    expect(auditEvents()).toHaveLength(1);
   });
 
   it("returns nothing when the unlock cannot be recorded", async () => {

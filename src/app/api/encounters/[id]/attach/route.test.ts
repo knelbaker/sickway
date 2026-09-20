@@ -146,13 +146,28 @@ describe("POST /api/encounters/:id/attach", () => {
     expect(packets()).toEqual([]);
   });
 
-  it.each(["emergency", "needs_review"])("refuses a %s encounter", async (status) => {
-    await seed(SESSION_A, "enc-x", { status });
+  it.each(["emergency", "needs_review"])("attaches a packet for a %s encounter without changing its reviewed answers", async (status) => {
+    const intake = {
+      ...sampleEncounterDetailResponse.intake,
+      symptoms: ["dizziness"],
+      redFlags: { ...sampleEncounterDetailResponse.intake.redFlags, dehydration: status === "emergency" ? true : null },
+    };
+    await seed(SESSION_A, "enc-x", { status, intake });
+
+    const locked = await attach("enc-x", brandSelection);
+    expect(locked.status).toBe(403);
+    expect(packets()).toEqual([]);
 
     const response = await attach("enc-x", genericSelection);
 
-    expect(response.status).toBe(409);
-    expect(packets()).toEqual([]);
+    expect(response.status).toBe(200);
+    const body = attachResponseSchema.parse(await response.json());
+    const stored = encounterSchema.parse(fake.db.items.get(`${SESSION_A}|ENC#enc-x`));
+    expect(stored).toMatchObject({ status: "packet_available", packetId: body.packetId, intake });
+    expect(packets()).toHaveLength(1);
+    const repeated = attachResponseSchema.parse(await (await attach("enc-x", genericSelection)).json());
+    expect(repeated.packetId).toBe(body.packetId);
+    expect(packets()).toHaveLength(1);
   });
 
   it("returns 404 for another session's encounter and stores nothing", async () => {
