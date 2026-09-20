@@ -2,7 +2,7 @@
 
 import { BriefAudio } from "@/components/hcp/brief-audio";
 import { BriefView } from "@/components/hcp/brief-view";
-import { STATUS_LABEL, STATUS_VARIANT } from "@/components/hcp/labels";
+import { STATUS_VARIANT } from "@/components/hcp/labels";
 import { SourcePanel } from "@/components/hcp/source-panel";
 import { OutcomeChip } from "@/components/outcome-chip";
 import { PollStatus } from "@/components/poll-status";
@@ -11,6 +11,7 @@ import type { StudentProfileSummary } from "@/components/student/profile-summary
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { encounterDetailResponseSchema } from "@/lib/api-contracts";
+import { useLanguage } from "@/lib/client/language-store";
 import { usePolling } from "@/lib/client/use-polling";
 import { RED_FLAG_DEFINITIONS } from "@/lib/red-flags";
 
@@ -26,15 +27,19 @@ export function EncounterView({
   preparedSpokenScript: string;
   voiceEnabled?: boolean;
 }) {
+  const { t } = useLanguage();
+  const c = t.clinician;
+  const e = c.encounter;
   const poll = usePolling(`/api/encounters/${encounterId}`, encounterDetailResponseSchema);
   const { data: encounter, error } = poll;
+  const flagNames = (flags: typeof RED_FLAG_DEFINITIONS) => flags.map((flag) => t.followUps.redFlags[flag.key].label).join("; ");
 
   if (!encounter) {
     if (error === "not_found") {
-      return <p className="text-sm text-muted-foreground">This encounter is not in the current demo session.</p>;
+      return <p className="text-sm text-muted-foreground">{e.notInSession}</p>;
     }
     if (error === "session") return null; // the queue already explains an ended session
-    return <p className="text-sm text-muted-foreground">{error ? "Reconnecting…" : "Loading encounter…"}</p>;
+    return <p className="text-sm text-muted-foreground">{error ? e.reconnecting : e.loading}</p>;
   }
 
   const unanswered = RED_FLAG_DEFINITIONS.filter((flag) => encounter.intake.redFlags[flag.key] === null);
@@ -47,14 +52,14 @@ export function EncounterView({
           {profile.name}
         </h2>
         <div className="flex flex-wrap items-center gap-2">
-          <PollStatus poll={poll} />
+          <PollStatus poll={poll} localized />
           <Badge variant={STATUS_VARIANT[encounter.status]} aria-live="polite">
-            {STATUS_LABEL[encounter.status]}
+            {c.status[encounter.status]}
           </Badge>
         </div>
       </div>
 
-      {encounter.followUp && <OutcomeChip followUp={encounter.followUp} />}
+      {encounter.followUp && <OutcomeChip followUp={encounter.followUp} localized />}
 
       {(positive.length > 0 || encounter.status === "emergency") && (
         <Alert variant="destructive">
@@ -72,7 +77,7 @@ export function EncounterView({
 
       {(unanswered.length > 0 || encounter.status === "needs_review") && (
         <Alert>
-          <AlertTitle>Needs review — not an all-clear</AlertTitle>
+          <AlertTitle>{e.reviewTitle}</AlertTitle>
           <AlertDescription>
             {unanswered.length > 0
               ? `Not answered by the student: ${unanswered.map((flag) => flag.label).join("; ")}.`

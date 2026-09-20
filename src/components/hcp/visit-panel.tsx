@@ -13,21 +13,9 @@ import { attachResponseSchema } from "@/lib/api-contracts";
 import { apiFetch } from "@/lib/client/session-store";
 import type { Encounter, InstructionLanguage, OptionRow } from "@/lib/schemas";
 import { describeOptions, describeResources, findOptionRow, PROPOSED_MESSAGE, USE_TYPED_CONTROLS } from "@/lib/voice-tools";
+import { useLanguage } from "@/lib/client/language-store";
 
-const LANGUAGES: { code: InstructionLanguage; name: string }[] = [
-  { code: "en", name: "English" },
-  { code: "es", name: "Spanish" },
-];
-
-const ATTACH_ERRORS: Record<string, string> = {
-  confirmation_required: "Confirmation is required. Nothing was attached.",
-  resource_locked: "A selected manufacturer resource is not unlocked for this encounter. Nothing was attached.",
-  resource_therapy_mismatch: "A selected resource belongs to a different therapy. Nothing was attached.",
-  price_mismatch: "The demo price changed. Reload the options and try again. Nothing was attached.",
-  not_available_for_status: "A packet cannot be attached to this encounter.",
-  invalid_session: "This demo session has ended. Start or join a session again from the home page.",
-  expired_session: "This demo session has ended. Start or join a session again from the home page.",
-};
+const LANGUAGES: { code: InstructionLanguage }[] = [{ code: "en" }, { code: "es" }];
 
 const rowKey = (row: OptionRow) => `${row.therapyId}/${row.pharmacyId}`;
 
@@ -53,6 +41,8 @@ export function VisitPanel({
 }) {
   const [rows, setRows] = useState<OptionRow[]>([]);
   const [unlocked, setUnlocked] = useState<UnlockedResources>({});
+  const { t } = useLanguage();
+  const v = t.clinician.visit;
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [languages, setLanguages] = useState<InstructionLanguage[]>(
     LANGUAGES.map((language) => language.code).filter((code) => preferredLanguages.includes(code)),
@@ -124,13 +114,13 @@ export function VisitPanel({
       const body: unknown = await response.json().catch(() => null);
       if (!response.ok) {
         const code = (body as { error?: string } | null)?.error ?? "";
-        setError(ATTACH_ERRORS[code] ?? "Could not attach the packet. Nothing was changed. Try again.");
+        setError(v.errors[code] ?? v.generic);
         return;
       }
       attachResponseSchema.parse(body);
       setAttached(true);
     } catch {
-      setError("Could not attach the packet. Nothing was changed. Try again.");
+      setError(v.generic);
     } finally {
       setPending(false);
       setReviewing(false);
@@ -159,7 +149,7 @@ export function VisitPanel({
                   type="radio"
                   name={`option-${encounter.id}`}
                   className="size-5"
-                  aria-label={`Select ${row.therapyName} at ${row.pharmacyName}`}
+                  aria-label={t.clinician.options.selectRow(row.therapyName, row.pharmacyName)}
                   checked={selectedKey === rowKey(row)}
                   onChange={() => {
                     setSelectedKey(rowKey(row));
@@ -174,10 +164,8 @@ export function VisitPanel({
 
       {done && (
         <Alert aria-live="polite">
-          <AlertTitle>Packet available in demo</AlertTitle>
-          <AlertDescription>
-            The paired student screen can now open it. Nothing was transmitted to a pharmacy or clinic.
-          </AlertDescription>
+          <AlertTitle>{v.doneTitle}</AlertTitle>
+          <AlertDescription>{v.doneBody}</AlertDescription>
         </Alert>
       )}
 
@@ -185,15 +173,15 @@ export function VisitPanel({
         <section aria-labelledby="attach-heading" className="flex flex-col gap-4 rounded-3xl border-2 border-ink bg-paper/80 p-5 sm:p-6">
           <div>
             <h3 id="attach-heading" className="display text-xl">
-              Packet for the student
+              {v.title}
             </h3>
             <p className="text-sm text-muted-foreground">
-              {selected.therapyName} at {selected.pharmacyName}
+              {v.at(selected.therapyName, selected.pharmacyName)}
             </p>
           </div>
 
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-1 text-sm font-medium">Prewritten demo instructions</legend>
+            <legend className="mb-1 text-sm font-medium">{v.instructions}</legend>
             {LANGUAGES.map((language) => (
               <div key={language.code} className="flex items-center gap-3">
                 <Checkbox
@@ -209,23 +197,23 @@ export function VisitPanel({
                   }
                 />
                 <Label htmlFor={`language-${language.code}`} className="min-h-11 flex-1 items-center font-normal">
-                  {language.name}
+                  {t.clinician.sources.languageNames[language.code]}
                   {preferredLanguages.includes(language.code) && (
                     <span className="text-xs text-muted-foreground">
-                      {preferenceSource === "student" ? " — student's preference" : " — profile preference"}
+                      {preferenceSource === "student" ? v.studentPreference : v.profilePreference}
                     </span>
                   )}
                 </Label>
               </div>
             ))}
             <p className="text-xs leading-5 text-muted-foreground">
-              Static demo copy, not live translation and not clinically validated instructions.
+              {v.staticCopy}
             </p>
           </fieldset>
 
           {offered.length > 0 && (
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-1 text-sm font-medium">Include unlocked manufacturer resources (optional)</legend>
+              <legend className="mb-1 text-sm font-medium">{v.includeResources}</legend>
               {offered.map((resource) => (
                 <div key={resource.id} className="flex items-center gap-3">
                   <Checkbox
@@ -248,10 +236,10 @@ export function VisitPanel({
 
           <div>
             <Button type="button" className="h-11" disabled={languages.length === 0} onClick={() => setReviewing(true)}>
-              Review and confirm
+              {v.review}
             </Button>
             {languages.length === 0 && (
-              <p className="mt-2 text-xs text-muted-foreground">Choose at least one instruction language.</p>
+              <p className="mt-2 text-xs text-muted-foreground">{v.chooseLanguage}</p>
             )}
           </div>
 
@@ -269,7 +257,7 @@ export function VisitPanel({
 
       {error && (
         <Alert variant="destructive" aria-live="assertive">
-          <AlertTitle>Not attached</AlertTitle>
+          <AlertTitle>{v.notAttached}</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}

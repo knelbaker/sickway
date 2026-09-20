@@ -5,7 +5,8 @@ import { AnimatePresence, motion, MotionConfig, useInView } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SickwayMark } from "@/components/brand/sickway-logo";
 import { Disclaimer } from "@/components/disclaimer";
-import { SessionPanel } from "@/components/session/session-panel";
+import { RoleLinks, useStartSession } from "@/components/session/session-panel";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { BlurFade } from "@/components/ui/blur-fade";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,9 @@ import { Iphone } from "@/components/ui/iphone";
 import { Safari } from "@/components/ui/safari";
 import { StepPlayer } from "@/components/ui/step-player";
 import { TaskList } from "@/components/ui/task-list";
+import { openDemoMenu } from "@/lib/client/demo-menu-store";
 import { useLanguage } from "@/lib/client/language-store";
+import { useSessionToken } from "@/lib/client/session-store";
 import { useMediaQuery } from "@/lib/client/use-media-query";
 import { cn } from "@/lib/utils";
 
@@ -143,10 +146,7 @@ function Hero() {
           <Disclaimer className="mt-4 border-l-[3px] border-dashed border-ink-soft pl-4 text-sm leading-6 text-ink-soft" />
         </BlurFade>
         <BlurFade delay={0.25}>
-          <div className="flex flex-col gap-3 pt-2">
-            <h2 className="display text-2xl sm:text-3xl">{copy.startTitle}</h2>
-            <SessionPanel />
-          </div>
+          <HeroActions />
         </BlurFade>
       </div>
 
@@ -249,6 +249,54 @@ function TryIt() {
   );
 }
 
+/**
+ * The hero's one row of actions. Pairing details live in the navbar's Demo menu, so the page
+ * stays clean: before a session there is a single button, which starts one and then opens that
+ * menu on the join link; after, the two screens and a quiet way back to the join link.
+ */
+function HeroActions() {
+  const { t } = useLanguage();
+  const token = useSessionToken();
+  const { start, pending, error } = useStartSession();
+
+  // Undefined until the browser has read its stored token; hold the row's height so nothing jumps.
+  if (token === undefined) return <div aria-hidden className="min-h-12" />;
+
+  if (token === null) {
+    return (
+      <div className="flex flex-col gap-3">
+        <div>
+          <Button
+            variant="brand"
+            className="min-h-12 px-7 text-base"
+            disabled={pending}
+            onClick={async () => {
+              if (await start()) openDemoMenu();
+            }}
+          >
+            {pending ? t.home.starting : t.home.start}
+          </Button>
+        </div>
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>{t.home.startFailedTitle}</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <RoleLinks />
+      <Button variant="ghost" onClick={openDemoMenu}>
+        {t.landing.pair}
+      </Button>
+    </div>
+  );
+}
+
 /** The last beat: the orb alone, with room around it, and one way back to the start. */
 function Closing() {
   const { t } = useLanguage();
@@ -267,7 +315,7 @@ function Closing() {
         <h2 id="closing-title" className="display mt-10 max-w-[12ch] text-5xl sm:text-7xl">
           {t.landing.headline}
         </h2>
-        <Button variant="brand" className="mt-8 min-h-12 px-7 text-base" onClick={() => scrollToId("start")}>
+        <Button variant="brand" className="mt-8 min-h-12 px-7 text-base" onClick={openDemoMenu}>
           {t.landing.closingCta}
         </Button>
       </BlurFade>

@@ -85,6 +85,33 @@ describe("decideUnlock", () => {
     });
   });
 
+  // The clinician screen also works in Spanish. Fixture therapy names stay in English; the rule does not change.
+  it("unlocks exactly one therapy for an unambiguous named request in Spanish", () => {
+    expect(decideUnlock({ text: `Mostrar los recursos del fabricante de ${BRAND_NAME}` })).toEqual({
+      unlock: true,
+      therapyId: BRAND,
+      reason: "named_therapy_request",
+    });
+  });
+
+  it.each([
+    "Mostrar las opciones antivirales de demostración y sus costos de ejemplo",
+    "muéstreme los recursos del fabricante",
+    "¿y la tarjeta de copago?",
+  ])("keeps %j locked: a Spanish category or unnamed request unlocks nothing", (text) => {
+    expect(decideUnlock({ text }).unlock).toBe(false);
+  });
+
+  it.each([
+    `Mostrar las opciones de ${BRAND_NAME} y sus costos`,
+    `¿cuánto cuesta ${BRAND_NAME} en la farmacia A?`,
+  ])("keeps %j locked: naming a therapy in Spanish without asking for its resources is not enough", (text) => {
+    expect(decideUnlock({ text })).toEqual({
+      unlock: false,
+      reason: "That asked about a therapy, not its manufacturer resources. Resources remain locked.",
+    });
+  });
+
   it("stays locked when more than one therapy is named", () => {
     const text = `manufacturer resources for ${fixtures.therapies.map((therapy) => therapy.name).join(" and ")}`;
 

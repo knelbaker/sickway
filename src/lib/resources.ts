@@ -26,8 +26,12 @@ export function findResource(resourceId: string): ManufacturerResource | undefin
   return fixtures.resources.find((resource) => resource.id === resourceId);
 }
 
-/** Words that show the clinician is asking for manufacturer resources rather than options or prices. */
-const RESOURCE_WORDS = /\b(resources?|manufacturer|co-?pay|savings|assistance|card|educational?|materials?)\b/i;
+/**
+ * Words that show the clinician is asking for manufacturer resources rather than options or prices,
+ * in English or Spanish. The rule is the same in both: one named therapy, plus one of these.
+ */
+const RESOURCE_WORDS =
+  /\b(resources?|manufacturer|co-?pay|savings|assistance|card|educational?|materials?|recursos?|fabricante|copago|ahorros?|asistencia|tarjeta|educativ[oa]s?|materiales)\b/i;
 
 /**
  * Pure decision: an explicit therapy ID, or text that both names exactly one

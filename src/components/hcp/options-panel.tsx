@@ -11,8 +11,8 @@ import { optionsResponseSchema, resourcesResponseSchema } from "@/lib/api-contra
 import { apiFetch } from "@/lib/client/session-store";
 import type { OptionRow } from "@/lib/schemas";
 import type { OptionsOutcome, ResourcesOutcome } from "@/lib/voice-tools";
+import { useLanguage } from "@/lib/client/language-store";
 
-const CATEGORY_QUESTION = "Show the antiviral demo options and sample costs";
 
 type PanelError = "session" | "unavailable" | null;
 
@@ -46,6 +46,10 @@ export function OptionsPanel({
   onUnlocked?: (unlocked: UnlockedResources) => void;
   onActions?: (actions: OptionsActions | null) => void;
 }) {
+  const { t } = useLanguage();
+  const o = t.clinician.options;
+  // The example question is sent to the server as typed. "antiviral" is the word it keys on, in either language.
+  const CATEGORY_QUESTION = o.question;
   const [query, setQuery] = useState("");
   const [rows, setRows] = useState<OptionRow[] | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -74,7 +78,7 @@ export function OptionsPanel({
     const result = resourcesResponseSchema.parse(await response.json());
     if (!result.unlocked) {
       // A plain options question is expected to stay locked; only say so when resources were asked for.
-      setLockedReason("therapyId" in body || /resource|manufacturer|co-?pay|card/i.test(body.text) ? result.reason : null);
+      setLockedReason("therapyId" in body || /resource|manufacturer|co-?pay|card|recurso|fabricante|copago|tarjeta/i.test(body.text) ? result.reason : null);
       return { kind: "locked", reason: result.reason };
     }
     const therapyName = knownRows?.find((row) => row.therapyId === result.therapyId)?.therapyName ?? result.therapyId;
@@ -173,11 +177,10 @@ export function OptionsPanel({
     <section aria-labelledby="options-heading" className="flex flex-col gap-4 glass rounded-3xl p-5 sm:p-6">
       <div>
         <h3 id="options-heading" className="display text-xl">
-          Access options
+          {o.title}
         </h3>
         <p className="text-xs leading-5 text-muted-foreground">
-          Fixture data for the synthetic patient&apos;s fictional plan. Nothing here checks real
-          coverage, prices, or stock.
+          {o.body}
         </p>
       </div>
 
@@ -188,7 +191,7 @@ export function OptionsPanel({
           void ask(query);
         }}
       >
-        <Label htmlFor="options-query">Ask about demo options</Label>
+        <Label htmlFor="options-query">{o.askLabel}</Label>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Input
             id="options-query"
@@ -199,32 +202,32 @@ export function OptionsPanel({
             onChange={(event) => setQuery(event.target.value)}
           />
           <Button type="submit" className="h-11" disabled={pending || query.trim() === ""}>
-            {pending ? "Looking…" : "Ask"}
+            {pending ? o.looking : o.ask}
           </Button>
         </div>
         <div>
           <Button type="button" variant="outline" className="h-11" disabled={pending} onClick={() => void ask(CATEGORY_QUESTION)}>
-            Show antiviral demo options
+            {o.quick}
           </Button>
         </div>
       </form>
 
       {error && (
         <Alert variant="destructive">
-          <AlertTitle>{error === "session" ? "Demo session ended" : "Could not load options"}</AlertTitle>
+          <AlertTitle>{error === "session" ? t.clinician.sessionEndedTitle : o.errorTitle}</AlertTitle>
           <AlertDescription>
             {error === "session"
-              ? "Start or join a demo session again from the home page."
-              : "Nothing was changed. Check the connection and try again."}
+              ? t.clinician.sessionEndedBody
+              : o.errorBody}
           </AlertDescription>
         </Alert>
       )}
 
       {notFound && (
         <Alert>
-          <AlertTitle>No demo option found</AlertTitle>
+          <AlertTitle>{o.notFoundTitle}</AlertTitle>
           <AlertDescription>
-            This demo has fixture options for one category only. Try “{CATEGORY_QUESTION}”.
+            {o.notFoundBody(CATEGORY_QUESTION)}
           </AlertDescription>
         </Alert>
       )}
