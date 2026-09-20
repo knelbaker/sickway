@@ -81,7 +81,7 @@ export function EncounterView({
       )}
 
       {encounter.sbar && (
-        <BriefView sbar={encounter.sbar}>
+        <BriefView sbar={encounter.sbar} words={encounter.intake.transcript ?? null}>
           <BriefAudio encounterId={encounterId} script={encounter.sbar.spokenScript} preparedScript={preparedSpokenScript} />
         </BriefView>
       )}

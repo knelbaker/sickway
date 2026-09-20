@@ -27,8 +27,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "sickway — a sick day, said once",
-  description: "A synthetic student intake and clinician workflow prototype.",
+  title: "sickway — say how you feel, in your language",
+  description:
+    "A synthetic prototype for students who find it hard to describe symptoms in English: English and Spanish screens, the student's own words kept beside the clinician's brief, and prewritten instructions in their language. Nothing is translated.",
 };
 
 // Draw under the iOS notch and home indicator; the banner and tab bar pad themselves with the safe-area insets.

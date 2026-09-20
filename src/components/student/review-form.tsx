@@ -71,6 +71,15 @@ export function ReviewForm({
         </p>
       </div>
 
+      {/* What the student typed, unchanged, so every field below can be checked against it. */}
+      {draft.transcript && (
+        <figure className="rounded-2xl border border-ink/12 bg-paper/70 p-4">
+          <figcaption className="text-sm font-semibold">{t.review.yourWords}</figcaption>
+          <blockquote className="mt-1.5 leading-7">“{draft.transcript}”</blockquote>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">{t.review.yourWordsNote}</p>
+        </figure>
+      )}
+
       <FieldRow id="review-symptoms" label={t.review.symptoms} hint={t.review.symptomsHint}>
         <Input
           id="review-symptoms"

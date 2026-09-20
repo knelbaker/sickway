@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CircleHelp, RotateCcw, SquareCheckBig, SquareDashed } from "lucide-react";
+import { Check, CircleHelp, Languages, SquareCheckBig, SquareDashed } from "lucide-react";
 import { AnimatePresence, motion, MotionConfig, useInView } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SickwayMark } from "@/components/brand/sickway-logo";
@@ -26,11 +26,11 @@ import { useMediaQuery } from "@/lib/client/use-media-query";
 import { useSafeReducedMotion } from "@/lib/client/use-safe-reduced-motion";
 import { cn } from "@/lib/utils";
 
-const PROMISE_ICONS = [CircleHelp, SquareCheckBig, SquareDashed, RotateCcw];
+const PROMISE_ICONS = [CircleHelp, SquareCheckBig, SquareDashed, Languages];
 
 /** Real screenshots of this app, regenerated with `pnpm shots:brand`. */
 /** Landing sections, in page order; the side rail and scroll position share them. */
-const SECTION_IDS = ["start", "journey", "real", "promises", "try"] as const;
+const SECTION_IDS = ["start", "journey", "why", "real", "promises", "try"] as const;
 
 function scrollToId(id: string) {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -53,6 +53,25 @@ export function Landing() {
       <PageRail />
       <Hero />
       <Showcase />
+
+      {/* Problem, what the prototype demonstrates, and the hoped-for benefit kept apart from anything measured. */}
+      <section id="why" aria-labelledby="why-title">
+        <BlurFade inView>
+          <h2 id="why-title" className="display max-w-[16ch] text-4xl sm:text-6xl">
+            {copy.whyTitle}
+          </h2>
+        </BlurFade>
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {copy.why.map((item, index) => (
+            <BlurFade key={item.title} inView delay={0.05 * index}>
+              <div className={cn("h-full rounded-[1.75rem] p-6 sm:p-7", index === 2 ? "border-2 border-dashed border-ink-soft/70" : "glass")}>
+                <h3 className="text-xl font-bold">{item.title}</h3>
+                <p className="mt-2 leading-7 text-ink-soft">{item.body}</p>
+              </div>
+            </BlurFade>
+          ))}
+        </div>
+      </section>
 
       <section id="real" aria-labelledby="real-title">
         <BlurFade inView>
@@ -146,13 +165,21 @@ function Hero() {
       // keeps its width and moves left while the devices stay where they are.
       className="hero-shift grid min-h-[calc(100svh-10rem)] content-center items-center gap-14 pt-4 lg:-ml-[var(--shift)] lg:grid-cols-[1fr_1fr] lg:gap-[calc(2rem+var(--shift))] lg:pt-0"
     >
-      <div className="flex flex-col gap-7">
+      <div className="flex flex-col gap-7 squat:gap-4">
         <BlurFade delay={0.05}>
-          <h1 className="display text-[clamp(3rem,8.2vw,6rem)]">{copy.headline}</h1>
+          {/* One sentence in two sizes: the feeling first, then the barrier this project is about. */}
+          <h1 className="display text-[clamp(2.75rem,6.4vw,5rem)] squat:text-[3.25rem]">
+            {copy.headline}
+            <span className="mt-3 block text-[0.5em] leading-[1.08] tracking-[-0.015em] text-ink-soft [word-spacing:0.14em]">{copy.headlineSecond}</span>
+          </h1>
         </BlurFade>
         <BlurFade delay={0.15}>
-          <p className="max-w-[54ch] text-lg leading-8 sm:text-xl sm:leading-9">{copy.sub}</p>
-          <Disclaimer className="mt-4 border-l-[3px] border-dashed border-ink-soft pl-4 text-sm leading-6 text-ink-soft" />
+          <p className="max-w-[54ch] text-lg leading-8 sm:text-xl sm:leading-9 squat:text-base squat:leading-7">{copy.sub}</p>
+          <div className="mt-4 border-l-[3px] border-dashed border-ink-soft pl-4 text-sm leading-6 text-ink-soft">
+            {/* What is supported, stated before the student starts: two languages, and no translation. */}
+            <p className="font-medium text-ink">{copy.support}</p>
+            <Disclaimer className="leading-6" />
+          </div>
         </BlurFade>
         <BlurFade delay={0.25}>
           <HeroActions />
@@ -316,8 +343,9 @@ function Closing() {
         />
       </BlurFade>
       <BlurFade inView delay={0.1}>
-        <h2 id="closing-title" className="display mt-10 max-w-[12ch] text-5xl sm:text-7xl">
+        <h2 id="closing-title" className="display mx-auto mt-10 max-w-[16ch] text-4xl sm:text-6xl">
           {t.landing.headline}
+          <span className="mt-3 block text-[0.55em] leading-[1.1] tracking-[-0.015em] text-ink-soft [word-spacing:0.14em]">{t.landing.headlineSecond}</span>
         </h2>
         <Button variant="brand" className="mt-8 min-h-12 px-7 text-base" onClick={openDemoMenu}>
           {t.landing.closingCta}
