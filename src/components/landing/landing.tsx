@@ -431,26 +431,31 @@ function Showcase() {
       // One pinned screen, plus a stretch of scrolling for each step.
       style={{ height: `calc(100svh - 10.5rem + ${count * STEP_SCROLL_VH}vh)` }}
     >
-      <div ref={pinRef} className="sticky top-36 grid h-[calc(100svh-10.5rem)] grid-cols-[0.9fr_1.1fr] gap-14">
+      <div
+        ref={pinRef}
+        // The text column is the wider one, so the descriptions run in long lines; the top padding is small
+        // so the heading sits high, and it is on this block so the device panel starts on the same line.
+        className="sticky top-36 grid h-[calc(100svh-10.5rem)] grid-cols-[1.12fr_0.88fr] items-start gap-16 pt-[clamp(0.25rem,4vh,3rem)] short:pt-[2vh]"
+      >
         {/* Anchored from the top, not centred: the steps differ in length, and a centred column
             would nudge the pinned heading every time the step changes. */}
-        <div className="flex min-h-0 flex-col justify-start pt-[clamp(0.5rem,12vh,9rem)] short:pt-[8vh]">
+        <div className="flex min-h-0 flex-col justify-start">
           <h2 id="journey-title" className="display max-w-[14ch] text-5xl xl:text-6xl short:text-4xl xl:short:text-4xl">
             {copy.journeyTitle}
           </h2>
 
-          <ol className="mt-8 flex flex-col short:mt-5">
+          <ol className="mt-10 flex flex-col short:mt-6">
             {copy.steps.map((step, index) => {
               const current = active === index;
               return (
-                <li key={step.where} className="relative py-3 pl-8 short:py-1.5">
+                <li key={step.where} className="relative py-6 pl-8 short:py-3">
                   <span aria-hidden className="absolute top-0 bottom-0 left-0 w-[3px] bg-ink/10 first:rounded-t-full" />
                   {current && (
                     <motion.span
                       aria-hidden
                       layoutId="sickway-thread"
                       transition={{ type: "spring", stiffness: 260, damping: 30 }}
-                      className="absolute top-2 bottom-2 left-0 w-[3px] rounded-full bg-brand-red"
+                      className="absolute top-4 bottom-4 left-0 w-[3px] rounded-full bg-brand-red short:top-2 short:bottom-2"
                     />
                   )}
                   <button
@@ -479,7 +484,7 @@ function Showcase() {
                     )}
                   >
                     <div className="overflow-hidden">
-                      <p className="max-w-[52ch] pt-2 pb-1 pl-8 text-lg leading-8 text-ink-soft short:pt-1 short:text-base short:leading-7">{step.what}</p>
+                      <p className="max-w-[68ch] pt-2 pb-1 pl-8 text-lg leading-8 text-ink-soft short:pt-1 short:text-base short:leading-7">{step.what}</p>
                     </div>
                   </div>
                 </li>
@@ -488,7 +493,7 @@ function Showcase() {
           </ol>
         </div>
 
-        <div className="glass relative flex min-h-0 flex-col items-center gap-5 overflow-hidden rounded-[2.5rem] p-8">
+        <div className="glass relative flex h-[min(100%,37rem)] min-h-0 flex-col items-center gap-5 overflow-hidden rounded-[2.5rem] p-7">
           <DotPattern width={20} height={20} cr={1} className="text-ink/15 [mask-image:radial-gradient(closest-side,black,transparent)]" />
           <AnimatePresence mode="wait">
             <motion.figure
