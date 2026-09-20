@@ -175,8 +175,8 @@ Voice is an input layer over this flow. The clinician agent uses the same option
 ### 6.3 Red-flag demo checklist
 Retain the original scenario's checklist categories: breathing/chest pain, confusion/fainting, stiff neck/rash, high temperature, dehydration, and sudden severe headache. These are prototype fields, not a validated clinical screening instrument.
 
-- A positive flag takes the emergency branch and bypasses routine options and packet attachment. Every consented intake still gets an SBAR and audio from its reviewed answers, shown with the routing warning and source values for live demos.
-- An unknown flag keeps the intake in `needs_review`; do not display “no red flags.”
+- A positive flag labels the intake `emergency`; an unknown flag labels it `needs_review`. These labels do not block the synthetic demo workflow: every consented intake supports SBAR/audio, mock options, therapy-specific resource requests, confirmed packet creation, student packet delivery, and simulated follow-up.
+- Preserve positive and unanswered values in the intake and brief. Keep their warnings visible in the clinician workspace after packet creation; a packet does not resolve unknown answers or establish that fixture options are appropriate treatment. Never display “no red flags” for unanswered items.
 - Check the reviewed values on the server as well as in the UI.
 - Emergency messaging and any broader triage rules require clinical review before real-world use. A disclaimer does not make them validated.
 
@@ -396,7 +396,7 @@ Never cut the typed end-to-end flow, reviewed intake and consent, traceable brie
 ### Acceptance checks before polish
 - Submit fictional intake on phone; open and attach packet on laptop; packet appears on phone.
 - Decline consent; verify no queue entry is created.
-- Leave a red-flag answer unknown; verify the system does not show a clean screen or routine completion.
+- Leave a red-flag answer unknown or select yes; complete options and packet creation, and verify the original answers and clinician warnings remain visible without implying an all-clear.
 - Change a symptom; verify the brief and audio do not silently reuse the seeded case.
 - Ask a category question; resources stay locked. Request a named therapy; only its resources unlock.
 - Repeat attach and reset; verify no duplicate packet or previous patient's state appears.

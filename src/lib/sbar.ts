@@ -16,7 +16,7 @@ import type { ReviewedIntake, Sbar } from "@/lib/schemas";
  * a therapy or manufacturer, or claim that coverage was verified.
  */
 
-export const SBAR_PROMPT_VERSION = "sbar-v3";
+export const SBAR_PROMPT_VERSION = "sbar-v4";
 
 type Profile = Fixtures["profile"];
 
@@ -32,16 +32,16 @@ const generatedSchema = z.object({
 
 const BRANCH_LABEL: Record<DemoRoutingResult["branch"], string> = {
   ready: "routine campus clinic demo",
-  needs_review: "needs review before continuing",
-  emergency: "emergency branch — routine demo flow bypassed",
+  needs_review: "needs review — unanswered items remain unknown",
+  emergency: "emergency branch — positive demo checklist answers",
 };
 
 const RECOMMENDATION: Record<DemoRoutingResult["branch"], string> = {
   ready: "Review the synthetic intake with the demo clinic. Booking is not connected.",
   needs_review:
-    "Review the unanswered or unexpected items with the student before continuing. Booking is not connected.",
+    "Review the unanswered or unexpected items with the student. Mock options and a fictional packet are available for demonstrating the workflow; they are not treatment recommendations. Booking is not connected.",
   emergency:
-    "A demo checklist item was answered yes, so the routine demo flow is bypassed. This prototype message is not a validated screening result.",
+    "Review the positive demo checklist answers. Mock options and a fictional packet are available for demonstrating the workflow; they are not treatment recommendations. This prototype message is not a validated screening result.",
 };
 
 function list(values: string[]): string {

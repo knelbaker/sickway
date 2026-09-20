@@ -25,11 +25,6 @@ export function packetIdFor(encounterId: string): string {
 
 /** Checks a confirmed selection against the fixtures and the encounter's unlocked therapies. */
 export function validateSelection(encounter: Encounter, request: AttachRequest): AttachResult | null {
-  // Emergency and needs-review encounters have no routine packet path.
-  if (encounter.status === "emergency" || encounter.status === "needs_review") {
-    return refuse(409, "not_available_for_status");
-  }
-
   const therapy = fixtures.therapies.find((row) => row.id === request.therapyId);
   const pharmacy = fixtures.pharmacies.find((row) => row.id === request.pharmacyId);
   if (!therapy || !pharmacy) return refuse(400, "unknown_selection");

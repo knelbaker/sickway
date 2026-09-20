@@ -106,7 +106,7 @@ await check("2. Declined consent creates no queue entry", async () => {
   return "400 consent_required; queue empty";
 });
 
-await check("3. Unknown red flag never yields a clean or routine result", async () => {
+await check("3. Flagged and unknown intakes complete the demo without losing their answers", async () => {
   const { phone, laptop } = await pairedDevices();
   const intake = await phone("POST", "/api/intake", {
     intake: { ...seeded, redFlags: { ...NO_FLAGS, dehydration: null } },
@@ -118,14 +118,37 @@ await check("3. Unknown red flag never yields a clean or routine result", async 
   expect(detail.body.intake.redFlags.dehydration === null, "unknown was coerced");
   expect(!/no red flags/i.test(JSON.stringify(detail.body.sbar ?? {})), "brief claims no red flags");
   const attach = await laptop("POST", `/api/encounters/${intake.body.encounterId}/attach`, genericAtA);
-  expect(attach.status === 409, `attach on needs_review → ${attach.status}, expected 409`);
+  expect(attach.status === 200, `attach on needs_review → ${attach.status}, expected 200`);
+  const reviewed = await phone("GET", `/api/encounters/${intake.body.encounterId}`);
+  expect(reviewed.body.status === "packet_available" && reviewed.body.intake.redFlags.dehydration === null, "packet creation erased the unanswered item");
 
   const emergency = await phone("POST", "/api/intake", { intake: { ...seeded, redFlags: { ...NO_FLAGS, breathing_chest_pain: true } }, consent: { shareWithClinic: true } });
   expect(emergency.body?.status === "emergency", "a positive flag did not take the emergency branch");
   const emergencyDetail = await laptop("GET", `/api/encounters/${emergency.body.encounterId}`);
   expect(emergencyDetail.body?.sbar?.assessment?.includes("Answered yes: Breathing difficulty or chest pain"), "emergency SBAR is missing the positive answer");
   expect(emergencyDetail.body?.sbar?.spokenScript?.includes("Breathing difficulty or chest pain"), "emergency audio is missing the positive answer");
-  return "needs_review stored; attach refused (409); positive flag → emergency with SBAR and current audio";
+  const id = emergency.body.encounterId;
+  const options = await laptop("POST", `/api/encounters/${id}/options`, { query: "antiviral options" });
+  expect(options.status === 200 && options.body.found, "positive intake cannot view options");
+  const brandPacket = { ...genericAtA, therapyId: BRAND, mockPrice: 45, instructionLanguages: ["en", "es"], resourceIds: ["resource-demo-copay"] };
+  const locked = await laptop("POST", `/api/encounters/${id}/attach`, brandPacket);
+  expect(locked.status === 403, "positive intake bypassed the resource gate");
+  const unlocked = await laptop("POST", `/api/encounters/${id}/resources`, { therapyId: BRAND });
+  expect(unlocked.status === 200 && unlocked.body.unlocked, "positive intake cannot unlock named resources");
+  const attached = await laptop("POST", `/api/encounters/${id}/attach`, brandPacket);
+  expect(attached.status === 200, "positive intake cannot attach a packet");
+  const repeated = await laptop("POST", `/api/encounters/${id}/attach`, brandPacket);
+  expect(repeated.body.packetId === attached.body.packetId, "repeat attach duplicated the packet");
+  const packet = await phone("GET", `/api/packet/${attached.body.packetId}`);
+  expect(packet.status === 200 && packet.body.resourceIds.includes("resource-demo-copay"), "student cannot open the packet with its selected resources");
+  expect(packet.body.display.instructions.map((item) => item.language).join() === "en,es", "packet lost the instruction languages");
+  const final = await phone("GET", `/api/encounters/${id}`);
+  expect(final.body.status === "packet_available" && final.body.intake.redFlags.breathing_chest_pain === true, "packet creation erased the positive answer");
+  const followUp = await phone("POST", `/api/encounters/${id}/followup`, { simulated: true, filled: true, symptomStatus: "improving" });
+  expect(followUp.status === 200, "positive intake cannot record a simulated follow-up after packet creation");
+  const outcome = await laptop("GET", `/api/encounters/${id}`);
+  expect(outcome.body.followUp?.simulated === true && outcome.body.followUp.symptomStatus === "improving", "clinician cannot read the simulated follow-up");
+  return "answers preserved; options, gated resources, confirmed packet, repeat attach, student packet read, and simulated follow-up passed";
 });
 
 await check("4. A changed symptom does not reuse the seeded brief or audio", async () => {

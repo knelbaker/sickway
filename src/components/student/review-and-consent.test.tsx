@@ -192,15 +192,18 @@ describe("status after sharing", () => {
     expect(within(status).getByText("Shared — needs review")).toBeDefined();
     expect(status.textContent).toContain("This is not an all-clear");
     expect(status.textContent).not.toMatch(/no red flags|campus clinic/i);
+    expect(status.textContent).toContain("attach a packet");
   });
 
-  test("emergency shows emergency messaging and no clinic next step", async () => {
+  test("emergency shows the checklist warning and explains how to continue the demo packet flow", async () => {
     await submitWithStatus("emergency");
 
     const status = screen.getByRole("alert");
     expect(status.textContent).toContain("call 911");
     expect(status.textContent).toContain("not a validated medical screening result");
     expect(status.textContent).not.toMatch(/campus clinic|Booking not connected/);
+    expect(status.textContent).toContain("attach a packet");
+    expect(status.textContent).not.toContain("stops here");
   });
 
   test("restores the status after a refresh in the same session, but not in a new session", async () => {

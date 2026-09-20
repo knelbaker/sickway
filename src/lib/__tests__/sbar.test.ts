@@ -64,7 +64,7 @@ describe("sbarFacts", () => {
       "Review the synthetic intake with the demo clinic. Booking is not connected.",
     );
     expect(sbarFacts(flagged, profile, routeIntake(flagged)).nextStep).toContain(
-      "Review the unanswered or unexpected items with the student before continuing",
+      "Review the unanswered or unexpected items with the student",
     );
   });
 
@@ -111,12 +111,13 @@ describe("deterministicSbar", () => {
     expect(sbar.assessment).not.toContain("answered no by the student");
   });
 
-  it("describes the emergency branch without a routine next step", () => {
+  it("describes positive answers and the fictional packet workflow without a treatment recommendation", () => {
     const intake = intakeWith({ redFlags: { ...seeded.redFlags, breathing_chest_pain: true } });
     const sbar = deterministicSbar(intake, profile, routeIntake(intake));
 
     expect(sbar.assessment).toContain("emergency branch");
-    expect(sbar.recommendation).toContain("routine demo flow is bypassed");
+    expect(sbar.recommendation).toContain("Mock options and a fictional packet are available");
+    expect(sbar.recommendation).toContain("not treatment recommendations");
   });
 
   it("contains no therapy, manufacturer, or verified-coverage claim", () => {
@@ -189,7 +190,7 @@ describe("generateSbar", () => {
     expect(call.system).toContain("Never turn it into a negative");
     expect(call.system).toContain("restate FACTS.nextStep in full");
     expect(call.system).toContain("use FACTS.checklistSummary word for word");
-    expect(call.promptVersion).toBe("sbar-v3");
+    expect(call.promptVersion).toBe("sbar-v4");
   });
 
   it("returns null when generation fails", async () => {
