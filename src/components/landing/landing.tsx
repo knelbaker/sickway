@@ -23,6 +23,7 @@ import { openDemoMenu } from "@/lib/client/demo-menu-store";
 import { useLanguage } from "@/lib/client/language-store";
 import { useSessionToken } from "@/lib/client/session-store";
 import { useMediaQuery } from "@/lib/client/use-media-query";
+import { useSafeReducedMotion } from "@/lib/client/use-safe-reduced-motion";
 import { cn } from "@/lib/utils";
 
 const PROMISE_ICONS = [CircleHelp, SquareCheckBig, SquareDashed, RotateCcw];
@@ -326,90 +327,197 @@ function Closing() {
   );
 }
 
+/** How much scrolling, in viewport heights, each step gets while the story is pinned. */
+const STEP_SCROLL_VH = 70;
+
 /**
- * The signature moment. On a wide screen a glass stage stays pinned while the
- * three steps scroll past, and its device swaps to a real screenshot of that
- * step; the logo's red line slides to whichever step is active. On a phone each
- * step simply carries its own screenshot.
+ * The signature moment. On a wide screen the whole section pins: the heading, the three steps,
+ * and the device stage hold still while the page scrolls underneath, and the scroll position
+ * moves the story from step 1 to 2 to 3. Only once step 3 has had its turn does the section let
+ * go and scroll away. Scroll position is the single source of truth; the player and the step
+ * titles just scroll the page to the right place. On a phone each step carries its own screenshot.
  */
 function Showcase() {
   const { t } = useLanguage();
   const copy = t.landing;
   const wide = useMediaQuery("(min-width: 1024px)", true);
+  const reduced = useSafeReducedMotion();
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
   const captions = [copy.phoneCaption, copy.laptopCaption, copy.packetCaption];
   const sectionRef = useRef<HTMLElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
   const onStage = useInView(sectionRef, { amount: 0.2 });
+  const count = copy.steps.length;
 
-  // The player drives the page: each finished step scrolls the next one into the middle,
-  // and the scroll position stays the single source of truth for which step is active.
-  const goTo = useCallback((index: number) => {
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    document.getElementById(`journey-step-${index}`)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+  // Where the pinned block is within its section: 0 when it has just pinned, 1 when it is about to let go.
+  const measure = useCallback(() => {
+    const section = sectionRef.current;
+    const pin = pinRef.current;
+    if (!section || !pin) return null;
+    const rect = section.getBoundingClientRect();
+    const stickyTop = parseFloat(getComputedStyle(pin).top) || 0;
+    const range = rect.height - pin.offsetHeight;
+    return { rect, stickyTop, range };
   }, []);
 
-  return (
-    <section ref={sectionRef} id="journey" aria-labelledby="journey-title">
-      <BlurFade inView>
-        <h2 id="journey-title" className="display max-w-[14ch] text-4xl sm:text-6xl">
-          {copy.journeyTitle}
-        </h2>
-      </BlurFade>
+  useEffect(() => {
+    if (!wide) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const m = measure();
+      if (!m || m.range <= 0) return;
+      const progress = Math.min(1, Math.max(0, (m.stickyTop - m.rect.top) / m.range));
+      setActive(Math.min(count - 1, Math.floor(progress * count)));
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [wide, count, measure]);
 
-      <div className="mt-10 grid gap-10 lg:mt-4 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
-        <ol className="flex flex-col gap-16 lg:gap-0">
+  // Scroll the page to the middle of a step's share of the pinned range.
+  const goTo = useCallback(
+    (index: number) => {
+      const m = measure();
+      if (!m) return;
+      const target = window.scrollY + m.rect.top - m.stickyTop + ((index + 0.5) / count) * m.range;
+      window.scrollTo({ top: target, behavior: reduced ? "auto" : "smooth" });
+    },
+    [count, measure, reduced],
+  );
+
+  if (!wide) {
+    return (
+      <section ref={sectionRef} id="journey" aria-labelledby="journey-title">
+        <BlurFade inView>
+          <h2 id="journey-title" className="display max-w-[14ch] text-4xl sm:text-6xl">
+            {copy.journeyTitle}
+          </h2>
+        </BlurFade>
+        <ol className="mt-10 flex flex-col gap-16">
           {copy.steps.map((step, index) => (
-            <Step key={step.where} id={`journey-step-${index}`} index={index} active={wide && active === index} onActive={setActive} tall={wide}>
+            <li key={step.where} className="relative pl-6 sm:pl-8">
+              <span aria-hidden className="absolute top-0 bottom-0 left-0 w-[3px] rounded-full bg-ink/10" />
               <span aria-hidden className="display text-xl text-brand-red-ink">
                 {index + 1}
               </span>
               <h3 className="display mt-1 text-3xl sm:text-4xl">{step.where}</h3>
               <p className="mt-4 max-w-[52ch] text-lg leading-8 text-ink-soft">{step.what}</p>
-              {!wide && (
-                <figure className="mt-8">
-                  <Device index={index} className="mx-auto" />
-                  <figcaption className="mt-3 text-center text-sm text-ink-soft">{captions[index]}</figcaption>
-                </figure>
-              )}
-            </Step>
+              <figure className="mt-8">
+                <Device index={index} className="mx-auto" />
+                <figcaption className="mt-3 text-center text-sm text-ink-soft">{captions[index]}</figcaption>
+              </figure>
+            </li>
           ))}
         </ol>
+      </section>
+    );
+  }
 
-        {wide && (
-          <div className="relative">
-            <div className="glass sticky top-40 flex h-[min(74vh,46rem)] flex-col items-center gap-5 overflow-hidden rounded-[2.5rem] p-8">
-              <DotPattern width={20} height={20} cr={1} className="text-ink/15 [mask-image:radial-gradient(closest-side,black,transparent)]" />
-              <AnimatePresence mode="wait">
-                <motion.figure
-                  key={active}
-                  initial={{ opacity: 0, y: 18, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -12, scale: 0.98 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-4"
-                >
-                  <Device index={active} className="max-h-[calc(100%-2.5rem)]" />
-                  <figcaption className="text-sm text-ink-soft">{captions[active]}</figcaption>
-                </motion.figure>
-              </AnimatePresence>
-              {/* Remounts per step so the fill restarts when scrolling, not only when playing. */}
-              <StepPlayer
-                key={active}
-                steps={copy.steps.map((step) => ({ label: step.where, duration: 5000 }))}
-                value={active}
-                onValueChange={goTo}
-                playing={playing && onStage}
-                onPlayingChange={setPlaying}
-                onComplete={() => setPlaying(false)}
-                controlPosition="left"
-                controlLabels={copy.player}
-                className="relative z-10 w-full shrink-0"
-              />
-              <BorderBeam size={160} duration={10} colorFrom="#ee121d" colorTo="#ee121d" borderWidth={2} />
-            </div>
-          </div>
-        )}
+  return (
+    <section
+      ref={sectionRef}
+      id="journey"
+      aria-labelledby="journey-title"
+      // One pinned screen, plus a stretch of scrolling for each step.
+      style={{ height: `calc(100svh - 10.5rem + ${count * STEP_SCROLL_VH}vh)` }}
+    >
+      <div ref={pinRef} className="sticky top-36 grid h-[calc(100svh-10.5rem)] grid-cols-[0.9fr_1.1fr] gap-14">
+        {/* Anchored from the top, not centred: the steps differ in length, and a centred column
+            would nudge the pinned heading every time the step changes. */}
+        <div className="flex min-h-0 flex-col justify-start pt-[clamp(0.5rem,12vh,9rem)] short:pt-[8vh]">
+          <h2 id="journey-title" className="display max-w-[14ch] text-5xl xl:text-6xl short:text-4xl xl:short:text-4xl">
+            {copy.journeyTitle}
+          </h2>
+
+          <ol className="mt-8 flex flex-col short:mt-5">
+            {copy.steps.map((step, index) => {
+              const current = active === index;
+              return (
+                <li key={step.where} className="relative py-3 pl-8 short:py-1.5">
+                  <span aria-hidden className="absolute top-0 bottom-0 left-0 w-[3px] bg-ink/10 first:rounded-t-full" />
+                  {current && (
+                    <motion.span
+                      aria-hidden
+                      layoutId="sickway-thread"
+                      transition={{ type: "spring", stiffness: 260, damping: 30 }}
+                      className="absolute top-2 bottom-2 left-0 w-[3px] rounded-full bg-brand-red"
+                    />
+                  )}
+                  <button
+                    type="button"
+                    aria-current={current ? "step" : undefined}
+                    onClick={() => goTo(index)}
+                    className={cn(
+                      "flex min-h-11 w-full cursor-pointer items-baseline gap-3 rounded-lg text-left transition-opacity duration-300 outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                      !current && "opacity-45 hover:opacity-80",
+                    )}
+                  >
+                    <span aria-hidden className="display text-xl text-brand-red-ink">
+                      {index + 1}
+                    </span>
+                    <h3 className="display text-2xl xl:text-3xl short:text-xl xl:short:text-2xl">{step.where}</h3>
+                  </button>
+                  {/* Only the current step spells itself out; the others stay as titles so all three fit on one screen. */}
+                  {/* Expands with CSS grid rows, not a measured height: animating to height "auto" makes the
+                      animation library measure the element and then restore the scroll position, which
+                      cancels a smooth scroll that is under way (clicking step 3 used to stop at step 2). */}
+                  <div
+                    aria-hidden={!current}
+                    className={cn(
+                      "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
+                      current ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+                    )}
+                  >
+                    <div className="overflow-hidden">
+                      <p className="max-w-[52ch] pt-2 pb-1 pl-8 text-lg leading-8 text-ink-soft short:pt-1 short:text-base short:leading-7">{step.what}</p>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+
+        <div className="glass relative flex min-h-0 flex-col items-center gap-5 overflow-hidden rounded-[2.5rem] p-8">
+          <DotPattern width={20} height={20} cr={1} className="text-ink/15 [mask-image:radial-gradient(closest-side,black,transparent)]" />
+          <AnimatePresence mode="wait">
+            <motion.figure
+              key={active}
+              initial={{ opacity: 0, y: 18, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.98 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="relative flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-4"
+            >
+              <Device index={active} className="max-h-[calc(100%-2.5rem)]" />
+              <figcaption className="text-sm text-ink-soft">{captions[active]}</figcaption>
+            </motion.figure>
+          </AnimatePresence>
+          {/* Remounts per step so the fill restarts when scrolling, not only when playing. */}
+          <StepPlayer
+            key={active}
+            steps={copy.steps.map((step) => ({ label: step.where, duration: 5000 }))}
+            value={active}
+            onValueChange={goTo}
+            playing={playing && onStage}
+            onPlayingChange={setPlaying}
+            onComplete={() => setPlaying(false)}
+            controlPosition="left"
+            controlLabels={copy.player}
+            className="relative z-10 w-full shrink-0"
+          />
+          <BorderBeam size={160} duration={10} colorFrom="#ee121d" colorTo="#ee121d" borderWidth={2} />
+        </div>
       </div>
     </section>
   );
@@ -424,49 +532,5 @@ function Device({ index, className }: { index: number; className?: string }) {
       src={index === 0 ? SHOTS.student : SHOTS.packet}
       className={cn("h-auto w-56 max-w-full drop-shadow-[0_24px_32px_rgba(60,40,0,0.28)] lg:h-full lg:w-auto", className)}
     />
-  );
-}
-
-function Step({
-  id,
-  index,
-  active,
-  tall,
-  onActive,
-  children,
-}: {
-  id: string;
-  index: number;
-  active: boolean;
-  tall: boolean;
-  onActive: (index: number) => void;
-  children: React.ReactNode;
-}) {
-  const ref = useRef<HTMLLIElement>(null);
-
-  // The step nearest the middle of the screen is the active one.
-  useEffect(() => {
-    const element = ref.current;
-    if (!element || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(([entry]) => entry.isIntersecting && onActive(index), {
-      rootMargin: "-45% 0px -45% 0px",
-    });
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [index, onActive]);
-
-  return (
-    <li ref={ref} id={id} className={cn("relative pl-6 sm:pl-8", tall && "flex min-h-[70vh] flex-col justify-center")}>
-      <span aria-hidden className="absolute top-0 bottom-0 left-0 w-[3px] rounded-full bg-ink/10" />
-      {active && (
-        <motion.span
-          aria-hidden
-          layoutId="sickway-thread"
-          transition={{ type: "spring", stiffness: 260, damping: 30 }}
-          className="absolute top-[38%] bottom-[38%] left-0 w-[3px] rounded-full bg-brand-red"
-        />
-      )}
-      <div className={cn("transition-opacity duration-300", tall && !active && "opacity-40")}>{children}</div>
-    </li>
   );
 }
