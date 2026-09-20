@@ -1,96 +1,107 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BRIEF_AUDIO_LABEL, briefAudioMode, PREPARED_BRIEF_AUDIO_SRC } from "@/lib/voice";
+import { apiFetch } from "@/lib/client/session-store";
+import { BRIEF_AUDIO_LABEL, matchesPreparedScript, PREPARED_BRIEF_AUDIO_SRC } from "@/lib/voice";
 
-const noSubscription = () => () => {};
+type Props = { encounterId: string; script: string; preparedScript: string };
 
-/**
- * Manual Play / Stop for the brief on screen. Autoplay is never required. The
- * mode is always labelled, so a prepared recording is never mistaken for live
- * voice (§10), and the brief's text stays visible whatever happens here.
- */
-export function BriefAudio({ script, preparedScript }: { script: string; preparedScript: string }) {
-  const speechSynthesisSupported = useSyncExternalStore(
-    noSubscription,
-    () => "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
-    () => false,
-  );
-  const [preparedFileFailed, setPreparedFileFailed] = useState(false);
-  const [playing, setPlaying] = useState(false);
+export function BriefAudio(props: Props) {
+  // A changed brief or encounter must discard its audio and any pending request.
+  return <BriefPlayer key={`${props.encounterId}:${props.script}`} {...props} />;
+}
+
+function BriefPlayer({ encounterId, script, preparedScript }: Props) {
+  const [generated, setGenerated] = useState(!matchesPreparedScript(script, preparedScript));
+  const [state, setState] = useState<"idle" | "loading" | "playing" | "unavailable">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  const generatedUrl = useRef<string | null>(null);
+  const active = state === "loading" || state === "playing";
+  const mode = state === "unavailable" ? "unavailable" : generated ? "elevenlabs" : "prepared_recording";
 
-  const mode = briefAudioMode(script, preparedScript, { speechSynthesis: speechSynthesisSupported, preparedFileFailed });
-
-  function stop() {
-    audioRef.current?.pause();
-    if (audioRef.current) audioRef.current.currentTime = 0;
-    if (speechSynthesisSupported) window.speechSynthesis.cancel();
-    setPlaying(false);
-  }
-
-  // Stop when the brief changes or the view closes, so audio never outlives the text it belongs to.
   useEffect(() => {
     const audio = audioRef.current;
     return () => {
+      requestRef.current?.abort();
       audio?.pause();
-      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      if (generatedUrl.current) URL.revokeObjectURL(generatedUrl.current);
     };
-  }, [script]);
+  }, []);
 
-  function speak() {
-    const utterance = new SpeechSynthesisUtterance(script);
-    utterance.lang = "en-US";
-    utterance.onend = () => setPlaying(false);
-    utterance.onerror = () => setPlaying(false);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-    setPlaying(true);
+  function stop() {
+    requestRef.current?.abort();
+    audioRef.current?.pause();
+    if (audioRef.current) audioRef.current.currentTime = 0;
+    setState("idle");
   }
 
   async function play() {
-    if (mode === "browser_speech") return speak();
-    if (mode !== "prepared_recording" || !audioRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setState("loading");
     try {
-      await audioRef.current.play();
-      setPlaying(true);
+      if (!generated) {
+        try {
+          audio.src = PREPARED_BRIEF_AUDIO_SRC;
+          await audio.play();
+          if (!controller.signal.aborted) setState("playing");
+          return;
+        } catch {
+          if (controller.signal.aborted) return;
+          setGenerated(true);
+        }
+      }
+      if (!generatedUrl.current) {
+        const response = await apiFetch(`/api/encounters/${encodeURIComponent(encounterId)}/audio`, {
+          method: "POST",
+          body: JSON.stringify({ spokenScript: script }),
+          signal: controller.signal,
+        });
+        if (!response.ok || !response.headers.get("content-type")?.startsWith("audio/mpeg")) throw new Error("Audio unavailable");
+        const blob = await response.blob();
+        if (controller.signal.aborted) return;
+        if (!blob.size) throw new Error("Empty audio");
+        generatedUrl.current = URL.createObjectURL(blob);
+      }
+      audio.src = generatedUrl.current;
+      await audio.play();
+      if (!controller.signal.aborted) setState("playing");
     } catch {
-      // Missing or blocked file: fall back to speaking the same, current script.
-      setPreparedFileFailed(true);
-      if (speechSynthesisSupported) speak();
+      if (!controller.signal.aborted) setState("unavailable");
+    } finally {
+      if (requestRef.current === controller) requestRef.current = null;
     }
   }
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md bg-muted/50 p-3">
-      {mode !== "unavailable" && (
-        <Button type="button" className="h-11 min-w-28" onClick={playing ? stop : play}>
-          {playing ? "Stop" : "Play brief"}
-        </Button>
-      )}
+      <Button type="button" className="h-11 min-w-28" onClick={active ? stop : play}>
+        {active ? "Stop" : "Play brief"}
+      </Button>
       <Badge variant="outline" role="status">
-        {BRIEF_AUDIO_LABEL[mode]}
+        {state === "loading" ? "Preparing audio…" : BRIEF_AUDIO_LABEL[mode]}
       </Badge>
-      {mode === "prepared_recording" && (
-        <>
-          <span className="text-xs text-muted-foreground">Recorded in advance for this exact seeded case. Not live voice.</span>
-          <audio
-            ref={audioRef}
-            src={PREPARED_BRIEF_AUDIO_SRC}
-            preload="none"
-            onEnded={() => setPlaying(false)}
-            onError={() => {
-              setPreparedFileFailed(true);
-              setPlaying(false);
-            }}
-          />
-        </>
-      )}
-      {mode === "browser_speech" && (
-        <span className="text-xs text-muted-foreground">Your browser reads the current brief aloud.</span>
-      )}
+      <span className="text-xs text-muted-foreground">
+        {generated
+          ? "Reads the current brief with the same ElevenLabs voice as the prepared recording."
+          : "Recorded in advance for this exact seeded case. Not live voice."}
+      </span>
+      <audio
+        ref={audioRef}
+        preload="none"
+        onEnded={() => setState("idle")}
+        onError={() => {
+          if (generatedUrl.current) URL.revokeObjectURL(generatedUrl.current);
+          generatedUrl.current = null;
+          // play() handles errors during startup, including a missing prepared file.
+          if (!requestRef.current) setState("unavailable");
+        }}
+      />
     </div>
   );
 }

@@ -16,6 +16,7 @@
  * that only a paired demo session can obtain from /api/voice/conversation-token.
  */
 import { existsSync } from "node:fs";
+import DEMO_VOICE from "../data/demo-voice.json" with { type: "json" };
 
 for (const file of [".env.local", ".env"]) if (existsSync(file)) process.loadEnvFile(file);
 const key = process.env.ELEVENLABS_API_KEY;
@@ -26,7 +27,6 @@ if (!key) {
 
 const API = "https://api.elevenlabs.io/v1/convai";
 const AGENT_NAME = "Sick Day Doorway — clinician demo";
-const VOICE_NAME = "Sarah";
 
 const PROMPT = `You are the voice interface of "Doorway", a PROTOTYPE clinician workspace in a hackathon demo. Everything is synthetic: the patient, plan, therapies, pharmacies, prices, coverage, stock, and manufacturer resources are fictional fixture data. You are talking to a demo clinician or a judge.
 
@@ -96,9 +96,11 @@ async function call(method, path, body) {
   return text ? JSON.parse(text) : {};
 }
 
-const voices = await fetch("https://api.elevenlabs.io/v1/voices", { headers: { "xi-api-key": key } }).then((r) => r.json());
-const voice = voices.voices?.find((item) => item.name.startsWith(VOICE_NAME)) ?? voices.voices?.[0];
-if (!voice) throw new Error("No ElevenLabs voice available on this account.");
+const response = await fetch("https://api.elevenlabs.io/v1/voices", { headers: { "xi-api-key": key } });
+if (!response.ok) throw new Error(`Could not check the ElevenLabs voice (${response.status}).`);
+const voices = await response.json();
+const voice = voices.voices?.find((item) => item.voice_id === DEMO_VOICE.id);
+if (!voice) throw new Error(`Required British voice ${DEMO_VOICE.name} (${DEMO_VOICE.id}) is unavailable. Agent unchanged.`);
 
 // Tools: create once, update in place afterwards.
 const existingTools = (await call("GET", "/tools")).tools ?? [];
