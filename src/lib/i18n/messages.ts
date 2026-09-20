@@ -76,6 +76,12 @@ const en = {
     folderHint: "Hover or tap the folder",
     closingCta: "Start a demo session",
     pair: "Pair a second device",
+    slideshow: {
+      label: "The two screens",
+      previous: "Previous screen",
+      next: "Next screen",
+      position: (current: number, total: number) => `Screen ${current} of ${total}`,
+    },
     promisesTitle: "Four promises the interface keeps",
     promises: [
       { title: "Unknown is never “no”", body: "A skipped or unsure answer stays unknown on every screen and in the brief." },
@@ -625,6 +631,12 @@ const es: Messages = {
     folderHint: "Pase el cursor o toque la carpeta",
     closingCta: "Iniciar una sesión de demostración",
     pair: "Vincular un segundo dispositivo",
+    slideshow: {
+      label: "Las dos pantallas",
+      previous: "Pantalla anterior",
+      next: "Pantalla siguiente",
+      position: (current: number, total: number) => `Pantalla ${current} de ${total}`,
+    },
     promisesTitle: "Cuatro promesas que la interfaz cumple",
     promises: [
       { title: "Desconocido nunca es “no”", body: "Una respuesta omitida o insegura se queda como desconocida en todas las pantallas y en el resumen." },
