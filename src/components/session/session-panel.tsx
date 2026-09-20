@@ -1,6 +1,8 @@
 "use client";
 
+import { QrCode } from "lucide-react";
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +65,7 @@ export function SessionPanel() {
   const { t } = useLanguage();
   const { start, pending, error } = useStartSession();
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
 
   // Undefined until the browser has read its stored token.
   if (token === undefined) {
@@ -91,6 +94,8 @@ export function SessionPanel() {
   }
 
   const joinLink = `${window.location.origin}/join?t=${encodeURIComponent(token)}`;
+  // A phone cannot open "localhost": that name means the phone itself. Say so instead of showing a code that fails.
+  const isLocalhost = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
 
   async function copy() {
     try {
@@ -125,6 +130,33 @@ export function SessionPanel() {
             {copied ? t.home.copied : t.home.copy}
           </Button>
         </div>
+
+        {/* The same link as a QR code, for a phone's camera. It is drawn here in the browser: the link
+            carries the session token, so it is never sent to an outside QR service. */}
+        <div>
+          <Button
+            variant="outline"
+            aria-expanded={showQr}
+            aria-controls="join-qr"
+            className="sm:whitespace-nowrap"
+            onClick={() => setShowQr((shown) => !shown)}
+          >
+            <QrCode aria-hidden className="size-4" />
+            {showQr ? t.home.hideQr : t.home.showQr}
+          </Button>
+        </div>
+        {showQr && (
+          <figure id="join-qr" className="flex flex-col items-center gap-2 self-center rounded-2xl border border-ink/10 bg-white p-4">
+            {/* Black on white with a quiet zone: the combination phone cameras read most reliably. */}
+            <QRCodeSVG value={joinLink} size={208} level="M" marginSize={2} title={t.home.qrTitle} role="img" />
+            <figcaption className="max-w-[16rem] text-center text-xs leading-5 text-muted-foreground">{t.home.qrHelp}</figcaption>
+            {isLocalhost && (
+              <p role="note" className="max-w-[16rem] text-center text-xs leading-5 font-medium text-ink">
+                {t.home.qrLocalhost}
+              </p>
+            )}
+          </figure>
+        )}
         <p className="text-xs leading-5 text-muted-foreground">
           {t.home.joinNote}
         </p>
