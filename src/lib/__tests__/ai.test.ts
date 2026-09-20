@@ -7,11 +7,13 @@ import { z } from "zod";
 
 vi.mock("server-only", () => ({}));
 
-const { doGenerate, send, configuration } = vi.hoisted(() => ({
+const { doGenerate, send, configuration, attemptedKeys } = vi.hoisted(() => ({
   doGenerate: vi.fn<MockLanguageModelV4["doGenerate"]>(),
   send: vi.fn(),
+  attemptedKeys: [] as string[],
   configuration: {
     GOOGLE_GENERATIVE_AI_API_KEY: "test-key",
+    GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK: undefined as string | undefined,
     GEMINI_MODEL: "test-model",
     AWS_REGION: "us-east-1",
     AWS_ACCESS_KEY_ID: "test-access-key",
@@ -24,7 +26,13 @@ vi.mock("@/lib/env", () => ({ env: configuration }));
 vi.mock("@ai-sdk/google", async () => {
   const { MockLanguageModelV4 } = await import("ai/test");
   return {
-    createGoogle: () => (modelId: string) => new MockLanguageModelV4({ modelId, doGenerate }),
+    createGoogle: ({ apiKey }: { apiKey: string }) => (modelId: string) => new MockLanguageModelV4({
+      modelId,
+      doGenerate: (options) => {
+        attemptedKeys.push(apiKey);
+        return doGenerate(options);
+      },
+    }),
   };
 });
 vi.mock("@aws-sdk/lib-dynamodb", async (importOriginal) => ({
@@ -71,6 +79,8 @@ beforeEach(() => {
   vi.useFakeTimers({ now: NOW });
   vi.stubEnv("GOOGLE_GENERATIVE_AI_API_KEY", undefined);
   configuration.GEMINI_MODEL = "test-model";
+  configuration.GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK = undefined;
+  attemptedKeys.length = 0;
   doGenerate.mockReset().mockResolvedValue(response());
   records.clear();
   send.mockReset().mockImplementation(async (command: GetCommand | PutCommand) => {
@@ -92,6 +102,44 @@ afterEach(() => {
 });
 
 describe("generateStructured", () => {
+  it("switches to the fallback key after a 429 and caches the validated result", async () => {
+    configuration.GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK = "test-fallback-key";
+    doGenerate.mockRejectedValueOnce(apiError(429));
+    const result = generateStructured(options);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(await result).toEqual({ ok: true, data, cached: false });
+    expect(attemptedKeys).toEqual(["test-key", "test-fallback-key"]);
+    expect(await generateStructured(options)).toEqual({ ok: true, data, cached: true });
+    expect(doGenerate).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the three-attempt bound when both keys are rate-limited", async () => {
+    configuration.GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK = "test-fallback-key";
+    doGenerate.mockRejectedValue(apiError(429));
+    const result = generateStructured(options);
+    await vi.advanceTimersByTimeAsync(1_500);
+    expect(await result).toEqual({ ok: false, reason: "rate_limited" });
+    expect(attemptedKeys).toEqual(["test-key", "test-fallback-key", "test-fallback-key"]);
+    expect(records.size).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("retries an overloaded provider on the same key", async () => {
+    configuration.GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK = "test-fallback-key";
+    doGenerate.mockRejectedValueOnce(apiError(503));
+    const result = generateStructured(options);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(await result).toEqual({ ok: true, data, cached: false });
+    expect(attemptedKeys).toEqual(["test-key", "test-key"]);
+  });
+
+  it.each([400, 401, 403, 404])("does not switch credentials for permanent status %s", async (status) => {
+    configuration.GOOGLE_GENERATIVE_AI_API_KEY_FALLBACK = "test-fallback-key";
+    doGenerate.mockRejectedValue(apiError(status));
+    expect(await generateStructured(options)).toEqual({ ok: false, reason: "provider_error" });
+    expect(attemptedKeys).toEqual(["test-key"]);
+  });
+
   it("validates model JSON through the real SDK and caches it in the session partition", async () => {
     expect(await generateStructured(options)).toEqual({ ok: true, data, cached: false });
     expect(doGenerate).toHaveBeenCalledTimes(1);
@@ -159,11 +207,14 @@ describe("generateStructured", () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it("returns a typed failure after transient retry exhaustion without nested SDK retries", async () => {
-    doGenerate.mockRejectedValue(apiError(503));
+  it.each([
+    [429, "rate_limited"],
+    [503, "provider_error"],
+  ] as const)("classifies exhausted status %s without nested SDK retries or provider details", async (status, reason) => {
+    doGenerate.mockRejectedValue(apiError(status));
     const result = generateStructured(options);
     await vi.advanceTimersByTimeAsync(40_000);
-    expect(await result).toEqual({ ok: false, reason: "provider_error" });
+    expect(await result).toEqual({ ok: false, reason });
     expect(doGenerate).toHaveBeenCalledTimes(3);
     expect(records.size).toBe(0);
   });
