@@ -229,6 +229,13 @@
   /* The hero's device column grows into the empty right margin on wide screens, so the
    laptop and phone can be large without squeezing the headline. Never past the viewport. */
 @media (min-width: 1024px) {
+  /* How far the hero's text slides left into the empty margin, which opens the same amount of
+     white space before the devices. It stops short of the "on this page" rail (shown from 1440px,
+     about 8.75rem wide with its breathing room), so it is zero on a window with no margin to spare. */
+  .hero-shift {
+    --shift: max(0px, min(6rem, (100vw - 72rem) / 2 - 8.75rem));
+  }
+
   .hero-bleed,
   .page-bleed {
     /* Only the amount lives here. This file's classes sit in the components layer, where

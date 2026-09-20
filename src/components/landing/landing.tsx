@@ -136,7 +136,14 @@ function Hero() {
   const copy = t.landing;
 
   return (
-    <section id="start" className="grid items-center gap-14 pt-4 lg:grid-cols-[1fr_1fr] lg:gap-8 lg:pt-10">
+    // The hero owns the first screen: it is at least as tall as the window below the sticky header,
+    // so the next section starts past the fold at any window height, and its content sits centred.
+    <section
+      id="start"
+      // The section grows left by --shift and its gap grows by the same amount, so the text column
+      // keeps its width and moves left while the devices stay where they are.
+      className="hero-shift grid min-h-[calc(100svh-10rem)] content-center items-center gap-14 pt-4 lg:-ml-[var(--shift)] lg:grid-cols-[1fr_1fr] lg:gap-[calc(2rem+var(--shift))] lg:pt-0"
+    >
       <div className="flex flex-col gap-7">
         <BlurFade delay={0.05}>
           <h1 className="display text-[clamp(3rem,8.2vw,6rem)]">{copy.headline}</h1>
